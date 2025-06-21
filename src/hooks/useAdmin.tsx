@@ -70,46 +70,100 @@ export const useAdmin = () => {
     checkAdminStatus();
   }, [user, authLoading]);
 
-  const fetchAllData = async () => {
-    if (!isAdmin) return;
+  // Auto-fetch data when user becomes admin
+  useEffect(() => {
+    if (isAdmin && !loading) {
+      console.log('User is admin, fetching all data...');
+      fetchAllData();
+    }
+  }, [isAdmin, loading]);
 
+  const fetchAllData = async () => {
+    if (!isAdmin) {
+      console.log('User is not admin, skipping data fetch');
+      return;
+    }
+
+    console.log('Starting to fetch all admin data...');
     setLoading(true);
     try {
       // Fetch all profiles
-      const { data: profilesData } = await supabase
+      console.log('Fetching profiles...');
+      const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
         .select('*')
         .order('created_at', { ascending: false });
 
+      if (profilesError) {
+        console.error('Error fetching profiles:', profilesError);
+      } else {
+        console.log('Profiles fetched:', profilesData?.length || 0);
+      }
+
       // Fetch all lotes
-      const { data: lotesData } = await supabase
+      console.log('Fetching lotes...');
+      const { data: lotesData, error: lotesError } = await supabase
         .from('lotes')
         .select('*')
         .order('created_at', { ascending: false });
 
+      if (lotesError) {
+        console.error('Error fetching lotes:', lotesError);
+      } else {
+        console.log('Lotes fetched:', lotesData?.length || 0);
+      }
+
       // Fetch all productos
-      const { data: productosData } = await supabase
+      console.log('Fetching productos...');
+      const { data: productosData, error: productosError } = await supabase
         .from('productos')
         .select('*')
         .order('created_at', { ascending: false });
 
+      if (productosError) {
+        console.error('Error fetching productos:', productosError);
+      } else {
+        console.log('Productos fetched:', productosData?.length || 0);
+      }
+
       // Fetch all calificaciones
-      const { data: calificacionesData } = await supabase
+      console.log('Fetching calificaciones...');
+      const { data: calificacionesData, error: calificacionesError } = await supabase
         .from('calificaciones')
         .select('*')
         .order('created_at', { ascending: false });
 
+      if (calificacionesError) {
+        console.error('Error fetching calificaciones:', calificacionesError);
+      } else {
+        console.log('Calificaciones fetched:', calificacionesData?.length || 0);
+      }
+
       // Fetch all ordenes
-      const { data: ordenesData } = await supabase
+      console.log('Fetching ordenes...');
+      const { data: ordenesData, error: ordenesError } = await supabase
         .from('ordenes')
         .select('*')
         .order('created_at', { ascending: false });
 
+      if (ordenesError) {
+        console.error('Error fetching ordenes:', ordenesError);
+      } else {
+        console.log('Ordenes fetched:', ordenesData?.length || 0);
+      }
+
       // Fetch audit logs
-      const { data: auditoriasData } = await supabase
+      console.log('Fetching auditorias...');
+      const { data: auditoriasData, error: auditoriasError } = await supabase
         .from('auditoria_admin')
         .select('*')
         .order('created_at', { ascending: false });
+
+      if (auditoriasError) {
+        console.error('Error fetching auditorias:', auditoriasError);
+      } else {
+        console.log('Auditorias fetched:', auditoriasData?.length || 0);
+      }
 
       setProfiles(profilesData || []);
       setLotes(lotesData || []);
@@ -117,6 +171,8 @@ export const useAdmin = () => {
       setCalificaciones(calificacionesData || []);
       setOrdenes(ordenesData || []);
       setAuditorias(auditoriasData || []);
+
+      console.log('All admin data fetched successfully');
     } catch (error) {
       console.error('Error fetching admin data:', error);
       toast({
