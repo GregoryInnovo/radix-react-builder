@@ -48,7 +48,7 @@ export const CalificacionesView: React.FC<CalificacionesViewProps> = ({ califica
                   <div>
                     <CardTitle className="text-lg flex items-center gap-2">
                       Calificación 
-                      <StarRating rating={calificacion.puntuacion} readonly size="sm" />
+                      <StarRating rating={calificacion.puntuacion} interactive={false} size="sm" />
                       <span className="text-sm font-normal">
                         ({calificacion.puntuacion}/5)
                       </span>

@@ -336,6 +336,10 @@ export type Database = {
         Args: { user_id: string }
         Returns: number
       }
+      is_current_user_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
     }
     Enums: {
       batch_status: "disponible" | "reservado" | "recogido" | "cancelado"
