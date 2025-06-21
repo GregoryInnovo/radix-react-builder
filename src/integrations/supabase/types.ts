@@ -9,6 +9,42 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      auditoria_admin: {
+        Row: {
+          action: string
+          admin_id: string
+          created_at: string | null
+          entity_id: string
+          entity_type: string
+          id: string
+          new_status: string | null
+          notes: string | null
+          previous_status: string | null
+        }
+        Insert: {
+          action: string
+          admin_id: string
+          created_at?: string | null
+          entity_id: string
+          entity_type: string
+          id?: string
+          new_status?: string | null
+          notes?: string | null
+          previous_status?: string | null
+        }
+        Update: {
+          action?: string
+          admin_id?: string
+          created_at?: string | null
+          entity_id?: string
+          entity_type?: string
+          id?: string
+          new_status?: string | null
+          notes?: string | null
+          previous_status?: string | null
+        }
+        Relationships: []
+      }
       calificaciones: {
         Row: {
           calificado_id: string
@@ -72,6 +108,7 @@ export type Database = {
           fecha_disponible: string | null
           id: string
           peso_estimado: number
+          status: string | null
           tipo_residuo: Database["public"]["Enums"]["roa_type"]
           ubicacion_lat: number
           ubicacion_lng: number
@@ -86,6 +123,7 @@ export type Database = {
           fecha_disponible?: string | null
           id?: string
           peso_estimado: number
+          status?: string | null
           tipo_residuo: Database["public"]["Enums"]["roa_type"]
           ubicacion_lat: number
           ubicacion_lng: number
@@ -100,6 +138,7 @@ export type Database = {
           fecha_disponible?: string | null
           id?: string
           peso_estimado?: number
+          status?: string | null
           tipo_residuo?: Database["public"]["Enums"]["roa_type"]
           ubicacion_lat?: number
           ubicacion_lng?: number
@@ -203,6 +242,7 @@ export type Database = {
           imagenes: string[]
           nombre: string
           origen_roa: string | null
+          status: string | null
           updated_at: string
           user_id: string
         }
@@ -214,6 +254,7 @@ export type Database = {
           imagenes?: string[]
           nombre: string
           origen_roa?: string | null
+          status?: string | null
           updated_at?: string
           user_id: string
         }
@@ -225,6 +266,7 @@ export type Database = {
           imagenes?: string[]
           nombre?: string
           origen_roa?: string | null
+          status?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -239,6 +281,7 @@ export type Database = {
           full_name: string | null
           id: string
           is_active: boolean | null
+          is_admin: boolean | null
           is_verified: boolean | null
           location_lat: number | null
           location_lng: number | null
@@ -254,6 +297,7 @@ export type Database = {
           full_name?: string | null
           id: string
           is_active?: boolean | null
+          is_admin?: boolean | null
           is_verified?: boolean | null
           location_lat?: number | null
           location_lng?: number | null
@@ -269,6 +313,7 @@ export type Database = {
           full_name?: string | null
           id?: string
           is_active?: boolean | null
+          is_admin?: boolean | null
           is_verified?: boolean | null
           location_lat?: number | null
           location_lng?: number | null

@@ -2,11 +2,13 @@
 import { Button } from "@/components/ui/button";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import { LogOut, User, Package, Search, ShoppingBag, ClipboardList } from "lucide-react";
+import { useAdmin } from "@/hooks/useAdmin";
+import { LogOut, User, Package, Search, ShoppingBag, ClipboardList, Settings } from "lucide-react";
 import { NotificacionesDropdown } from "@/components/notificaciones/NotificacionesDropdown";
 
 export const Header = () => {
   const { user, signOut, isAuthenticated } = useAuth();
+  const { isAdmin } = useAdmin();
   const navigate = useNavigate();
 
   const handleSignOut = async () => {
@@ -39,6 +41,12 @@ export const Header = () => {
               <ClipboardList className="h-4 w-4" />
               Órdenes
             </Link>
+            {isAdmin && (
+              <Link to="/admin" className="flex items-center gap-2 text-purple-600 hover:text-purple-700">
+                <Settings className="h-4 w-4" />
+                Admin
+              </Link>
+            )}
           </nav>
 
           <div className="flex items-center space-x-4">
