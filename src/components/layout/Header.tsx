@@ -1,21 +1,128 @@
-
 import { Button } from "@/components/ui/button";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdmin } from "@/hooks/useAdmin";
-import { LogOut, User, Package, Search, ShoppingBag, ClipboardList, Settings } from "lucide-react";
+import { LogOut, User, Package, Search, ShoppingBag, ClipboardList, Settings, Menu, X } from "lucide-react";
 import { NotificacionesDropdown } from "@/components/notificaciones/NotificacionesDropdown";
+import { useState } from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 
 export const Header = () => {
   const { user, signOut, isAuthenticated } = useAuth();
   const { isAdmin } = useAdmin();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
+  const [isOpen, setIsOpen] = useState(false);
 
   const handleSignOut = async () => {
     await signOut();
+    setIsOpen(false);
     navigate("/");
   };
 
+  const handleNavigation = (path: string) => {
+    navigate(path);
+    setIsOpen(false);
+  };
+
+  const navigationItems = [
+    { path: "/search", label: "Buscar Lotes", icon: Search },
+    { path: "/lotes", label: "Mis Lotes", icon: Package },
+    { path: "/productos", label: "Productos", icon: ShoppingBag },
+    { path: "/ordenes", label: "Órdenes", icon: ClipboardList },
+    ...(isAdmin ? [{ path: "/admin", label: "Admin", icon: Settings }] : []),
+  ];
+
+  if (isMobile) {
+    return (
+      <header className="bg-white shadow-sm border-b sticky top-0 z-50">
+        <div className="container mx-auto px-4 py-3">
+          <div className="flex items-center justify-between">
+            <Link to="/" className="text-xl font-bold text-green-600">
+              NatuVital
+            </Link>
+            
+            <div className="flex items-center space-x-3">
+              {isAuthenticated && <NotificacionesDropdown />}
+              
+              <Sheet open={isOpen} onOpenChange={setIsOpen}>
+                <SheetTrigger asChild>
+                  <Button variant="ghost" size="sm" className="p-2">
+                    <Menu className="h-5 w-5" />
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="right" className="w-80">
+                  <SheetHeader>
+                    <SheetTitle className="text-left">Menú</SheetTitle>
+                  </SheetHeader>
+                  
+                  <div className="mt-8 space-y-4">
+                    {isAuthenticated ? (
+                      <>
+                        {/* User Info */}
+                        <div className="flex items-center space-x-3 p-3 bg-green-50 rounded-lg">
+                          <User className="h-5 w-5 text-green-600" />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-gray-900 truncate">
+                              {user?.email}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Navigation Items */}
+                        <nav className="space-y-2">
+                          {navigationItems.map((item) => (
+                            <button
+                              key={item.path}
+                              onClick={() => handleNavigation(item.path)}
+                              className="w-full flex items-center space-x-3 p-3 text-left text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                            >
+                              <item.icon className="h-5 w-5" />
+                              <span>{item.label}</span>
+                            </button>
+                          ))}
+                        </nav>
+
+                        {/* Logout Button */}
+                        <div className="pt-4 border-t">
+                          <Button
+                            variant="outline"
+                            onClick={handleSignOut}
+                            className="w-full justify-start text-red-600 border-red-200 hover:bg-red-50"
+                          >
+                            <LogOut className="h-4 w-4 mr-3" />
+                            Cerrar Sesión
+                          </Button>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="space-y-4">
+                        <Button 
+                          onClick={() => handleNavigation("/auth")}
+                          className="w-full"
+                        >
+                          Iniciar Sesión
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                </SheetContent>
+              </Sheet>
+            </div>
+          </div>
+        </div>
+      </header>
+    );
+  }
+
+  // Desktop version remains the same
   return (
     <header className="bg-white shadow-sm border-b">
       <div className="container mx-auto px-4 py-4">
