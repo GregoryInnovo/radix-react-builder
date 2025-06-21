@@ -4,7 +4,7 @@ import { Header } from '@/components/layout/Header';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Leaf, Recycle, Users, TrendingUp } from 'lucide-react';
+import { Leaf, Recycle, Users, TrendingUp, Package, Plus } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const WelcomeScreen = () => {
@@ -105,15 +105,26 @@ const Dashboard = () => {
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           <Card className="border-0 shadow-lg bg-white/80 backdrop-blur">
             <CardHeader>
-              <CardTitle className="text-green-800">Mis Lotes</CardTitle>
+              <CardTitle className="text-green-800 flex items-center gap-2">
+                <Package className="w-5 h-5" />
+                Mis Lotes
+              </CardTitle>
               <CardDescription>
                 Gestiona tus lotes de residuos orgánicos
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              <Button variant="outline" className="w-full">
-                Ver Lotes
-              </Button>
+            <CardContent className="space-y-3">
+              <Link to="/lotes">
+                <Button variant="outline" className="w-full">
+                  Ver Mis Lotes
+                </Button>
+              </Link>
+              <Link to="/lotes">
+                <Button className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Crear Lote
+                </Button>
+              </Link>
             </CardContent>
           </Card>
 

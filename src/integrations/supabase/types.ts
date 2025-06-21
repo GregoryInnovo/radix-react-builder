@@ -9,6 +9,51 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      lotes: {
+        Row: {
+          created_at: string | null
+          descripcion: string | null
+          direccion: string | null
+          estado: Database["public"]["Enums"]["batch_status"]
+          fecha_disponible: string | null
+          id: string
+          peso_estimado: number
+          tipo_residuo: Database["public"]["Enums"]["roa_type"]
+          ubicacion_lat: number
+          ubicacion_lng: number
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          descripcion?: string | null
+          direccion?: string | null
+          estado?: Database["public"]["Enums"]["batch_status"]
+          fecha_disponible?: string | null
+          id?: string
+          peso_estimado: number
+          tipo_residuo: Database["public"]["Enums"]["roa_type"]
+          ubicacion_lat: number
+          ubicacion_lng: number
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          descripcion?: string | null
+          direccion?: string | null
+          estado?: Database["public"]["Enums"]["batch_status"]
+          fecha_disponible?: string | null
+          id?: string
+          peso_estimado?: number
+          tipo_residuo?: Database["public"]["Enums"]["roa_type"]
+          ubicacion_lat?: number
+          ubicacion_lng?: number
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           address: string | null
@@ -65,7 +110,14 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      batch_status: "disponible" | "reservado" | "recogido" | "cancelado"
+      roa_type:
+        | "cascara_fruta"
+        | "posos_cafe"
+        | "restos_vegetales"
+        | "cascara_huevo"
+        | "restos_cereales"
+        | "otros"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -180,6 +232,16 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      batch_status: ["disponible", "reservado", "recogido", "cancelado"],
+      roa_type: [
+        "cascara_fruta",
+        "posos_cafe",
+        "restos_vegetales",
+        "cascara_huevo",
+        "restos_cereales",
+        "otros",
+      ],
+    },
   },
 } as const
