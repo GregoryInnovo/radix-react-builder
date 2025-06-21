@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Edit, Trash2, MapPin, Calendar, Weight } from 'lucide-react';
+import { Edit, Trash2, MapPin, Calendar, Weight, Eye } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import type { Database } from '@/integrations/supabase/types';
 
@@ -17,6 +17,7 @@ interface LotesListProps {
   lotes: Lote[];
   loading: boolean;
   onEdit: (lote: Lote) => void;
+  onView: (lote: Lote) => void;
   onDelete: (id: string) => void;
 }
 
@@ -43,7 +44,7 @@ const STATUS_COLORS: Record<BatchStatus, string> = {
   'cancelado': 'bg-red-100 text-red-800',
 };
 
-export const LotesList = ({ lotes, loading, onEdit, onDelete }: LotesListProps) => {
+export const LotesList = ({ lotes, loading, onEdit, onView, onDelete }: LotesListProps) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [typeFilter, setTypeFilter] = useState<string>('all');
@@ -167,6 +168,16 @@ export const LotesList = ({ lotes, loading, onEdit, onDelete }: LotesListProps) 
                 )}
 
                 <div className="flex gap-2 pt-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => onView(lote)}
+                    className="flex-1"
+                  >
+                    <Eye className="w-4 h-4 mr-2" />
+                    Ver
+                  </Button>
+                  
                   <Button
                     variant="outline"
                     size="sm"

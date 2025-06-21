@@ -8,6 +8,7 @@ import type { Database } from '@/integrations/supabase/types';
 type Lote = Database['public']['Tables']['lotes']['Row'];
 type LoteInsert = Database['public']['Tables']['lotes']['Insert'];
 type LoteUpdate = Database['public']['Tables']['lotes']['Update'];
+type BatchStatus = Database['public']['Enums']['batch_status'];
 
 export const useLotes = () => {
   const [lotes, setLotes] = useState<Lote[]>([]);
@@ -107,6 +108,36 @@ export const useLotes = () => {
     }
   };
 
+  const updateLoteStatus = async (id: string, newStatus: BatchStatus) => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('lotes')
+        .update({ estado: newStatus })
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // Aquí se podría llamar a una Edge Function para enviar notificaciones
+      // await notifyStatusChange(id, newStatus);
+
+      await fetchLotes();
+      return data;
+    } catch (error: any) {
+      console.error('Error updating lote status:', error);
+      toast({
+        title: "Error al cambiar estado",
+        description: error.message,
+        variant: "destructive",
+      });
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const deleteLote = async (id: string) => {
     setLoading(true);
     try {
@@ -144,6 +175,7 @@ export const useLotes = () => {
     loading,
     createLote,
     updateLote,
+    updateLoteStatus,
     deleteLote,
     refreshLotes: fetchLotes,
   };
