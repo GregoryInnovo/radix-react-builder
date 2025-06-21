@@ -3,9 +3,13 @@ import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Leaf, Users, Search, Package } from 'lucide-react';
+import { Leaf, Users, Search, Package, Play, CheckCircle, XCircle, Star, Shield, ArrowRight } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
 import { useAuth } from '@/hooks/useAuth';
+import { HowItWorksSection } from '@/components/landing/HowItWorksSection';
+import { ROAGuideSection } from '@/components/landing/ROAGuideSection';
+import { UserGuidesSection } from '@/components/landing/UserGuidesSection';
+import { TrustSection } from '@/components/landing/TrustSection';
 
 const Index = () => {
   const navigate = useNavigate();
@@ -22,6 +26,7 @@ const Index = () => {
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50">
       <Header />
       
+      {/* Hero Section */}
       <main className="container mx-auto px-4 py-16">
         <div className="text-center space-y-8 mb-16">
           <div className="space-y-4">
@@ -55,6 +60,7 @@ const Index = () => {
           </div>
         </div>
 
+        {/* Features Cards */}
         <div className="grid md:grid-cols-3 gap-8 mb-16">
           <Card className="border-green-200 hover:shadow-lg transition-shadow">
             <CardHeader>
@@ -92,27 +98,37 @@ const Index = () => {
             </CardHeader>
           </Card>
         </div>
+      </main>
 
-        <div className="text-center">
-          <Card className="inline-block border-dashed border-2 border-green-300">
+      {/* Educational Sections */}
+      <HowItWorksSection />
+      <ROAGuideSection />
+      <UserGuidesSection />
+      <TrustSection />
+
+      {/* Call to Action */}
+      <section className="py-16 bg-gradient-to-r from-green-500 to-emerald-600">
+        <div className="container mx-auto px-4 text-center">
+          <Card className="inline-block border-dashed border-2 border-white/20 bg-white/10 backdrop-blur-sm">
             <CardContent className="p-8">
-              <h2 className="text-2xl font-semibold text-gray-900 mb-4">
+              <h2 className="text-2xl font-semibold text-white mb-4">
                 ¿Listo para comenzar?
               </h2>
-              <p className="text-gray-600 mb-6">
+              <p className="text-green-50 mb-6">
                 Únete a la red de intercambio de residuos orgánicos aprovechables
               </p>
               <Button
                 size="lg"
                 onClick={() => navigate('/auth')}
-                className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white"
+                className="bg-white text-green-600 hover:bg-green-50"
               >
                 Comenzar Ahora
+                <ArrowRight className="w-5 h-5 ml-2" />
               </Button>
             </CardContent>
           </Card>
         </div>
-      </main>
+      </section>
     </div>
   );
 };
