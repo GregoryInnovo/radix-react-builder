@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { MapPin, Search, Navigation, Weight, Calendar } from 'lucide-react';
+import { MapPin, Search as SearchIcon, Navigation, Weight, Calendar } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { useSearchLotes } from '@/hooks/useSearchLotes';
@@ -114,7 +114,7 @@ const Search = () => {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Search className="w-5 h-5" />
+                  <SearchIcon className="w-5 h-5" />
                   Filtros de Búsqueda
                 </CardTitle>
                 <CardDescription>
@@ -207,7 +207,7 @@ const Search = () => {
                   disabled={!userLocation || loading}
                   className="w-full bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700"
                 >
-                  <Search className="w-4 h-4 mr-2" />
+                  <SearchIcon className="w-4 h-4 mr-2" />
                   {loading ? 'Buscando...' : 'Buscar Lotes'}
                 </Button>
               </CardContent>
@@ -292,7 +292,7 @@ const Search = () => {
             {results.length === 0 && !loading && userLocation && (
               <Card className="border-dashed">
                 <CardContent className="flex flex-col items-center justify-center py-12">
-                  <Search className="w-12 h-12 text-gray-400 mb-4" />
+                  <SearchIcon className="w-12 h-12 text-gray-400 mb-4" />
                   <h3 className="text-lg font-medium text-gray-900 mb-2">
                     No se encontraron lotes
                   </h3>
