@@ -11,7 +11,7 @@ import type { Database } from '@/integrations/supabase/types';
 type Orden = Database['public']['Tables']['ordenes']['Row'];
 
 interface CalificarOrdenProps {
-  orden: Orden;
+  orden: Orden & { calificado_id?: string };
 }
 
 export const CalificarOrden: React.FC<CalificarOrdenProps> = ({ orden }) => {
@@ -22,21 +22,20 @@ export const CalificarOrden: React.FC<CalificarOrdenProps> = ({ orden }) => {
 
   useEffect(() => {
     const checkCanRate = async () => {
-      const result = await canRateOrder(orden.id);
+      if (!user || !orden.calificado_id) return;
+      
+      const result = await canRateOrder(orden.id, orden.calificado_id);
       setCanRate(result);
     };
 
     if (user && orden.estado === 'completada') {
       checkCanRate();
     }
-  }, [orden.id, orden.estado, user, canRateOrder]);
+  }, [orden.id, orden.estado, orden.calificado_id, user, canRateOrder]);
 
-  if (!canRate || orden.estado !== 'completada') {
+  if (!canRate || orden.estado !== 'completada' || !orden.calificado_id) {
     return null;
   }
-
-  // Determine who to rate (the other party in the transaction)
-  const calificadoId = orden.solicitante_id === user?.id ? orden.proveedor_id : orden.solicitante_id;
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -52,7 +51,7 @@ export const CalificarOrden: React.FC<CalificarOrdenProps> = ({ orden }) => {
         </DialogHeader>
         <CalificacionForm
           ordenId={orden.id}
-          calificadoId={calificadoId}
+          calificadoId={orden.calificado_id}
           productoId={orden.tipo_item === 'producto' ? orden.item_id : undefined}
           onSuccess={() => setOpen(false)}
           onCancel={() => setOpen(false)}

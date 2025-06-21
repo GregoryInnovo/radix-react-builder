@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,6 +11,7 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Clock, Package, MapPin, MessageSquare } from 'lucide-react';
 import { useState } from 'react';
+import { useAuth } from '@/hooks/useAuth';
 
 const getStatusColor = (estado: string) => {
   const colors = {
@@ -33,6 +35,7 @@ const getStatusText = (estado: string) => {
 
 export const OrdenesList: React.FC = () => {
   const { ordenesComoSolicitante, ordenesComoProveedor, updateOrden, loading } = useOrdenes();
+  const { user } = useAuth();
   const [responseMessages, setResponseMessages] = useState<Record<string, string>>({});
 
   const handleStatusUpdate = async (ordenId: string, newStatus: string, mensaje?: string) => {
@@ -138,8 +141,39 @@ export const OrdenesList: React.FC = () => {
         )}
 
         {orden.estado === 'completada' && (
-          <div className="border-t pt-3">
-            <CalificarOrden orden={orden} />
+          <div className="border-t pt-3 space-y-3">
+            <div className="text-sm font-medium text-gray-700 mb-2">
+              Calificar participantes:
+            </div>
+            <div className="grid grid-cols-1 gap-2">
+              {/* Calificar al proveedor (si soy el solicitante) */}
+              {user?.id === orden.solicitante_id && (
+                <div className="p-2 bg-gray-50 rounded-lg">
+                  <div className="text-xs text-gray-600 mb-2">Calificar al proveedor:</div>
+                  <CalificarOrden 
+                    orden={{
+                      ...orden,
+                      // Override para que califique al proveedor
+                      calificado_id: orden.proveedor_id
+                    }} 
+                  />
+                </div>
+              )}
+              
+              {/* Calificar al solicitante (si soy el proveedor) */}
+              {user?.id === orden.proveedor_id && (
+                <div className="p-2 bg-gray-50 rounded-lg">
+                  <div className="text-xs text-gray-600 mb-2">Calificar al solicitante:</div>
+                  <CalificarOrden 
+                    orden={{
+                      ...orden,
+                      // Override para que califique al solicitante
+                      calificado_id: orden.solicitante_id
+                    }} 
+                  />
+                </div>
+              )}
+            </div>
           </div>
         )}
       </CardContent>
