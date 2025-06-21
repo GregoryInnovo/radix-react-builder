@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { useOrdenes } from '@/hooks/useOrdenes';
+import { CalificarOrden } from '@/components/calificaciones/CalificarOrden';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Clock, Package, MapPin, MessageSquare } from 'lucide-react';
@@ -134,6 +134,12 @@ export const OrdenesList: React.FC = () => {
             >
               Marcar como Completada
             </Button>
+          </div>
+        )}
+
+        {orden.estado === 'completada' && (
+          <div className="border-t pt-3">
+            <CalificarOrden orden={orden} />
           </div>
         )}
       </CardContent>

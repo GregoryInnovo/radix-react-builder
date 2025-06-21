@@ -9,6 +9,60 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      calificaciones: {
+        Row: {
+          calificado_id: string
+          calificador_id: string
+          comentario: string | null
+          created_at: string
+          id: string
+          orden_id: string
+          producto_id: string | null
+          puntuacion: number
+          reportada: boolean
+          updated_at: string
+        }
+        Insert: {
+          calificado_id: string
+          calificador_id: string
+          comentario?: string | null
+          created_at?: string
+          id?: string
+          orden_id: string
+          producto_id?: string | null
+          puntuacion: number
+          reportada?: boolean
+          updated_at?: string
+        }
+        Update: {
+          calificado_id?: string
+          calificador_id?: string
+          comentario?: string | null
+          created_at?: string
+          id?: string
+          orden_id?: string
+          producto_id?: string | null
+          puntuacion?: number
+          reportada?: boolean
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calificaciones_orden_id_fkey"
+            columns: ["orden_id"]
+            isOneToOne: false
+            referencedRelation: "ordenes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "calificaciones_producto_id_fkey"
+            columns: ["producto_id"]
+            isOneToOne: false
+            referencedRelation: "productos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lotes: {
         Row: {
           created_at: string | null
@@ -229,7 +283,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_user_average_rating: {
+        Args: { user_id: string }
+        Returns: number
+      }
+      get_user_rating_count: {
+        Args: { user_id: string }
+        Returns: number
+      }
     }
     Enums: {
       batch_status: "disponible" | "reservado" | "recogido" | "cancelado"
