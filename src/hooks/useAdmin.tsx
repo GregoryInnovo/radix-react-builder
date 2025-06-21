@@ -14,7 +14,9 @@ type AuditoriaAdmin = Database['public']['Tables']['auditoria_admin']['Row'];
 
 export const useAdmin = () => {
   const [isAdmin, setIsAdmin] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [checkingAdmin, setCheckingAdmin] = useState(true);
+  const [loadingData, setLoadingData] = useState(false);
+  const [dataLoaded, setDataLoaded] = useState(false);
   const { user, loading: authLoading } = useAuth();
 
   const [profiles, setProfiles] = useState<Profile[]>([]);
@@ -24,9 +26,12 @@ export const useAdmin = () => {
   const [ordenes, setOrdenes] = useState<Orden[]>([]);
   const [auditorias, setAuditorias] = useState<AuditoriaAdmin[]>([]);
 
+  // Combined loading state for UI
+  const loading = checkingAdmin || loadingData;
+
   useEffect(() => {
-    const checkAdminStatus = async () => {
-      console.log('Checking admin status:', { user: user?.id, authLoading });
+    const initializeAdmin = async () => {
+      console.log('Initializing admin check:', { user: user?.id, authLoading });
       
       // Wait for auth to complete
       if (authLoading) {
@@ -37,7 +42,7 @@ export const useAdmin = () => {
       if (!user) {
         console.log('No user found, setting isAdmin to false');
         setIsAdmin(false);
-        setLoading(false);
+        setCheckingAdmin(false);
         return;
       }
 
@@ -58,34 +63,33 @@ export const useAdmin = () => {
           const adminStatus = profile?.is_admin || false;
           console.log('Setting isAdmin to:', adminStatus);
           setIsAdmin(adminStatus);
+
+          // If user is admin and data hasn't been loaded yet, fetch data
+          if (adminStatus && !dataLoaded) {
+            console.log('User is admin, fetching all data...');
+            await fetchAllData();
+          }
         }
       } catch (error) {
         console.error('Error checking admin status:', error);
         setIsAdmin(false);
       } finally {
-        setLoading(false);
+        setCheckingAdmin(false);
       }
     };
 
-    checkAdminStatus();
-  }, [user, authLoading]);
-
-  // Auto-fetch data when user becomes admin
-  useEffect(() => {
-    if (isAdmin && !loading) {
-      console.log('User is admin, fetching all data...');
-      fetchAllData();
-    }
-  }, [isAdmin, loading]);
+    initializeAdmin();
+  }, [user, authLoading, dataLoaded]);
 
   const fetchAllData = async () => {
-    if (!isAdmin) {
-      console.log('User is not admin, skipping data fetch');
+    if (loadingData) {
+      console.log('Data already loading, skipping...');
       return;
     }
 
     console.log('Starting to fetch all admin data...');
-    setLoading(true);
+    setLoadingData(true);
+    
     try {
       // Fetch all profiles
       console.log('Fetching profiles...');
@@ -171,6 +175,7 @@ export const useAdmin = () => {
       setCalificaciones(calificacionesData || []);
       setOrdenes(ordenesData || []);
       setAuditorias(auditoriasData || []);
+      setDataLoaded(true);
 
       console.log('All admin data fetched successfully');
     } catch (error) {
@@ -181,7 +186,7 @@ export const useAdmin = () => {
         variant: "destructive",
       });
     } finally {
-      setLoading(false);
+      setLoadingData(false);
     }
   };
 
@@ -248,6 +253,7 @@ export const useAdmin = () => {
       });
 
       // Refresh data
+      setDataLoaded(false);
       await fetchAllData();
     } catch (error: any) {
       console.error('Error updating entity status:', error);

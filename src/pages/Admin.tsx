@@ -26,7 +26,6 @@ const Admin = () => {
         console.log('User not authenticated, redirecting to home');
         navigate('/', { replace: true });
       }
-      // If authenticated but not admin, we don't redirect - we show access denied message
     }
   }, [isAuthenticated, isAdmin, authLoading, adminLoading, navigate]);
 
@@ -38,7 +37,9 @@ const Admin = () => {
         <div className="container mx-auto px-4 py-8">
           <div className="flex justify-center items-center h-64">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
-            <p className="ml-4 text-gray-600">Verificando permisos...</p>
+            <p className="ml-4 text-gray-600">
+              {authLoading ? 'Verificando autenticación...' : 'Verificando permisos de administrador...'}
+            </p>
           </div>
         </div>
       </div>
@@ -64,7 +65,7 @@ const Admin = () => {
     );
   }
 
-  // If authenticated but not admin, show access denied (don't redirect)
+  // If authenticated but not admin, show access denied
   if (!isAdmin) {
     return (
       <div className="min-h-screen bg-gray-50">

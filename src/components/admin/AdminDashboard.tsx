@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAdmin } from '@/hooks/useAdmin';
 import { UsersManagement } from './UsersManagement';
@@ -18,18 +18,14 @@ export const AdminDashboard: React.FC = () => {
     calificaciones, 
     ordenes, 
     auditorias,
-    fetchAllData, 
     loading 
   } = useAdmin();
-
-  // Remove the useEffect that calls fetchAllData since it's now handled in useAdmin
-  // The data will be automatically fetched when the user is confirmed as admin
 
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
-        <p className="ml-4 text-gray-600">Cargando datos administrativos...</p>
+        <p className="ml-4 text-gray-600">Cargando panel administrativo...</p>
       </div>
     );
   }
