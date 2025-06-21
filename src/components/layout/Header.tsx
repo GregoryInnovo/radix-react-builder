@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -5,7 +6,6 @@ import { useAdmin } from "@/hooks/useAdmin";
 import { LogOut, User, Package, Search, ShoppingBag, ClipboardList, Settings, Menu, X } from "lucide-react";
 import { NotificacionesDropdown } from "@/components/notificaciones/NotificacionesDropdown";
 import { useState } from "react";
-import { useIsMobile } from "@/hooks/use-mobile";
 import {
   Sheet,
   SheetContent,
@@ -18,7 +18,6 @@ export const Header = () => {
   const { user, signOut, isAuthenticated } = useAuth();
   const { isAdmin } = useAdmin();
   const navigate = useNavigate();
-  const isMobile = useIsMobile();
   const [isOpen, setIsOpen] = useState(false);
 
   const handleSignOut = async () => {
@@ -40,12 +39,18 @@ export const Header = () => {
     ...(isAdmin ? [{ path: "/admin", label: "Admin", icon: Settings }] : []),
   ];
 
-  if (isMobile) {
+  // Show mobile layout for mobile and tablet (including iPad)
+  const isMobileOrTablet = () => {
+    if (typeof window === 'undefined') return false;
+    return window.innerWidth <= 1024;
+  };
+
+  if (isMobileOrTablet()) {
     return (
       <header className="bg-white shadow-sm border-b sticky top-0 z-50">
         <div className="container mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
-            <Link to="/" className="text-xl font-bold text-green-600">
+            <Link to="/" className="text-xl lg:text-2xl font-bold text-green-600">
               NatuVital
             </Link>
             
@@ -54,23 +59,23 @@ export const Header = () => {
               
               <Sheet open={isOpen} onOpenChange={setIsOpen}>
                 <SheetTrigger asChild>
-                  <Button variant="ghost" size="sm" className="p-2">
-                    <Menu className="h-5 w-5" />
+                  <Button variant="ghost" size="sm" className="p-2 lg:p-3">
+                    <Menu className="h-5 w-5 lg:h-6 lg:w-6" />
                   </Button>
                 </SheetTrigger>
-                <SheetContent side="right" className="w-80">
+                <SheetContent side="right" className="w-80 lg:w-96">
                   <SheetHeader>
-                    <SheetTitle className="text-left">Menú</SheetTitle>
+                    <SheetTitle className="text-left text-lg lg:text-xl">Menú</SheetTitle>
                   </SheetHeader>
                   
                   <div className="mt-8 space-y-4">
                     {isAuthenticated ? (
                       <>
                         {/* User Info */}
-                        <div className="flex items-center space-x-3 p-3 bg-green-50 rounded-lg">
-                          <User className="h-5 w-5 text-green-600" />
+                        <div className="flex items-center space-x-3 p-3 lg:p-4 bg-green-50 rounded-lg">
+                          <User className="h-5 w-5 lg:h-6 lg:w-6 text-green-600" />
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-gray-900 truncate">
+                            <p className="text-sm lg:text-base font-medium text-gray-900 truncate">
                               {user?.email}
                             </p>
                           </div>
@@ -82,10 +87,10 @@ export const Header = () => {
                             <button
                               key={item.path}
                               onClick={() => handleNavigation(item.path)}
-                              className="w-full flex items-center space-x-3 p-3 text-left text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                              className="w-full flex items-center space-x-3 p-3 lg:p-4 text-left text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
                             >
-                              <item.icon className="h-5 w-5" />
-                              <span>{item.label}</span>
+                              <item.icon className="h-5 w-5 lg:h-6 lg:w-6" />
+                              <span className="text-sm lg:text-base">{item.label}</span>
                             </button>
                           ))}
                         </nav>
@@ -95,9 +100,9 @@ export const Header = () => {
                           <Button
                             variant="outline"
                             onClick={handleSignOut}
-                            className="w-full justify-start text-red-600 border-red-200 hover:bg-red-50"
+                            className="w-full justify-start text-red-600 border-red-200 hover:bg-red-50 p-3 lg:p-4 text-sm lg:text-base"
                           >
-                            <LogOut className="h-4 w-4 mr-3" />
+                            <LogOut className="h-4 w-4 lg:h-5 lg:w-5 mr-3" />
                             Cerrar Sesión
                           </Button>
                         </div>
@@ -106,7 +111,7 @@ export const Header = () => {
                       <div className="space-y-4">
                         <Button 
                           onClick={() => handleNavigation("/auth")}
-                          className="w-full"
+                          className="w-full p-3 lg:p-4 text-sm lg:text-base"
                         >
                           Iniciar Sesión
                         </Button>
@@ -131,7 +136,7 @@ export const Header = () => {
             NatuVital
           </Link>
           
-          <nav className="hidden md:flex items-center space-x-6">
+          <nav className="hidden xl:flex items-center space-x-6">
             <Link to="/search" className="flex items-center gap-2 text-gray-600 hover:text-green-600">
               <Search className="h-4 w-4" />
               Buscar Lotes
