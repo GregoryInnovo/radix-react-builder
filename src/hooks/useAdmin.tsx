@@ -15,7 +15,7 @@ type AuditoriaAdmin = Database['public']['Tables']['auditoria_admin']['Row'];
 export const useAdmin = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
 
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [lotes, setLotes] = useState<Lote[]>([]);
@@ -26,20 +26,39 @@ export const useAdmin = () => {
 
   useEffect(() => {
     const checkAdminStatus = async () => {
+      console.log('Checking admin status:', { user: user?.id, authLoading });
+      
+      // Wait for auth to complete
+      if (authLoading) {
+        console.log('Auth still loading, waiting...');
+        return;
+      }
+
       if (!user) {
+        console.log('No user found, setting isAdmin to false');
         setIsAdmin(false);
         setLoading(false);
         return;
       }
 
       try {
-        const { data: profile } = await supabase
+        console.log('Fetching profile for user:', user.id);
+        
+        const { data: profile, error } = await supabase
           .from('profiles')
           .select('is_admin')
           .eq('id', user.id)
           .single();
 
-        setIsAdmin(profile?.is_admin || false);
+        if (error) {
+          console.error('Error fetching profile:', error);
+          setIsAdmin(false);
+        } else {
+          console.log('Profile fetched:', profile);
+          const adminStatus = profile?.is_admin || false;
+          console.log('Setting isAdmin to:', adminStatus);
+          setIsAdmin(adminStatus);
+        }
       } catch (error) {
         console.error('Error checking admin status:', error);
         setIsAdmin(false);
@@ -49,7 +68,7 @@ export const useAdmin = () => {
     };
 
     checkAdminStatus();
-  }, [user]);
+  }, [user, authLoading]);
 
   const fetchAllData = async () => {
     if (!isAdmin) return;

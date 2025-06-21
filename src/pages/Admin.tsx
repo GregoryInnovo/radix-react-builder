@@ -8,30 +8,64 @@ import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent } from '@/components/ui/card';
 
 const Admin = () => {
-  const { isAuthenticated } = useAuth();
-  const { isAdmin, loading } = useAdmin();
+  const { isAuthenticated, loading: authLoading } = useAuth();
+  const { isAdmin, loading: adminLoading } = useAdmin();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!loading && (!isAuthenticated || !isAdmin)) {
-      navigate('/', { replace: true });
-    }
-  }, [isAuthenticated, isAdmin, loading, navigate]);
+    console.log('Admin page effect:', {
+      authLoading,
+      adminLoading,
+      isAuthenticated,
+      isAdmin
+    });
 
-  if (loading) {
+    // Only redirect if both auth and admin checks are complete
+    if (!authLoading && !adminLoading) {
+      if (!isAuthenticated) {
+        console.log('User not authenticated, redirecting to home');
+        navigate('/', { replace: true });
+      }
+      // If authenticated but not admin, we don't redirect - we show access denied message
+    }
+  }, [isAuthenticated, isAdmin, authLoading, adminLoading, navigate]);
+
+  // Show loading while either auth or admin status is being determined
+  if (authLoading || adminLoading) {
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
         <div className="container mx-auto px-4 py-8">
           <div className="flex justify-center items-center h-64">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
+            <p className="ml-4 text-gray-600">Verificando permisos...</p>
           </div>
         </div>
       </div>
     );
   }
 
-  if (!isAuthenticated || !isAdmin) {
+  // If not authenticated, this will be handled by the useEffect redirect
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Header />
+        <div className="container mx-auto px-4 py-8">
+          <Card className="max-w-md mx-auto">
+            <CardContent className="p-6 text-center">
+              <h2 className="text-xl font-semibold mb-4">Acceso Requerido</h2>
+              <p className="text-gray-600">
+                Debes iniciar sesión para acceder al panel administrativo.
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  // If authenticated but not admin, show access denied (don't redirect)
+  if (!isAdmin) {
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
@@ -49,6 +83,7 @@ const Admin = () => {
     );
   }
 
+  // User is authenticated and is admin - show the dashboard
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
