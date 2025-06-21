@@ -1,140 +1,141 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Edit, Trash2, Eye, EyeOff } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Edit2, Trash2, Package, Calendar } from 'lucide-react';
+import { SolicitarIntercambio } from '@/components/ordenes/SolicitarIntercambio';
 import { useProductos } from '@/hooks/useProductos';
+import { useAuth } from '@/hooks/useAuth';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { SolicitarIntercambio } from '@/components/ordenes/SolicitarIntercambio';
-import { useAuth } from '@/hooks/useAuth';
+import type { Database } from '@/integrations/supabase/types';
+
+type Producto = Database['public']['Tables']['productos']['Row'];
 
 interface ProductsListProps {
-  showActions?: boolean;
-  onEdit?: (producto: any) => void;
+  productos: Producto[];
+  showOwnerActions: boolean;
 }
 
-export const ProductsList: React.FC<ProductsListProps> = ({ showActions = true, onEdit }) => {
-  const { productos, loading, deleteProducto, updateProducto } = useProductos();
+export const ProductsList: React.FC<ProductsListProps> = ({
+  productos,
+  showOwnerActions
+}) => {
+  const { updateProducto, deleteProducto } = useProductos();
   const { user } = useAuth();
+  const [loadingIds, setLoadingIds] = useState<Set<string>>(new Set());
 
-  const toggleDisponibilidad = async (producto: any) => {
-    await updateProducto(producto.id, {
-      disponible: !producto.disponible
-    });
+  const handleToggleDisponible = async (producto: Producto) => {
+    setLoadingIds(prev => new Set(prev).add(producto.id));
+    try {
+      await updateProducto(producto.id, {
+        disponible: !producto.disponible
+      });
+    } finally {
+      setLoadingIds(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(producto.id);
+        return newSet;
+      });
+    }
   };
 
-  if (loading) {
-    return <div className="text-center p-8">Cargando productos...</div>;
-  }
+  const handleDelete = async (id: string) => {
+    if (confirm('¿Estás seguro de que quieres eliminar este producto?')) {
+      await deleteProducto(id);
+    }
+  };
 
   if (productos.length === 0) {
     return (
       <Card>
-        <CardContent className="p-6 text-center text-gray-500">
-          No hay productos disponibles.
+        <CardContent className="p-8 text-center">
+          <div className="text-gray-500">
+            <Package className="w-12 h-12 mx-auto mb-4 opacity-50" />
+            <h3 className="text-lg font-medium mb-2">No hay productos disponibles</h3>
+            <p className="text-sm">
+              {showOwnerActions 
+                ? "Aún no has publicado ningún producto. ¡Publica tu primer producto para comenzar!"
+                : "No hay productos disponibles en este momento. ¡Vuelve pronto!"}
+            </p>
+          </div>
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-      {productos.map((producto) => {
-        const isOwner = user?.id === producto.user_id;
-        
-        return (
-          <Card key={producto.id} className="hover:shadow-lg transition-shadow">
-            <CardHeader>
-              <div className="flex justify-between items-start">
-                <CardTitle className="text-lg">{producto.nombre}</CardTitle>
-                <Badge className={producto.disponible ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}>
-                  {producto.disponible ? 'Disponible' : 'No disponible'}
-                </Badge>
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {productos.map((producto) => (
+        <Card key={producto.id} className="hover:shadow-lg transition-shadow">
+          <CardHeader>
+            <div className="flex justify-between items-start">
+              <CardTitle className="text-lg line-clamp-1">
+                {producto.nombre}
+              </CardTitle>
+              <Badge variant={producto.disponible ? 'default' : 'secondary'}>
+                {producto.disponible ? 'Disponible' : 'No disponible'}
+              </Badge>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-gray-600 text-sm line-clamp-3">
+              {producto.descripcion}
+            </p>
+            
+            {producto.origen_roa && (
+              <div className="text-sm text-green-600 bg-green-50 px-2 py-1 rounded">
+                <strong>Origen ROA:</strong> {producto.origen_roa}
               </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {producto.imagenes.length > 0 && (
-                <div className="aspect-video w-full bg-gray-100 rounded-lg overflow-hidden">
-                  <img
-                    src={producto.imagenes[0]}
-                    alt={producto.nombre}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              )}
+            )}
 
-              <p className="text-sm text-gray-700 line-clamp-3">
-                {producto.descripcion}
-              </p>
-
-              {producto.origen_roa && (
-                <div className="text-xs text-gray-500">
-                  <span className="font-medium">Origen ROA:</span> {producto.origen_roa}
-                </div>
-              )}
-
-              <div className="text-xs text-gray-400">
+            <div className="flex items-center text-gray-500 text-xs">
+              <Calendar className="w-3 h-3 mr-1" />
+              <span>
                 Publicado: {format(new Date(producto.created_at), 'PP', { locale: es })}
-              </div>
+              </span>
+            </div>
 
-              {showActions && (
-                <div className="flex gap-2 pt-2">
-                  {isOwner ? (
-                    <>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => toggleDisponibilidad(producto)}
-                        className="flex-1"
-                      >
-                        {producto.disponible ? (
-                          <>
-                            <EyeOff className="w-4 h-4 mr-2" />
-                            Ocultar
-                          </>
-                        ) : (
-                          <>
-                            <Eye className="w-4 h-4 mr-2" />
-                            Mostrar
-                          </>
-                        )}
-                      </Button>
-                      {onEdit && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => onEdit(producto)}
-                          className="flex-1"
-                        >
-                          <Edit className="w-4 h-4 mr-2" />
-                          Editar
-                        </Button>
-                      )}
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => deleteProducto(producto.id)}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </>
-                  ) : (
-                    producto.disponible && (
-                      <SolicitarIntercambio
-                        tipo_item="producto"
-                        item_id={producto.id}
-                        proveedor_id={producto.user_id}
-                      />
-                    )
-                  )}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        );
-      })}
+            {producto.imagenes && producto.imagenes.length > 0 && (
+              <div className="text-xs text-gray-500">
+                {producto.imagenes.length} imagen(es) disponible(s)
+              </div>
+            )}
+
+            {showOwnerActions && producto.user_id === user?.id && (
+              <div className="flex gap-2 pt-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleToggleDisponible(producto)}
+                  disabled={loadingIds.has(producto.id)}
+                  className="flex-1"
+                >
+                  <Edit2 className="w-4 h-4 mr-1" />
+                  {producto.disponible ? 'Marcar no disponible' : 'Marcar disponible'}
+                </Button>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => handleDelete(producto.id)}
+                  disabled={loadingIds.has(producto.id)}
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </div>
+            )}
+
+            {!showOwnerActions && producto.disponible && (
+              <SolicitarIntercambio
+                tipo_item="producto"
+                item_id={producto.id}
+                proveedor_id={producto.user_id}
+              />
+            )}
+          </CardContent>
+        </Card>
+      ))}
     </div>
   );
 };

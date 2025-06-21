@@ -20,6 +20,7 @@ export const useNotificaciones = () => {
       const { data, error } = await supabase
         .from('notificaciones')
         .select('*')
+        .eq('user_id', user.id) // Only fetch notifications for the current user
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -36,7 +37,8 @@ export const useNotificaciones = () => {
       const { error } = await supabase
         .from('notificaciones')
         .update({ leida: true })
-        .eq('id', id);
+        .eq('id', id)
+        .eq('user_id', user?.id); // Ensure user can only update their own notifications
 
       if (error) throw error;
       await fetchNotificaciones();
@@ -62,6 +64,39 @@ export const useNotificaciones = () => {
 
   useEffect(() => {
     fetchNotificaciones();
+  }, [user]);
+
+  // Set up real-time subscription for notifications
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel('notificaciones-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'notificaciones',
+          filter: `user_id=eq.${user.id}`
+        },
+        (payload) => {
+          console.log('New notification received:', payload);
+          fetchNotificaciones();
+          
+          // Show toast for new notifications
+          const newNotification = payload.new as Notificacion;
+          toast({
+            title: newNotification.titulo,
+            description: newNotification.mensaje,
+          });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [user]);
 
   const unreadCount = notificaciones.filter(n => !n.leida).length;
