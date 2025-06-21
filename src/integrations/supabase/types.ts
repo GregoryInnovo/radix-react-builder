@@ -54,6 +54,92 @@ export type Database = {
         }
         Relationships: []
       }
+      notificaciones: {
+        Row: {
+          created_at: string
+          id: string
+          leida: boolean
+          mensaje: string
+          orden_id: string | null
+          tipo: string
+          titulo: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          leida?: boolean
+          mensaje: string
+          orden_id?: string | null
+          tipo?: string
+          titulo: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          leida?: boolean
+          mensaje?: string
+          orden_id?: string | null
+          tipo?: string
+          titulo?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notificaciones_orden_id_fkey"
+            columns: ["orden_id"]
+            isOneToOne: false
+            referencedRelation: "ordenes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ordenes: {
+        Row: {
+          cantidad_solicitada: number
+          created_at: string
+          estado: Database["public"]["Enums"]["order_status"]
+          fecha_propuesta_retiro: string | null
+          id: string
+          item_id: string
+          mensaje_respuesta: string | null
+          mensaje_solicitud: string | null
+          proveedor_id: string
+          solicitante_id: string
+          tipo_item: Database["public"]["Enums"]["item_type"]
+          updated_at: string
+        }
+        Insert: {
+          cantidad_solicitada?: number
+          created_at?: string
+          estado?: Database["public"]["Enums"]["order_status"]
+          fecha_propuesta_retiro?: string | null
+          id?: string
+          item_id: string
+          mensaje_respuesta?: string | null
+          mensaje_solicitud?: string | null
+          proveedor_id: string
+          solicitante_id: string
+          tipo_item: Database["public"]["Enums"]["item_type"]
+          updated_at?: string
+        }
+        Update: {
+          cantidad_solicitada?: number
+          created_at?: string
+          estado?: Database["public"]["Enums"]["order_status"]
+          fecha_propuesta_retiro?: string | null
+          id?: string
+          item_id?: string
+          mensaje_respuesta?: string | null
+          mensaje_solicitud?: string | null
+          proveedor_id?: string
+          solicitante_id?: string
+          tipo_item?: Database["public"]["Enums"]["item_type"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       productos: {
         Row: {
           created_at: string
@@ -147,6 +233,8 @@ export type Database = {
     }
     Enums: {
       batch_status: "disponible" | "reservado" | "recogido" | "cancelado"
+      item_type: "lote" | "producto"
+      order_status: "pendiente" | "aceptada" | "completada" | "cancelada"
       roa_type:
         | "cascara_fruta"
         | "posos_cafe"
@@ -270,6 +358,8 @@ export const Constants = {
   public: {
     Enums: {
       batch_status: ["disponible", "reservado", "recogido", "cancelado"],
+      item_type: ["lote", "producto"],
+      order_status: ["pendiente", "aceptada", "completada", "cancelada"],
       roa_type: [
         "cascara_fruta",
         "posos_cafe",
