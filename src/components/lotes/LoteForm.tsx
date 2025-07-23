@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { MapPin, Loader2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { ImageUpload } from './ImageUpload';
 import type { Database } from '@/integrations/supabase/types';
 
 type Lote = Database['public']['Tables']['lotes']['Row'];
@@ -38,12 +39,17 @@ export const LoteForm = ({ lote, onSubmit, loading, onCancel }: LoteFormProps) =
     direccion: lote?.direccion || '',
     descripcion: lote?.descripcion || '',
     fecha_disponible: lote?.fecha_disponible || new Date().toISOString().split('T')[0],
+    imagenes: lote?.imagenes || [],
   });
 
   const [gettingLocation, setGettingLocation] = useState(false);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleImagesChange = (images: string[]) => {
+    setFormData(prev => ({ ...prev, imagenes: images }));
   };
 
   const getCurrentLocation = () => {
@@ -102,6 +108,7 @@ export const LoteForm = ({ lote, onSubmit, loading, onCancel }: LoteFormProps) =
       direccion: formData.direccion || null,
       descripcion: formData.descripcion || null,
       fecha_disponible: formData.fecha_disponible,
+      imagenes: formData.imagenes,
     };
 
     await onSubmit(submitData);
@@ -199,6 +206,12 @@ export const LoteForm = ({ lote, onSubmit, loading, onCancel }: LoteFormProps) =
               onChange={(e) => handleInputChange('fecha_disponible', e.target.value)}
             />
           </div>
+
+          <ImageUpload
+            images={formData.imagenes}
+            onImagesChange={handleImagesChange}
+            disabled={loading}
+          />
 
           <div className="space-y-2">
             <Label htmlFor="descripcion">Descripción Adicional</Label>

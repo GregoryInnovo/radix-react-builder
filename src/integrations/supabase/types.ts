@@ -112,6 +112,7 @@ export type Database = {
           estado: Database["public"]["Enums"]["batch_status"]
           fecha_disponible: string | null
           id: string
+          imagenes: string[]
           peso_estimado: number
           status: string | null
           tipo_residuo: Database["public"]["Enums"]["roa_type"]
@@ -127,6 +128,7 @@ export type Database = {
           estado?: Database["public"]["Enums"]["batch_status"]
           fecha_disponible?: string | null
           id?: string
+          imagenes?: string[]
           peso_estimado: number
           status?: string | null
           tipo_residuo: Database["public"]["Enums"]["roa_type"]
@@ -142,6 +144,7 @@ export type Database = {
           estado?: Database["public"]["Enums"]["batch_status"]
           fecha_disponible?: string | null
           id?: string
+          imagenes?: string[]
           peso_estimado?: number
           status?: string | null
           tipo_residuo?: Database["public"]["Enums"]["roa_type"]
