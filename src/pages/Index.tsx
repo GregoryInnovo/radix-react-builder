@@ -1,12 +1,14 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Leaf, Recycle, Users, MapPin, Star, TrendingUp } from 'lucide-react';
+import { Leaf, Recycle, Users, MapPin, Star, TrendingUp, User } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
 
 const Index = () => {
+  const { isAuthenticated, user } = useAuth();
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-50">
       {/* Header */}
@@ -15,7 +17,7 @@ const Index = () => {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <Leaf className="h-8 w-8 text-green-600" />
-              <h1 className="text-2xl font-bold text-green-800">NatuvitalDB</h1>
+              <h1 className="text-2xl font-bold text-green-800">Natuvital</h1>
             </div>
             <nav className="flex items-center space-x-4">
               <Button variant="ghost" asChild>
@@ -27,9 +29,16 @@ const Index = () => {
               <Button variant="ghost" asChild>
                 <Link to="/lotes">Mis Lotes</Link>
               </Button>
-              <Button asChild>
-                <Link to="/auth">Iniciar Sesión</Link>
-              </Button>
+              {isAuthenticated ? (
+                <div className="flex items-center space-x-2">
+                  <User className="h-4 w-4 text-gray-600" />
+                  <span className="text-sm text-gray-600">{user?.email}</span>
+                </div>
+              ) : (
+                <Button asChild>
+                  <Link to="/auth">Iniciar Sesión</Link>
+                </Button>
+              )}
             </nav>
           </div>
         </div>
@@ -46,12 +55,25 @@ const Index = () => {
             para crear un ecosistema circular sostenible
           </p>
           <div className="flex flex-wrap justify-center gap-4">
-            <Button size="lg" className="bg-green-600 hover:bg-green-700" asChild>
-              <Link to="/auth">Comenzar Ahora</Link>
-            </Button>
-            <Button size="lg" variant="outline" asChild>
-              <Link to="/search">Explorar ROA</Link>
-            </Button>
+            {!isAuthenticated ? (
+              <>
+                <Button size="lg" className="bg-green-600 hover:bg-green-700" asChild>
+                  <Link to="/auth">Comenzar Ahora</Link>
+                </Button>
+                <Button size="lg" variant="outline" asChild>
+                  <Link to="/search">Explorar ROA</Link>
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button size="lg" className="bg-green-600 hover:bg-green-700" asChild>
+                  <Link to="/lotes">Mis Lotes</Link>
+                </Button>
+                <Button size="lg" variant="outline" asChild>
+                  <Link to="/search">Buscar ROA</Link>
+                </Button>
+              </>
+            )}
           </div>
         </div>
       </section>
@@ -61,7 +83,7 @@ const Index = () => {
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
             <h3 className="text-3xl font-bold text-gray-900 mb-4">
-              ¿Cómo funciona NatuvitalDB?
+              ¿Cómo funciona Natuvital?
             </h3>
             <p className="text-lg text-gray-600">
               Una plataforma integral para la gestión de residuos orgánicos aprovechables
@@ -219,14 +241,25 @@ const Index = () => {
           <p className="text-xl mb-8 opacity-90">
             Únete a nuestra comunidad de generadores y transformadores de ROA
           </p>
-          <div className="flex flex-wrap justify-center gap-4">
-            <Button size="lg" variant="secondary" asChild>
-              <Link to="/auth">Registrarse como Generador</Link>
-            </Button>
-            <Button size="lg" variant="outline" className="text-white border-white hover:bg-white hover:text-green-600" asChild>
-              <Link to="/auth">Registrarse como Transformador</Link>
-            </Button>
-          </div>
+          {!isAuthenticated ? (
+            <div className="flex flex-wrap justify-center gap-4">
+              <Button size="lg" variant="secondary" asChild>
+                <Link to="/auth">Registrarse como Generador</Link>
+              </Button>
+              <Button size="lg" className="bg-green-500 hover:bg-green-400 text-white border-green-500" asChild>
+                <Link to="/auth">Registrarse como Transformador</Link>
+              </Button>
+            </div>
+          ) : (
+            <div className="flex flex-wrap justify-center gap-4">
+              <Button size="lg" variant="secondary" asChild>
+                <Link to="/lotes">Gestionar Lotes</Link>
+              </Button>
+              <Button size="lg" className="bg-green-500 hover:bg-green-400 text-white border-green-500" asChild>
+                <Link to="/productos">Ver Productos</Link>
+              </Button>
+            </div>
+          )}
         </div>
       </section>
 
@@ -237,7 +270,7 @@ const Index = () => {
             <div>
               <div className="flex items-center space-x-2 mb-4">
                 <Leaf className="h-6 w-6 text-green-400" />
-                <span className="text-lg font-semibold">NatuvitalDB</span>
+                <span className="text-lg font-semibold">Natuvital</span>
               </div>
               <p className="text-gray-400">
                 Conectando la comunidad de ROA para un futuro más sostenible
@@ -275,7 +308,7 @@ const Index = () => {
           </div>
           
           <div className="border-t border-gray-800 mt-12 pt-8 text-center text-gray-400">
-            <p>&copy; 2024 NatuvitalDB. Todos los derechos reservados.</p>
+            <p>&copy; 2024 Natuvital. Todos los derechos reservados.</p>
           </div>
         </div>
       </footer>
