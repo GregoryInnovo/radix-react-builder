@@ -115,7 +115,6 @@ export type Database = {
           imagenes: string[]
           peso_estimado: number
           status: string | null
-          tipo_residuo: Database["public"]["Enums"]["roa_type"]
           tipo_residuo_id: string | null
           ubicacion_lat: number
           ubicacion_lng: number
@@ -132,7 +131,6 @@ export type Database = {
           imagenes?: string[]
           peso_estimado: number
           status?: string | null
-          tipo_residuo: Database["public"]["Enums"]["roa_type"]
           tipo_residuo_id?: string | null
           ubicacion_lat: number
           ubicacion_lng: number
@@ -149,7 +147,6 @@ export type Database = {
           imagenes?: string[]
           peso_estimado?: number
           status?: string | null
-          tipo_residuo?: Database["public"]["Enums"]["roa_type"]
           tipo_residuo_id?: string | null
           ubicacion_lat?: number
           ubicacion_lng?: number
