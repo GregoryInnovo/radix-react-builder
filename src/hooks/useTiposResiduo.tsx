@@ -27,7 +27,7 @@ export const useTiposResiduo = () => {
         .order('descripcion', { ascending: true });
 
       if (error) throw error;
-      setTiposResiduos(data || []);
+      setTiposResiduos((data as unknown as TipoResiduo[]) || []);
     } catch (error: any) {
       console.error('Error fetching tipos residuo:', error);
       toast({

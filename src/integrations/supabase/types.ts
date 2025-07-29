@@ -116,6 +116,7 @@ export type Database = {
           peso_estimado: number
           status: string | null
           tipo_residuo: Database["public"]["Enums"]["roa_type"]
+          tipo_residuo_id: string | null
           ubicacion_lat: number
           ubicacion_lng: number
           updated_at: string | null
@@ -132,6 +133,7 @@ export type Database = {
           peso_estimado: number
           status?: string | null
           tipo_residuo: Database["public"]["Enums"]["roa_type"]
+          tipo_residuo_id?: string | null
           ubicacion_lat: number
           ubicacion_lng: number
           updated_at?: string | null
@@ -148,12 +150,21 @@ export type Database = {
           peso_estimado?: number
           status?: string | null
           tipo_residuo?: Database["public"]["Enums"]["roa_type"]
+          tipo_residuo_id?: string | null
           ubicacion_lat?: number
           ubicacion_lng?: number
           updated_at?: string | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_lotes_tipo_residuo"
+            columns: ["tipo_residuo_id"]
+            isOneToOne: false
+            referencedRelation: "tipos_residuo"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       notificaciones: {
         Row: {
@@ -328,6 +339,33 @@ export type Database = {
           phone?: string | null
           updated_at?: string | null
           user_type?: string | null
+        }
+        Relationships: []
+      }
+      tipos_residuo: {
+        Row: {
+          activo: boolean
+          created_at: string
+          descripcion: string | null
+          id: string
+          nombre: string
+          updated_at: string
+        }
+        Insert: {
+          activo?: boolean
+          created_at?: string
+          descripcion?: string | null
+          id?: string
+          nombre: string
+          updated_at?: string
+        }
+        Update: {
+          activo?: boolean
+          created_at?: string
+          descripcion?: string | null
+          id?: string
+          nombre?: string
+          updated_at?: string
         }
         Relationships: []
       }
