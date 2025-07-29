@@ -1,0 +1,255 @@
+import React from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { MapPin, Weight, Calendar, Clock, User, FileText, Image } from 'lucide-react';
+import { LoteImageGallery } from './LoteImageGallery';
+import { useState } from 'react';
+import type { Database } from '@/integrations/supabase/types';
+
+type Lote = Database['public']['Tables']['lotes']['Row'] & {
+  tipos_residuo?: {
+    id: string;
+    nombre: string;
+    descripcion: string | null;
+  } | null;
+};
+
+interface LoteDetailsModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  lote: Lote;
+  distance?: number;
+}
+
+export const LoteDetailsModal: React.FC<LoteDetailsModalProps> = ({
+  isOpen,
+  onClose,
+  lote,
+  distance
+}) => {
+  const [showImageGallery, setShowImageGallery] = useState(false);
+
+  const formatDistance = (distance: number) => {
+    if (distance < 1) {
+      return `${Math.round(distance * 1000)}m`;
+    }
+    return `${distance.toFixed(1)}km`;
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'pendiente':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'aprobado':
+        return 'bg-green-100 text-green-800';
+      case 'rechazado':
+        return 'bg-red-100 text-red-800';
+      case 'disponible':
+        return 'bg-blue-100 text-blue-800';
+      case 'reservado':
+        return 'bg-orange-100 text-orange-800';
+      case 'recolectado':
+        return 'bg-gray-100 text-gray-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'pendiente':
+        return 'Pendiente';
+      case 'aprobado':
+        return 'Aprobado';
+      case 'rechazado':
+        return 'Rechazado';
+      case 'disponible':
+        return 'Disponible';
+      case 'reservado':
+        return 'Reservado';
+      case 'recolectado':
+        return 'Recolectado';
+      default:
+        return status;
+    }
+  };
+
+  const images = lote.imagenes || [];
+
+  return (
+    <>
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold text-green-800">
+              Detalles del Lote de ROA
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-6">
+            {/* Status and Distance */}
+            <div className="flex items-center justify-between">
+              <Badge className={getStatusColor(lote.estado || 'pendiente')}>
+                {getStatusLabel(lote.estado || 'pendiente')}
+              </Badge>
+              {distance !== undefined && (
+                <Badge variant="outline">
+                  <MapPin className="w-3 h-3 mr-1" />
+                  {formatDistance(distance)}
+                </Badge>
+              )}
+            </div>
+
+            {/* Basic Info */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <Weight className="w-4 h-4 text-gray-500" />
+                  <span className="text-sm text-gray-600">Peso estimado:</span>
+                  <span className="font-semibold">{lote.peso_estimado} kg</span>
+                </div>
+
+                {lote.tipos_residuo && (
+                  <div className="flex items-center gap-2">
+                    <FileText className="w-4 h-4 text-gray-500" />
+                    <span className="text-sm text-gray-600">Tipo:</span>
+                    <span className="font-semibold">{lote.tipos_residuo.nombre}</span>
+                  </div>
+                )}
+
+                <div className="flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-gray-500" />
+                  <span className="text-sm text-gray-600">Creado:</span>
+                  <span className="font-semibold">
+                    {new Date(lote.created_at).toLocaleDateString()}
+                  </span>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                {lote.fecha_disponible && (
+                  <div className="flex items-center gap-2">
+                    <Clock className="w-4 h-4 text-gray-500" />
+                    <span className="text-sm text-gray-600">Disponible desde:</span>
+                    <span className="font-semibold">
+                      {new Date(lote.fecha_disponible).toLocaleDateString()}
+                    </span>
+                  </div>
+                )}
+
+              </div>
+            </div>
+
+            {/* Location */}
+            {lote.direccion && (
+              <div>
+                <h3 className="font-semibold mb-2 flex items-center gap-2">
+                  <MapPin className="w-4 h-4" />
+                  Ubicación
+                </h3>
+                <p className="text-gray-700 bg-gray-50 p-3 rounded-lg">
+                  {lote.direccion}
+                </p>
+              </div>
+            )}
+
+            {/* Description */}
+            {lote.descripcion && (
+              <div>
+                <h3 className="font-semibold mb-2 flex items-center gap-2">
+                  <FileText className="w-4 h-4" />
+                  Descripción
+                </h3>
+                <p className="text-gray-700 bg-gray-50 p-3 rounded-lg">
+                  {lote.descripcion}
+                </p>
+              </div>
+            )}
+
+            {/* Images */}
+            {images.length > 0 && (
+              <div>
+                <h3 className="font-semibold mb-2 flex items-center gap-2">
+                  <Image className="w-4 h-4" />
+                  Imágenes ({images.length})
+                </h3>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {images.slice(0, 6).map((image, index) => (
+                    <div 
+                      key={index}
+                      className="relative aspect-square bg-gray-100 rounded-lg overflow-hidden cursor-pointer hover:opacity-80 transition-opacity"
+                      onClick={() => setShowImageGallery(true)}
+                    >
+                      <img
+                        src={image}
+                        alt={`Imagen ${index + 1} del lote`}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.currentTarget.src = '/placeholder.svg';
+                        }}
+                      />
+                      {index === 5 && images.length > 6 && (
+                        <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+                          <span className="text-white font-semibold">
+                            +{images.length - 6} más
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                {images.length > 0 && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowImageGallery(true)}
+                    className="mt-3 w-full"
+                  >
+                    <Image className="w-4 h-4 mr-2" />
+                    Ver todas las imágenes ({images.length})
+                  </Button>
+                )}
+              </div>
+            )}
+
+            {/* Additional Info */}
+            {lote.tipos_residuo?.descripcion && (
+              <div>
+                <h3 className="font-semibold mb-2">Información del tipo de residuo</h3>
+                <p className="text-gray-700 bg-gray-50 p-3 rounded-lg">
+                  {lote.tipos_residuo.descripcion}
+                </p>
+              </div>
+            )}
+
+            {/* Action Buttons */}
+            <div className="flex gap-3 pt-4 border-t">
+              <Button
+                variant="outline"
+                onClick={onClose}
+                className="flex-1"
+              >
+                Cerrar
+              </Button>
+              <Button
+                className="flex-1 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700"
+                disabled
+              >
+                Solicitar (Próximamente)
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Image Gallery Modal */}
+      <LoteImageGallery
+        isOpen={showImageGallery}
+        onClose={() => setShowImageGallery(false)}
+        images={images}
+        loteTitle="Lote de ROA"
+      />
+    </>
+  );
+};

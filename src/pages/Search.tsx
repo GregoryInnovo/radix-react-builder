@@ -9,6 +9,7 @@ import { MapPin, Search as SearchIcon, Navigation, Weight, Calendar } from 'luci
 import { Header } from '@/components/layout/Header';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { useSearchLotes } from '@/hooks/useSearchLotes';
+import { LoteDetailsModal } from '@/components/lotes/LoteDetailsModal';
 import type { Database } from '@/integrations/supabase/types';
 
 type ROAType = Database['public']['Enums']['roa_type'];
@@ -29,6 +30,8 @@ const Search = () => {
   const [selectedType, setSelectedType] = useState<string>('all');
   const [isDetectingLocation, setIsDetectingLocation] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
+  const [selectedLote, setSelectedLote] = useState<any>(null);
+  const [selectedDistance, setSelectedDistance] = useState<number>(0);
 
   const { searchLotes, loading, results } = useSearchLotes();
 
@@ -271,14 +274,19 @@ const Search = () => {
                             variant="outline" 
                             size="sm"
                             className="flex-1"
+                            onClick={() => {
+                              setSelectedLote(result.lote);
+                              setSelectedDistance(result.distance);
+                            }}
                           >
                             Ver Detalles
                           </Button>
                           <Button 
                             size="sm"
                             className="flex-1 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700"
+                            disabled
                           >
-                            Solicitar
+                            Próximamente
                           </Button>
                         </div>
                       </CardContent>
@@ -305,6 +313,16 @@ const Search = () => {
             )}
           </div>
         </main>
+
+        {/* Lote Details Modal */}
+        {selectedLote && (
+          <LoteDetailsModal
+            isOpen={!!selectedLote}
+            onClose={() => setSelectedLote(null)}
+            lote={selectedLote}
+            distance={selectedDistance}
+          />
+        )}
       </div>
     </ProtectedRoute>
   );
