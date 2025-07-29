@@ -55,7 +55,7 @@ export const LotesManagement: React.FC<LotesManagementProps> = ({ lotes }) => {
       restos_cereales: 'Restos de cereales',
       otros: 'Otros',
     };
-    return types[lote.tipo_residuo as keyof typeof types] || lote.tipo_residuo;
+    return 'Tipo no disponible';
   };
 
   const handleStatusChange = async (loteId: string, newStatus: string) => {

@@ -1,10 +1,12 @@
 
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { MapPin, Calendar, Weight, Eye, Edit, Trash2, Image as ImageIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { LoteImageGallery } from './LoteImageGallery';
 import type { Database } from '@/integrations/supabase/types';
 
 type Lote = Database['public']['Tables']['lotes']['Row'] & {
@@ -52,10 +54,25 @@ const getResiduoLabel = (lote: Lote) => {
     restos_cereales: 'Restos de cereales',
     otros: 'Otros',
   };
-  return types[lote.tipo_residuo as keyof typeof types] || lote.tipo_residuo;
+  return 'Tipo no disponible';
 };
 
 export const LotesList = ({ lotes, loading, onEdit, onView, onDelete }: LotesListProps) => {
+  const [selectedLote, setSelectedLote] = useState<Lote | null>(null);
+  const [isGalleryOpen, setIsGalleryOpen] = useState(false);
+
+  const handleViewImages = (lote: Lote) => {
+    setSelectedLote(lote);
+    setIsGalleryOpen(true);
+  };
+
+  const handleView = (lote: Lote) => {
+    if (lote.imagenes && lote.imagenes.length > 0) {
+      handleViewImages(lote);
+    } else {
+      onView(lote);
+    }
+  };
   if (loading) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -163,11 +180,11 @@ export const LotesList = ({ lotes, loading, onEdit, onView, onDelete }: LotesLis
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => onView(lote)}
+                onClick={() => handleView(lote)}
                 className="flex-1"
               >
                 <Eye className="w-4 h-4 mr-1" />
-                Ver
+                {lote.imagenes && lote.imagenes.length > 0 ? 'Ver Imágenes' : 'Ver'}
               </Button>
               <Button
                 variant="outline"
@@ -190,6 +207,14 @@ export const LotesList = ({ lotes, loading, onEdit, onView, onDelete }: LotesLis
           </CardContent>
         </Card>
       ))}
+      
+      {/* Modal de galería de imágenes */}
+      <LoteImageGallery
+        isOpen={isGalleryOpen}
+        onClose={() => setIsGalleryOpen(false)}
+        images={selectedLote?.imagenes || []}
+        loteTitle={selectedLote ? getResiduoLabel(selectedLote) : ''}
+      />
     </div>
   );
 };

@@ -35,7 +35,7 @@ export const useSearchLotes = () => {
 
       // Add type filter if specified
       if (filters.tipoResiduo) {
-        query = query.eq('tipo_residuo', filters.tipoResiduo);
+        query = query.eq('tipo_residuo_id', filters.tipoResiduo);
       }
 
       const { data, error } = await query;

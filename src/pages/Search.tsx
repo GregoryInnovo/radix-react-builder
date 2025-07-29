@@ -227,7 +227,7 @@ const Search = () => {
                         <div className="flex items-start justify-between mb-3">
                           <div>
                             <h3 className="font-semibold text-lg text-green-800">
-                              {ROA_TYPE_LABELS[result.lote.tipo_residuo]}
+                              Lote de ROA
                             </h3>
                             <div className="flex items-center gap-2 text-sm text-gray-600 mt-1">
                               <Weight className="w-4 h-4" />

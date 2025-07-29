@@ -39,10 +39,10 @@ export const LoteForm = ({ lote, onSubmit, loading, onCancel }: LoteFormProps) =
   // Establecer el tipo de residuo al cargar el lote
   useEffect(() => {
     if (lote && tiposResiduos.length > 0) {
-      // Buscar el tipo de residuo por nombre si existe la columna tipo_residuo
-      const tipoResiduo = tiposResiduos.find(tipo => tipo.nombre === lote.tipo_residuo);
+      // Buscar el tipo de residuo por ID si existe
+      const tipoResiduo = lote?.tipo_residuo_id;
       if (tipoResiduo) {
-        setFormData(prev => ({ ...prev, tipo_residuo_id: tipoResiduo.id }));
+        setFormData(prev => ({ ...prev, tipo_residuo_id: tipoResiduo }));
       }
     }
   }, [lote, tiposResiduos]);
