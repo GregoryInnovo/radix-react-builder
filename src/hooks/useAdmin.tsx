@@ -104,11 +104,18 @@ export const useAdmin = () => {
         console.log('Profiles fetched:', profilesData?.length || 0);
       }
 
-      // Fetch all lotes
+      // Fetch all lotes with tipos_residuo
       console.log('Fetching lotes...');
       const { data: lotesData, error: lotesError } = await supabase
         .from('lotes')
-        .select('*')
+        .select(`
+          *,
+          tipos_residuo:tipo_residuo_id (
+            id,
+            nombre,
+            descripcion
+          )
+        `)
         .order('created_at', { ascending: false });
 
       if (lotesError) {

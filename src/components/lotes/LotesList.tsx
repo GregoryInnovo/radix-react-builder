@@ -7,7 +7,13 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import type { Database } from '@/integrations/supabase/types';
 
-type Lote = Database['public']['Tables']['lotes']['Row'];
+type Lote = Database['public']['Tables']['lotes']['Row'] & {
+  tipos_residuo?: {
+    id: string;
+    nombre: string;
+    descripcion: string | null;
+  };
+};
 
 interface LotesListProps {
   lotes: Lote[];
@@ -32,7 +38,12 @@ const getStatusColor = (status: string) => {
   }
 };
 
-const getResiduoLabel = (tipo: string) => {
+const getResiduoLabel = (lote: Lote) => {
+  if (lote.tipos_residuo) {
+    return lote.tipos_residuo.descripcion || lote.tipos_residuo.nombre;
+  }
+  
+  // Fallback para datos antiguos
   const types = {
     cascara_fruta: 'Cáscara de fruta',
     posos_cafe: 'Posos de café',
@@ -41,7 +52,7 @@ const getResiduoLabel = (tipo: string) => {
     restos_cereales: 'Restos de cereales',
     otros: 'Otros',
   };
-  return types[tipo as keyof typeof types] || tipo;
+  return types[lote.tipo_residuo as keyof typeof types] || lote.tipo_residuo;
 };
 
 export const LotesList = ({ lotes, loading, onEdit, onView, onDelete }: LotesListProps) => {
@@ -88,7 +99,7 @@ export const LotesList = ({ lotes, loading, onEdit, onView, onDelete }: LotesLis
             <div className="flex justify-between items-start">
               <div className="flex-1">
                 <CardTitle className="text-lg text-green-800">
-                  {getResiduoLabel(lote.tipo_residuo)}
+                  {getResiduoLabel(lote)}
                 </CardTitle>
                 <div className="flex items-center text-sm text-gray-600 mt-1">
                   <Calendar className="w-4 h-4 mr-1" />
@@ -107,7 +118,7 @@ export const LotesList = ({ lotes, loading, onEdit, onView, onDelete }: LotesLis
               <div className="mb-4 relative">
                 <img
                   src={lote.imagenes[0]}
-                  alt={`Lote ${getResiduoLabel(lote.tipo_residuo)}`}
+                  alt={`Lote ${getResiduoLabel(lote)}`}
                   className="w-full h-40 object-cover rounded-lg"
                 />
                 {lote.imagenes.length > 1 && (

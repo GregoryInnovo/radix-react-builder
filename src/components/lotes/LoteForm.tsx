@@ -9,10 +9,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { MapPin, Loader2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { ImageUpload } from './ImageUpload';
+import { useTiposResiduo } from '@/hooks/useTiposResiduo';
 import type { Database } from '@/integrations/supabase/types';
 
 type Lote = Database['public']['Tables']['lotes']['Row'];
-type ROAType = Database['public']['Enums']['roa_type'];
 
 interface LoteFormProps {
   lote?: Lote;
@@ -21,18 +21,10 @@ interface LoteFormProps {
   onCancel: () => void;
 }
 
-const ROA_TYPES: { value: ROAType; label: string }[] = [
-  { value: 'cascara_fruta', label: 'Cáscara de fruta' },
-  { value: 'posos_cafe', label: 'Posos de café' },
-  { value: 'restos_vegetales', label: 'Restos vegetales' },
-  { value: 'cascara_huevo', label: 'Cáscara de huevo' },
-  { value: 'restos_cereales', label: 'Restos de cereales' },
-  { value: 'otros', label: 'Otros' },
-];
-
 export const LoteForm = ({ lote, onSubmit, loading, onCancel }: LoteFormProps) => {
+  const { tiposResiduos, loading: loadingTipos } = useTiposResiduo();
   const [formData, setFormData] = useState({
-    tipo_residuo: lote?.tipo_residuo || '',
+    tipo_residuo_id: lote?.tipo_residuo_id || '',
     peso_estimado: lote?.peso_estimado?.toString() || '',
     ubicacion_lat: lote?.ubicacion_lat?.toString() || '',
     ubicacion_lng: lote?.ubicacion_lng?.toString() || '',
@@ -91,7 +83,7 @@ export const LoteForm = ({ lote, onSubmit, loading, onCancel }: LoteFormProps) =
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.tipo_residuo || !formData.peso_estimado || !formData.ubicacion_lat || !formData.ubicacion_lng) {
+    if (!formData.tipo_residuo_id || !formData.peso_estimado || !formData.ubicacion_lat || !formData.ubicacion_lng) {
       toast({
         title: "Campos requeridos",
         description: "Por favor completa todos los campos obligatorios",
@@ -101,7 +93,7 @@ export const LoteForm = ({ lote, onSubmit, loading, onCancel }: LoteFormProps) =
     }
 
     const submitData = {
-      tipo_residuo: formData.tipo_residuo as ROAType,
+      tipo_residuo_id: formData.tipo_residuo_id,
       peso_estimado: parseFloat(formData.peso_estimado),
       ubicacion_lat: parseFloat(formData.ubicacion_lat),
       ubicacion_lng: parseFloat(formData.ubicacion_lng),
@@ -128,15 +120,15 @@ export const LoteForm = ({ lote, onSubmit, loading, onCancel }: LoteFormProps) =
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="tipo_residuo">Tipo de Residuo *</Label>
-              <Select value={formData.tipo_residuo} onValueChange={(value) => handleInputChange('tipo_residuo', value)}>
+              <Label htmlFor="tipo_residuo_id">Tipo de Residuo *</Label>
+              <Select value={formData.tipo_residuo_id} onValueChange={(value) => handleInputChange('tipo_residuo_id', value)}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecciona el tipo de ROA" />
+                  <SelectValue placeholder={loadingTipos ? "Cargando..." : "Selecciona el tipo de ROA"} />
                 </SelectTrigger>
                 <SelectContent>
-                  {ROA_TYPES.map((type) => (
-                    <SelectItem key={type.value} value={type.value}>
-                      {type.label}
+                  {tiposResiduos.map((tipo) => (
+                    <SelectItem key={tipo.id} value={tipo.id}>
+                      {tipo.descripcion || tipo.nombre}
                     </SelectItem>
                   ))}
                 </SelectContent>

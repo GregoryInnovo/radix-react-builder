@@ -11,7 +11,13 @@ import { es } from 'date-fns/locale';
 import { Search, Package, MapPin, Calendar, Weight } from 'lucide-react';
 import type { Database } from '@/integrations/supabase/types';
 
-type Lote = Database['public']['Tables']['lotes']['Row'];
+type Lote = Database['public']['Tables']['lotes']['Row'] & {
+  tipos_residuo?: {
+    id: string;
+    nombre: string;
+    descripcion: string | null;
+  };
+};
 
 interface LotesManagementProps {
   lotes: Lote[];
@@ -35,7 +41,12 @@ export const LotesManagement: React.FC<LotesManagementProps> = ({ lotes }) => {
     );
   };
 
-  const getResiduoType = (tipo: string) => {
+  const getResiduoType = (lote: Lote) => {
+    if (lote.tipos_residuo) {
+      return lote.tipos_residuo.descripcion || lote.tipos_residuo.nombre;
+    }
+    
+    // Fallback para datos antiguos
     const types = {
       cascara_fruta: 'Cáscara de fruta',
       posos_cafe: 'Posos de café',
@@ -44,7 +55,7 @@ export const LotesManagement: React.FC<LotesManagementProps> = ({ lotes }) => {
       restos_cereales: 'Restos de cereales',
       otros: 'Otros',
     };
-    return types[tipo as keyof typeof types] || tipo;
+    return types[lote.tipo_residuo as keyof typeof types] || lote.tipo_residuo;
   };
 
   const handleStatusChange = async (loteId: string, newStatus: string) => {
@@ -53,7 +64,7 @@ export const LotesManagement: React.FC<LotesManagementProps> = ({ lotes }) => {
 
   const filteredLotes = lotes.filter(lote => {
     const matchesSearch = 
-      getResiduoType(lote.tipo_residuo).toLowerCase().includes(searchTerm.toLowerCase()) ||
+      getResiduoType(lote).toLowerCase().includes(searchTerm.toLowerCase()) ||
       lote.descripcion?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       lote.direccion?.toLowerCase().includes(searchTerm.toLowerCase());
     
@@ -102,7 +113,7 @@ export const LotesManagement: React.FC<LotesManagementProps> = ({ lotes }) => {
                   </div>
                   <div>
                     <CardTitle className="text-lg">
-                      {getResiduoType(lote.tipo_residuo)}
+                      {getResiduoType(lote)}
                     </CardTitle>
                     <div className="flex items-center gap-2 text-sm text-gray-600">
                       <Calendar className="h-4 w-4" />

@@ -22,7 +22,14 @@ export const useLotes = () => {
     try {
       const { data, error } = await supabase
         .from('lotes')
-        .select('*')
+        .select(`
+          *,
+          tipos_residuo:tipo_residuo_id (
+            id,
+            nombre,
+            descripcion
+          )
+        `)
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
@@ -119,9 +126,6 @@ export const useLotes = () => {
         .single();
 
       if (error) throw error;
-
-      // Aquí se podría llamar a una Edge Function para enviar notificaciones
-      // await notifyStatusChange(id, newStatus);
 
       await fetchLotes();
       return data;

@@ -5,10 +5,11 @@ import { useAdmin } from '@/hooks/useAdmin';
 import { UsersManagement } from './UsersManagement';
 import { LotesManagement } from './LotesManagement';
 import { ProductosManagement } from './ProductosManagement';
+import { TiposResiduoManagement } from './TiposResiduoManagement';
 import { CalificacionesView } from './CalificacionesView';
 import { OrdenesView } from './OrdenesView';
 import { AuditoriasView } from './AuditoriasView';
-import { Users, Package, ShoppingBag, Star, ClipboardList, FileText } from 'lucide-react';
+import { Users, Package, ShoppingBag, Star, ClipboardList, FileText, Leaf } from 'lucide-react';
 
 export const AdminDashboard: React.FC = () => {
   const { 
@@ -32,7 +33,7 @@ export const AdminDashboard: React.FC = () => {
 
   return (
     <Tabs defaultValue="users" className="w-full">
-      <TabsList className="grid w-full grid-cols-6">
+      <TabsList className="grid w-full grid-cols-7">
         <TabsTrigger value="users" className="flex items-center gap-2">
           <Users className="h-4 w-4" />
           Usuarios ({profiles.length})
@@ -44,6 +45,10 @@ export const AdminDashboard: React.FC = () => {
         <TabsTrigger value="productos" className="flex items-center gap-2">
           <ShoppingBag className="h-4 w-4" />
           Productos ({productos.length})
+        </TabsTrigger>
+        <TabsTrigger value="tipos-residuo" className="flex items-center gap-2">
+          <Leaf className="h-4 w-4" />
+          Tipos Residuo
         </TabsTrigger>
         <TabsTrigger value="calificaciones" className="flex items-center gap-2">
           <Star className="h-4 w-4" />
@@ -69,6 +74,10 @@ export const AdminDashboard: React.FC = () => {
       
       <TabsContent value="productos">
         <ProductosManagement productos={productos} />
+      </TabsContent>
+      
+      <TabsContent value="tipos-residuo">
+        <TiposResiduoManagement />
       </TabsContent>
       
       <TabsContent value="calificaciones">
