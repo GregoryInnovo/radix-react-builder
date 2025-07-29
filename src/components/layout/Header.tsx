@@ -51,7 +51,7 @@ export const Header = () => {
         <div className="container mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
             <Link to="/" className="text-xl lg:text-2xl font-bold text-green-600">
-              NatuVital
+              NatuVital 0.1.0
             </Link>
             
             <div className="flex items-center space-x-3">
@@ -133,7 +133,7 @@ export const Header = () => {
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
           <Link to="/" className="text-2xl font-bold text-green-600">
-            NatuVital
+            NatuVital 0.1.0
           </Link>
           
           <nav className="hidden xl:flex items-center space-x-6">
