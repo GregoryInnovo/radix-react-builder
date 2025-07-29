@@ -2,9 +2,16 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
-import type { Database } from '@/integrations/supabase/types';
 
-type TipoResiduo = Database['public']['Tables']['tipos_residuo']['Row'];
+// Tipo temporal para tipos_residuo hasta que se actualicen los tipos de Supabase
+type TipoResiduo = {
+  id: string;
+  nombre: string;
+  descripcion: string | null;
+  activo: boolean;
+  created_at: string;
+  updated_at: string;
+};
 
 export const useTiposResiduo = () => {
   const [tiposResiduos, setTiposResiduos] = useState<TipoResiduo[]>([]);
@@ -14,7 +21,7 @@ export const useTiposResiduo = () => {
     setLoading(true);
     try {
       const { data, error } = await supabase
-        .from('tipos_residuo')
+        .from('tipos_residuo' as any)
         .select('*')
         .eq('activo', true)
         .order('descripcion', { ascending: true });

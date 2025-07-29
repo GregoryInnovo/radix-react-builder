@@ -3,11 +3,28 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from '@/hooks/use-toast';
-import type { Database } from '@/integrations/supabase/types';
 
-type TipoResiduo = Database['public']['Tables']['tipos_residuo']['Row'];
-type TipoResiduoInsert = Database['public']['Tables']['tipos_residuo']['Insert'];
-type TipoResiduoUpdate = Database['public']['Tables']['tipos_residuo']['Update'];
+// Tipo temporal para tipos_residuo hasta que se actualicen los tipos de Supabase
+type TipoResiduo = {
+  id: string;
+  nombre: string;
+  descripcion: string | null;
+  activo: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+type TipoResiduoInsert = {
+  nombre: string;
+  descripcion?: string;
+  activo?: boolean;
+};
+
+type TipoResiduoUpdate = {
+  nombre?: string;
+  descripcion?: string;
+  activo?: boolean;
+};
 
 export const useTiposResiduoAdmin = () => {
   const [tiposResiduos, setTiposResiduos] = useState<TipoResiduo[]>([]);
@@ -20,7 +37,7 @@ export const useTiposResiduoAdmin = () => {
     setLoading(true);
     try {
       const { data, error } = await supabase
-        .from('tipos_residuo')
+        .from('tipos_residuo' as any)
         .select('*')
         .order('created_at', { ascending: false });
 
@@ -38,13 +55,13 @@ export const useTiposResiduoAdmin = () => {
     }
   };
 
-  const createTipoResiduo = async (tipoData: Omit<TipoResiduoInsert, 'id' | 'created_at' | 'updated_at'>) => {
+  const createTipoResiduo = async (tipoData: TipoResiduoInsert) => {
     if (!user) return null;
 
     setLoading(true);
     try {
       const { data, error } = await supabase
-        .from('tipos_residuo')
+        .from('tipos_residuo' as any)
         .insert(tipoData)
         .select()
         .single();
@@ -75,7 +92,7 @@ export const useTiposResiduoAdmin = () => {
     setLoading(true);
     try {
       const { data, error } = await supabase
-        .from('tipos_residuo')
+        .from('tipos_residuo' as any)
         .update(updates)
         .eq('id', id)
         .select()
@@ -107,7 +124,7 @@ export const useTiposResiduoAdmin = () => {
     setLoading(true);
     try {
       const { error } = await supabase
-        .from('tipos_residuo')
+        .from('tipos_residuo' as any)
         .delete()
         .eq('id', id);
 

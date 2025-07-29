@@ -104,13 +104,13 @@ export const useAdmin = () => {
         console.log('Profiles fetched:', profilesData?.length || 0);
       }
 
-      // Fetch all lotes with tipos_residuo
+      // Fetch all lotes with the join using tipo_residuo_id
       console.log('Fetching lotes...');
       const { data: lotesData, error: lotesError } = await supabase
         .from('lotes')
         .select(`
           *,
-          tipos_residuo:tipo_residuo_id (
+          tipo_residuo:tipo_residuo_id (
             id,
             nombre,
             descripcion

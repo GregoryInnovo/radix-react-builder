@@ -24,7 +24,7 @@ interface LoteFormProps {
 export const LoteForm = ({ lote, onSubmit, loading, onCancel }: LoteFormProps) => {
   const { tiposResiduos, loading: loadingTipos } = useTiposResiduo();
   const [formData, setFormData] = useState({
-    tipo_residuo_id: lote?.tipo_residuo_id || '',
+    tipo_residuo_id: '', // Cambiar para usar el nuevo campo
     peso_estimado: lote?.peso_estimado?.toString() || '',
     ubicacion_lat: lote?.ubicacion_lat?.toString() || '',
     ubicacion_lng: lote?.ubicacion_lng?.toString() || '',
@@ -35,6 +35,17 @@ export const LoteForm = ({ lote, onSubmit, loading, onCancel }: LoteFormProps) =
   });
 
   const [gettingLocation, setGettingLocation] = useState(false);
+
+  // Establecer el tipo de residuo al cargar el lote
+  useEffect(() => {
+    if (lote && tiposResiduos.length > 0) {
+      // Buscar el tipo de residuo por nombre si existe la columna tipo_residuo
+      const tipoResiduo = tiposResiduos.find(tipo => tipo.nombre === lote.tipo_residuo);
+      if (tipoResiduo) {
+        setFormData(prev => ({ ...prev, tipo_residuo_id: tipoResiduo.id }));
+      }
+    }
+  }, [lote, tiposResiduos]);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));

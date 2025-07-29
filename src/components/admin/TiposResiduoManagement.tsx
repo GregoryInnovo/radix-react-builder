@@ -12,9 +12,16 @@ import { useTiposResiduoAdmin } from '@/hooks/useTiposResiduoAdmin';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Plus, Edit, Trash2, Package } from 'lucide-react';
-import type { Database } from '@/integrations/supabase/types';
 
-type TipoResiduo = Database['public']['Tables']['tipos_residuo']['Row'];
+// Tipo temporal para tipos_residuo hasta que se actualicen los tipos de Supabase
+type TipoResiduo = {
+  id: string;
+  nombre: string;
+  descripcion: string | null;
+  activo: boolean;
+  created_at: string;
+  updated_at: string;
+};
 
 export const TiposResiduoManagement: React.FC = () => {
   const [editingTipo, setEditingTipo] = useState<TipoResiduo | null>(null);
