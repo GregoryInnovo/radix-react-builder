@@ -3,8 +3,9 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Edit2, Trash2, Package, Calendar } from 'lucide-react';
+import { Edit2, Trash2, Package, Calendar, Image as ImageIcon, Eye } from 'lucide-react';
 import { SolicitarIntercambio } from '@/components/ordenes/SolicitarIntercambio';
+import { ProductImageGallery } from './ProductImageGallery';
 import { useProductos } from '@/hooks/useProductos';
 import { useAuth } from '@/hooks/useAuth';
 import { format } from 'date-fns';
@@ -25,6 +26,13 @@ export const ProductsList: React.FC<ProductsListProps> = ({
   const { updateProducto, deleteProducto } = useProductos();
   const { user } = useAuth();
   const [loadingIds, setLoadingIds] = useState<Set<string>>(new Set());
+  const [selectedProduct, setSelectedProduct] = useState<Producto | null>(null);
+  const [isGalleryOpen, setIsGalleryOpen] = useState(false);
+
+  const handleViewImages = (producto: Producto) => {
+    setSelectedProduct(producto);
+    setIsGalleryOpen(true);
+  };
 
   const handleToggleDisponible = async (producto: Producto) => {
     setLoadingIds(prev => new Set(prev).add(producto.id));
@@ -90,6 +98,32 @@ export const ProductsList: React.FC<ProductsListProps> = ({
               </div>
             )}
 
+            {/* Imagen de previsualización */}
+            {producto.imagenes && producto.imagenes.length > 0 ? (
+              <div className="mb-4 relative cursor-pointer" onClick={() => handleViewImages(producto)}>
+                <img
+                  src={producto.imagenes[0]}
+                  alt={producto.nombre}
+                  className="w-full h-40 object-cover rounded-lg hover:opacity-90 transition-opacity"
+                />
+                {producto.imagenes.length > 1 && (
+                  <div className="absolute bottom-2 right-2 bg-black bg-opacity-75 text-white px-2 py-1 rounded text-xs">
+                    +{producto.imagenes.length - 1} más
+                  </div>
+                )}
+                <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-10 transition-all rounded-lg flex items-center justify-center opacity-0 hover:opacity-100">
+                  <Eye className="w-8 h-8 text-white" />
+                </div>
+              </div>
+            ) : (
+              <div className="mb-4 h-40 bg-gray-100 rounded-lg flex items-center justify-center">
+                <div className="text-center text-gray-500">
+                  <ImageIcon className="w-8 h-8 mx-auto mb-2" />
+                  <p className="text-sm">Sin imágenes</p>
+                </div>
+              </div>
+            )}
+
             <div className="flex items-center text-gray-500 text-xs">
               <Calendar className="w-3 h-3 mr-1" />
               <span>
@@ -136,6 +170,14 @@ export const ProductsList: React.FC<ProductsListProps> = ({
           </CardContent>
         </Card>
       ))}
+      
+      {/* Modal de galería de imágenes */}
+      <ProductImageGallery
+        isOpen={isGalleryOpen}
+        onClose={() => setIsGalleryOpen(false)}
+        images={selectedProduct?.imagenes || []}
+        productTitle={selectedProduct?.nombre || ''}
+      />
     </div>
   );
 };
