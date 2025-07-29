@@ -24,7 +24,7 @@ export const useLotes = () => {
         .from('lotes')
         .select(`
           *,
-          tipo_residuo:tipo_residuo_id (
+          tipos_residuo:tipo_residuo_id (
             id,
             nombre,
             descripcion
