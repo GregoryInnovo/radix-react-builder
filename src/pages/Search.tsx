@@ -9,19 +9,8 @@ import { MapPin, Search as SearchIcon, Navigation, Weight, Calendar } from 'luci
 import { Header } from '@/components/layout/Header';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { useSearchLotes } from '@/hooks/useSearchLotes';
+import { useTiposResiduo } from '@/hooks/useTiposResiduo';
 import { LoteDetailsModal } from '@/components/lotes/LoteDetailsModal';
-import type { Database } from '@/integrations/supabase/types';
-
-type ROAType = Database['public']['Enums']['roa_type'];
-
-const ROA_TYPE_LABELS: Record<ROAType, string> = {
-  'cascara_fruta': 'Cáscara de fruta',
-  'posos_cafe': 'Posos de café',
-  'restos_vegetales': 'Restos vegetales',
-  'cascara_huevo': 'Cáscara de huevo',
-  'restos_cereales': 'Restos de cereales',
-  'otros': 'Otros',
-};
 
 const Search = () => {
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
@@ -34,6 +23,7 @@ const Search = () => {
   const [selectedDistance, setSelectedDistance] = useState<number>(0);
 
   const { searchLotes, loading, results } = useSearchLotes();
+  const { tiposResiduos } = useTiposResiduo();
 
   const detectLocation = () => {
     if (!navigator.geolocation) {
@@ -80,13 +70,16 @@ const Search = () => {
       return;
     }
 
+    console.log('Search triggered with selectedType:', selectedType);
+
     const filters = {
       lat: userLocation.lat,
       lng: userLocation.lng,
       radiusKm: parseInt(radius),
-      tipoResiduo: selectedType === 'all' ? undefined : selectedType as ROAType
+      tipoResiduoId: selectedType === 'all' ? undefined : selectedType
     };
 
+    console.log('Search filters:', filters);
     searchLotes(filters);
   };
 
@@ -197,8 +190,10 @@ const Search = () => {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="all">Todos los tipos</SelectItem>
-                        {Object.entries(ROA_TYPE_LABELS).map(([value, label]) => (
-                          <SelectItem key={value} value={value}>{label}</SelectItem>
+                        {tiposResiduos.map((tipo) => (
+                          <SelectItem key={tipo.id} value={tipo.id}>
+                            {tipo.nombre}
+                          </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
@@ -236,6 +231,12 @@ const Search = () => {
                               <Weight className="w-4 h-4" />
                               {result.lote.peso_estimado} kg
                             </div>
+                            {result.lote.tipos_residuo && (
+                              <div className="flex items-center gap-2 text-sm text-gray-600 mt-1">
+                                <span className="font-medium">Tipo:</span>
+                                <span>{result.lote.tipos_residuo.nombre}</span>
+                              </div>
+                            )}
                           </div>
                           
                           <div className="text-right">
@@ -304,9 +305,16 @@ const Search = () => {
                   <h3 className="text-lg font-medium text-gray-900 mb-2">
                     No se encontraron lotes
                   </h3>
-                  <p className="text-gray-500 text-center">
-                    No hay lotes de ROA disponibles en el radio seleccionado.
-                    Prueba ampliando el radio de búsqueda.
+                  <p className="text-gray-500 text-center max-w-md">
+                    No hay lotes de ROA disponibles y aprobados en el radio seleccionado.
+                    <br />
+                    <strong>Sugerencias:</strong>
+                    <br />
+                    • Amplía el radio de búsqueda
+                    <br />
+                    • Verifica que haya lotes con estado "disponible" y "aprobado"
+                    <br />
+                    • Intenta cambiar el tipo de ROA o selecciona "Todos los tipos"
                   </p>
                 </CardContent>
               </Card>

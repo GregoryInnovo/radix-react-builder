@@ -5,17 +5,22 @@ import { toast } from '@/hooks/use-toast';
 import type { Database } from '@/integrations/supabase/types';
 
 type Lote = Database['public']['Tables']['lotes']['Row'];
-type ROAType = Database['public']['Enums']['roa_type'];
 
 interface SearchFilters {
   lat: number;
   lng: number;
   radiusKm: number;
-  tipoResiduo?: ROAType;
+  tipoResiduoId?: string; // Changed to use UUID instead of enum
 }
 
 interface SearchResult {
-  lote: Lote;
+  lote: Lote & {
+    tipos_residuo?: {
+      id: string;
+      nombre: string;
+      descripcion: string | null;
+    } | null;
+  };
   distance: number;
 }
 
@@ -26,26 +31,41 @@ export const useSearchLotes = () => {
   const searchLotes = async (filters: SearchFilters) => {
     setLoading(true);
     try {
-      // Build the query
+      console.log('Starting search with filters:', filters);
+
+      // Build the query - include tipos_residuo join
       let query = supabase
         .from('lotes')
-        .select('*')
-        .in('estado', ['disponible']) // Only show available lots
+        .select(`
+          *,
+          tipos_residuo:tipo_residuo_id (
+            id,
+            nombre,
+            descripcion
+          )
+        `)
+        .eq('estado', 'disponible') // Only show available lots
+        .eq('status', 'aprobado') // Only show approved lots
         .order('created_at', { ascending: false });
 
       // Add type filter if specified
-      if (filters.tipoResiduo) {
-        query = query.eq('tipo_residuo_id', filters.tipoResiduo);
+      if (filters.tipoResiduoId) {
+        query = query.eq('tipo_residuo_id', filters.tipoResiduoId);
       }
 
       const { data, error } = await query;
 
+      console.log('Query result:', { data, error });
+
       if (error) throw error;
 
       if (!data) {
+        console.log('No data returned from query');
         setResults([]);
         return;
       }
+
+      console.log('Found lotes before distance filter:', data.length);
 
       // Calculate distances and filter by radius
       const resultsWithDistance: SearchResult[] = data
@@ -64,6 +84,8 @@ export const useSearchLotes = () => {
         })
         .filter(result => result.distance <= filters.radiusKm)
         .sort((a, b) => a.distance - b.distance); // Sort by distance (closest first)
+
+      console.log('Found lotes after distance filter:', resultsWithDistance.length);
 
       setResults(resultsWithDistance);
 

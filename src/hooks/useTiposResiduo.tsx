@@ -3,7 +3,6 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 
-// Tipo temporal para tipos_residuo hasta que se actualicen los tipos de Supabase
 type TipoResiduo = {
   id: string;
   nombre: string;
@@ -20,14 +19,21 @@ export const useTiposResiduo = () => {
   const fetchTiposResiduos = async () => {
     setLoading(true);
     try {
+      console.log('Fetching tipos residuo...');
+      
       const { data, error } = await supabase
-        .from('tipos_residuo' as any)
+        .from('tipos_residuo')
         .select('*')
         .eq('activo', true)
-        .order('descripcion', { ascending: true });
+        .order('nombre', { ascending: true });
+
+      console.log('Tipos residuo result:', { data, error });
 
       if (error) throw error;
-      setTiposResiduos((data as unknown as TipoResiduo[]) || []);
+      
+      const typedData = data as TipoResiduo[];
+      setTiposResiduos(typedData || []);
+      console.log('Tipos residuo loaded:', typedData?.length || 0);
     } catch (error: any) {
       console.error('Error fetching tipos residuo:', error);
       toast({
