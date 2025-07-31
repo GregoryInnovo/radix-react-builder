@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,6 +11,7 @@ import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { useSearchLotes } from '@/hooks/useSearchLotes';
 import { useTiposResiduo } from '@/hooks/useTiposResiduo';
 import { LoteDetailsModal } from '@/components/lotes/LoteDetailsModal';
+import { LocationMap } from '@/components/search/LocationMap';
 import { useAuth } from '@/hooks/useAuth';
 
 const Search = () => {
@@ -17,6 +19,7 @@ const Search = () => {
   const [manualLocation, setManualLocation] = useState({ lat: '', lng: '' });
   const [radius, setRadius] = useState('5');
   const [selectedType, setSelectedType] = useState<string>('all');
+  const [textSearch, setTextSearch] = useState('');
   const [isDetectingLocation, setIsDetectingLocation] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
   const [selectedLote, setSelectedLote] = useState<any>(null);
@@ -72,12 +75,14 @@ const Search = () => {
     }
 
     console.log('Search triggered with selectedType:', selectedType);
+    console.log('Text search:', textSearch);
 
     const filters = {
       lat: userLocation.lat,
       lng: userLocation.lng,
       radiusKm: parseInt(radius),
-      tipoResiduoId: selectedType === 'all' ? undefined : selectedType
+      tipoResiduoId: selectedType === 'all' ? undefined : selectedType,
+      textSearch: textSearch.trim() || undefined
     };
 
     console.log('Search filters:', filters);
@@ -120,43 +125,73 @@ const Search = () => {
               </CardHeader>
               
               <CardContent className="space-y-4">
+                {/* Text Search Field */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Buscar por palabras clave</label>
+                  <Input
+                    type="text"
+                    placeholder="Ej: cáscara naranja, posos café, compost, etc."
+                    value={textSearch}
+                    onChange={(e) => setTextSearch(e.target.value)}
+                    className="w-full"
+                  />
+                  <p className="text-xs text-gray-500">
+                    Busca por tipo de residuo, descripción, usos o características del lote
+                  </p>
+                </div>
+
                 {/* Location Input */}
                 <div className="space-y-3">
                   <label className="text-sm font-medium">Ubicación</label>
                   
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      onClick={detectLocation}
-                      disabled={isDetectingLocation}
-                      className="shrink-0"
-                    >
-                      <Navigation className="w-4 h-4 mr-2" />
-                      {isDetectingLocation ? 'Detectando...' : 'Usar GPS'}
-                    </Button>
-                  </div>
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                    <div className="lg:col-span-2 space-y-3">
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          onClick={detectLocation}
+                          disabled={isDetectingLocation}
+                          className="shrink-0"
+                        >
+                          <Navigation className="w-4 h-4 mr-2" />
+                          {isDetectingLocation ? 'Detectando...' : 'Usar GPS'}
+                        </Button>
+                      </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <div>
-                      <label className="text-xs text-gray-500">Latitud</label>
-                      <Input
-                        type="number"
-                        placeholder="-34.603722"
-                        value={manualLocation.lat}
-                        onChange={(e) => handleManualLocationChange('lat', e.target.value)}
-                        step="any"
-                      />
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div>
+                          <label className="text-xs text-gray-500">Latitud</label>
+                          <Input
+                            type="number"
+                            placeholder="-34.603722"
+                            value={manualLocation.lat}
+                            onChange={(e) => handleManualLocationChange('lat', e.target.value)}
+                            step="any"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs text-gray-500">Longitud</label>
+                          <Input
+                            type="number"
+                            placeholder="-58.381592"
+                            value={manualLocation.lng}
+                            onChange={(e) => handleManualLocationChange('lng', e.target.value)}
+                            step="any"
+                          />
+                        </div>
+                      </div>
                     </div>
-                    <div>
-                      <label className="text-xs text-gray-500">Longitud</label>
-                      <Input
-                        type="number"
-                        placeholder="-58.381592"
-                        value={manualLocation.lng}
-                        onChange={(e) => handleManualLocationChange('lng', e.target.value)}
-                        step="any"
-                      />
-                    </div>
+                    
+                    {/* Location Map */}
+                    {userLocation && (
+                      <div className="flex justify-center lg:justify-end">
+                        <LocationMap 
+                          lat={userLocation.lat} 
+                          lng={userLocation.lng}
+                          className="w-full max-w-32"
+                        />
+                      </div>
+                    )}
                   </div>
 
                   {locationError && (
@@ -217,6 +252,11 @@ const Search = () => {
               <div className="space-y-4">
                 <h2 className="text-xl font-semibold">
                   Resultados de búsqueda ({results.length} lotes encontrados)
+                  {textSearch && (
+                    <span className="text-sm font-normal text-gray-600 ml-2">
+                      para "{textSearch}"
+                    </span>
+                  )}
                 </h2>
 
                 <div className="grid gap-4">
@@ -230,6 +270,11 @@ const Search = () => {
                               {result.lote.user_id === user?.id && (
                                 <Badge variant="outline" className="ml-2 text-xs">
                                   Tu lote
+                                </Badge>
+                              )}
+                              {textSearch && result.relevanceScore > 1 && (
+                                <Badge variant="secondary" className="ml-2 text-xs">
+                                  Muy relevante
                                 </Badge>
                               )}
                             </h3>
@@ -314,28 +359,49 @@ const Search = () => {
                 <CardContent className="flex flex-col items-center justify-center py-12">
                   <SearchIcon className="w-12 h-12 text-gray-400 mb-4" />
                   <h3 className="text-lg font-medium text-gray-900 mb-2">
-                    No se encontraron lotes
+                    {textSearch 
+                      ? "No se encontraron lotes con esas palabras" 
+                      : "No se encontraron lotes"
+                    }
                   </h3>
                   <p className="text-gray-500 text-center max-w-md">
-                    No hay lotes de ROA disponibles en el radio seleccionado.
-                    <br />
-                    <strong>Posibles causas:</strong>
-                    <br />
-                    • No hay lotes con estado "disponible" en el área
-                    <br />
-                    • Los lotes están pendientes de aprobación por un administrador
-                    <br />
-                    • El radio de búsqueda es muy pequeño
-                    <br />
-                    • El tipo de ROA seleccionado no coincide
-                    <br /><br />
-                    <strong>Sugerencias:</strong>
-                    <br />
-                    • Amplía el radio de búsqueda
-                    <br />
-                    • Selecciona "Todos los tipos" de ROA
-                    <br />
-                    • Contacta al administrador si creaste lotes recientemente
+                    {textSearch ? (
+                      <>
+                        No hay lotes de ROA que coincidan con "<strong>{textSearch}</strong>" en el área seleccionada.
+                        <br /><br />
+                        <strong>Prueba con:</strong>
+                        <br />
+                        • Otras palabras clave (ej: "cáscara", "orgánico", "compost")
+                        <br />
+                        • Ampliar el radio de búsqueda
+                        <br />
+                        • Seleccionar "Todos los tipos" de ROA
+                        <br />
+                        • Revisar los filtros de ubicación
+                      </>
+                    ) : (
+                      <>
+                        No hay lotes de ROA disponibles en el radio seleccionado.
+                        <br />
+                        <strong>Posibles causas:</strong>
+                        <br />
+                        • No hay lotes con estado "disponible" en el área
+                        <br />
+                        • Los lotes están pendientes de aprobación por un administrador
+                        <br />
+                        • El radio de búsqueda es muy pequeño
+                        <br />
+                        • El tipo de ROA seleccionado no coincide
+                        <br /><br />
+                        <strong>Sugerencias:</strong>
+                        <br />
+                        • Amplía el radio de búsqueda
+                        <br />
+                        • Selecciona "Todos los tipos" de ROA
+                        <br />
+                        • Contacta al administrador si creaste lotes recientemente
+                      </>
+                    )}
                   </p>
                 </CardContent>
               </Card>

@@ -12,6 +12,7 @@ interface SearchFilters {
   lng: number;
   radiusKm: number;
   tipoResiduoId?: string;
+  textSearch?: string;
 }
 
 interface SearchResult {
@@ -23,12 +24,69 @@ interface SearchResult {
     } | null;
   };
   distance: number;
+  relevanceScore: number;
 }
 
 export const useSearchLotes = () => {
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<SearchResult[]>([]);
   const { user } = useAuth();
+
+  // Function to normalize text for search comparison
+  const normalizeText = (text: string) => {
+    return text
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '') // Remove accents
+      .trim();
+  };
+
+  // Function to calculate text relevance score
+  const calculateRelevanceScore = (lote: any, searchTerms: string[]) => {
+    let score = 0;
+    
+    // Check tipo_residuo name
+    if (lote.tipos_residuo?.nombre) {
+      const tipoNormalizado = normalizeText(lote.tipos_residuo.nombre);
+      searchTerms.forEach(term => {
+        if (tipoNormalizado.includes(term)) {
+          score += 3; // Higher weight for type matches
+        }
+      });
+    }
+
+    // Check tipo_residuo description
+    if (lote.tipos_residuo?.descripcion) {
+      const tipoDescNormalizada = normalizeText(lote.tipos_residuo.descripcion);
+      searchTerms.forEach(term => {
+        if (tipoDescNormalizada.includes(term)) {
+          score += 2;
+        }
+      });
+    }
+
+    // Check lote description
+    if (lote.descripcion) {
+      const descNormalizada = normalizeText(lote.descripcion);
+      searchTerms.forEach(term => {
+        if (descNormalizada.includes(term)) {
+          score += 2;
+        }
+      });
+    }
+
+    // Check address for location-based terms
+    if (lote.direccion) {
+      const direccionNormalizada = normalizeText(lote.direccion);
+      searchTerms.forEach(term => {
+        if (direccionNormalizada.includes(term)) {
+          score += 1;
+        }
+      });
+    }
+
+    return score;
+  };
 
   const searchLotes = async (filters: SearchFilters) => {
     setLoading(true);
@@ -94,8 +152,26 @@ export const useSearchLotes = () => {
 
       console.log('Found lotes after status filter:', filteredData.length);
 
-      // Calculate distances and filter by radius
-      const resultsWithDistance: SearchResult[] = filteredData
+      // Process text search if provided
+      let searchFilteredData = filteredData;
+      if (filters.textSearch && filters.textSearch.trim()) {
+        const searchTerms = normalizeText(filters.textSearch)
+          .split(/\s+/)
+          .filter(term => term.length > 0);
+        
+        console.log('Search terms:', searchTerms);
+        
+        searchFilteredData = filteredData.filter(lote => {
+          const score = calculateRelevanceScore(lote, searchTerms);
+          console.log(`Lote ${lote.id}: relevance score = ${score}`);
+          return score > 0;
+        });
+        
+        console.log('Found lotes after text search:', searchFilteredData.length);
+      }
+
+      // Calculate distances, relevance scores and filter by radius
+      const resultsWithDistance: SearchResult[] = searchFilteredData
         .map(lote => {
           const distance = calculateDistance(
             filters.lat,
@@ -104,11 +180,16 @@ export const useSearchLotes = () => {
             lote.ubicacion_lng
           );
 
-          console.log(`Distance for lote ${lote.id}: ${distance}km (max: ${filters.radiusKm}km)`);
+          const relevanceScore = filters.textSearch && filters.textSearch.trim() 
+            ? calculateRelevanceScore(lote, normalizeText(filters.textSearch).split(/\s+/).filter(term => term.length > 0))
+            : 1; // Default relevance for non-text searches
+
+          console.log(`Distance for lote ${lote.id}: ${distance}km (max: ${filters.radiusKm}km), relevance: ${relevanceScore}`);
 
           return {
             lote,
-            distance
+            distance,
+            relevanceScore
           };
         })
         .filter(result => {
@@ -116,12 +197,21 @@ export const useSearchLotes = () => {
           console.log(`Lote ${result.lote.id}: distance=${result.distance}km, withinRadius=${withinRadius}`);
           return withinRadius;
         })
-        .sort((a, b) => a.distance - b.distance); // Sort by distance (closest first)
+        .sort((a, b) => {
+          // Sort by relevance first (if text search), then by distance
+          if (filters.textSearch && filters.textSearch.trim()) {
+            if (b.relevanceScore !== a.relevanceScore) {
+              return b.relevanceScore - a.relevanceScore;
+            }
+          }
+          return a.distance - b.distance;
+        });
 
-      console.log('Final results after distance filter:', resultsWithDistance.length);
+      console.log('Final results after all filters:', resultsWithDistance.length);
       console.log('Final results:', resultsWithDistance.map(r => ({
         id: r.lote.id,
         distance: r.distance,
+        relevanceScore: r.relevanceScore,
         status: r.lote.status,
         isOwn: r.lote.user_id === user?.id
       })));
@@ -129,8 +219,10 @@ export const useSearchLotes = () => {
       setResults(resultsWithDistance);
 
       const message = resultsWithDistance.length > 0 
-        ? `Se encontraron ${resultsWithDistance.length} lotes en un radio de ${filters.radiusKm}km`
-        : `No se encontraron lotes en el radio seleccionado. Se consultaron ${data.length} lotes en total.`;
+        ? `Se encontraron ${resultsWithDistance.length} lotes${filters.textSearch ? ' que coinciden con tu búsqueda' : ''} en un radio de ${filters.radiusKm}km`
+        : filters.textSearch && filters.textSearch.trim()
+          ? "No se encontraron lotes con esas palabras. Prueba con otra descripción o revisa los filtros de categoría y ubicación."
+          : `No se encontraron lotes en el radio seleccionado. Se consultaron ${data.length} lotes en total.`;
 
       toast({
         title: "Búsqueda completada",
