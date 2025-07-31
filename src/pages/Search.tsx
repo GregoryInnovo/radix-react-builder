@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -226,6 +225,11 @@ const Search = () => {
                           <div>
                             <h3 className="font-semibold text-lg text-green-800">
                               Lote de ROA
+                              {result.lote.user_id === userLocation && (
+                                <Badge variant="outline" className="ml-2 text-xs">
+                                  Tu lote
+                                </Badge>
+                              )}
                             </h3>
                             <div className="flex items-center gap-2 text-sm text-gray-600 mt-1">
                               <Weight className="w-4 h-4" />
@@ -244,9 +248,14 @@ const Search = () => {
                               <MapPin className="w-3 h-3 mr-1" />
                               {formatDistance(result.distance)}
                             </Badge>
-                            <Badge className="bg-green-100 text-green-800">
-                              Disponible
-                            </Badge>
+                            <div className="flex flex-col gap-1">
+                              <Badge className="bg-green-100 text-green-800">
+                                {result.lote.estado}
+                              </Badge>
+                              <Badge variant={result.lote.status === 'aprobado' ? 'default' : 'secondary'} className="text-xs">
+                                {result.lote.status || 'pendiente'}
+                              </Badge>
+                            </div>
                           </div>
                         </div>
 
@@ -306,15 +315,25 @@ const Search = () => {
                     No se encontraron lotes
                   </h3>
                   <p className="text-gray-500 text-center max-w-md">
-                    No hay lotes de ROA disponibles y aprobados en el radio seleccionado.
+                    No hay lotes de ROA disponibles en el radio seleccionado.
                     <br />
+                    <strong>Posibles causas:</strong>
+                    <br />
+                    • No hay lotes con estado "disponible" en el área
+                    <br />
+                    • Los lotes están pendientes de aprobación por un administrador
+                    <br />
+                    • El radio de búsqueda es muy pequeño
+                    <br />
+                    • El tipo de ROA seleccionado no coincide
+                    <br /><br />
                     <strong>Sugerencias:</strong>
                     <br />
                     • Amplía el radio de búsqueda
                     <br />
-                    • Verifica que haya lotes con estado "disponible" y "aprobado"
+                    • Selecciona "Todos los tipos" de ROA
                     <br />
-                    • Intenta cambiar el tipo de ROA o selecciona "Todos los tipos"
+                    • Contacta al administrador si creaste lotes recientemente
                   </p>
                 </CardContent>
               </Card>

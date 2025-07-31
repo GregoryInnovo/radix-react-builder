@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
 import type { Database } from '@/integrations/supabase/types';
 
 type Lote = Database['public']['Tables']['lotes']['Row'];
@@ -10,7 +11,7 @@ interface SearchFilters {
   lat: number;
   lng: number;
   radiusKm: number;
-  tipoResiduoId?: string; // Changed to use UUID instead of enum
+  tipoResiduoId?: string;
 }
 
 interface SearchResult {
@@ -27,11 +28,13 @@ interface SearchResult {
 export const useSearchLotes = () => {
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<SearchResult[]>([]);
+  const { user } = useAuth();
 
   const searchLotes = async (filters: SearchFilters) => {
     setLoading(true);
     try {
       console.log('Starting search with filters:', filters);
+      console.log('Current user:', user?.id);
 
       // Build the query - include tipos_residuo join
       let query = supabase
@@ -45,7 +48,6 @@ export const useSearchLotes = () => {
           )
         `)
         .eq('estado', 'disponible') // Only show available lots
-        .eq('status', 'aprobado') // Only show approved lots
         .order('created_at', { ascending: false });
 
       // Add type filter if specified
@@ -55,9 +57,12 @@ export const useSearchLotes = () => {
 
       const { data, error } = await query;
 
-      console.log('Query result:', { data, error });
+      console.log('Raw query result:', { data, error, count: data?.length });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase query error:', error);
+        throw error;
+      }
 
       if (!data) {
         console.log('No data returned from query');
@@ -65,10 +70,32 @@ export const useSearchLotes = () => {
         return;
       }
 
-      console.log('Found lotes before distance filter:', data.length);
+      console.log('Found lotes before filtering:', data.map(lote => ({
+        id: lote.id,
+        status: lote.status,
+        estado: lote.estado,
+        user_id: lote.user_id,
+        peso: lote.peso_estimado,
+        lat: lote.ubicacion_lat,
+        lng: lote.ubicacion_lng,
+        tipo_residuo_id: lote.tipo_residuo_id,
+        created_at: lote.created_at
+      })));
+
+      // Filter lotes: show approved lotes OR own lotes (including pending ones)
+      const filteredData = data.filter(lote => {
+        const isApproved = lote.status === 'aprobado';
+        const isOwnLote = user && lote.user_id === user.id;
+        const shouldInclude = isApproved || isOwnLote;
+        
+        console.log(`Lote ${lote.id}: status=${lote.status}, isOwn=${isOwnLote}, include=${shouldInclude}`);
+        return shouldInclude;
+      });
+
+      console.log('Found lotes after status filter:', filteredData.length);
 
       // Calculate distances and filter by radius
-      const resultsWithDistance: SearchResult[] = data
+      const resultsWithDistance: SearchResult[] = filteredData
         .map(lote => {
           const distance = calculateDistance(
             filters.lat,
@@ -77,21 +104,37 @@ export const useSearchLotes = () => {
             lote.ubicacion_lng
           );
 
+          console.log(`Distance for lote ${lote.id}: ${distance}km (max: ${filters.radiusKm}km)`);
+
           return {
             lote,
             distance
           };
         })
-        .filter(result => result.distance <= filters.radiusKm)
+        .filter(result => {
+          const withinRadius = result.distance <= filters.radiusKm;
+          console.log(`Lote ${result.lote.id}: distance=${result.distance}km, withinRadius=${withinRadius}`);
+          return withinRadius;
+        })
         .sort((a, b) => a.distance - b.distance); // Sort by distance (closest first)
 
-      console.log('Found lotes after distance filter:', resultsWithDistance.length);
+      console.log('Final results after distance filter:', resultsWithDistance.length);
+      console.log('Final results:', resultsWithDistance.map(r => ({
+        id: r.lote.id,
+        distance: r.distance,
+        status: r.lote.status,
+        isOwn: r.lote.user_id === user?.id
+      })));
 
       setResults(resultsWithDistance);
 
+      const message = resultsWithDistance.length > 0 
+        ? `Se encontraron ${resultsWithDistance.length} lotes en un radio de ${filters.radiusKm}km`
+        : `No se encontraron lotes en el radio seleccionado. Se consultaron ${data.length} lotes en total.`;
+
       toast({
         title: "Búsqueda completada",
-        description: `Se encontraron ${resultsWithDistance.length} lotes en un radio de ${filters.radiusKm}km`,
+        description: message,
       });
 
     } catch (error: any) {
