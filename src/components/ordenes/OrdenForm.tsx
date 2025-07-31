@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Switch } from '@/components/ui/switch';
 import { CalendarIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -19,6 +20,7 @@ const formSchema = z.object({
   cantidad_solicitada: z.number().min(1, 'La cantidad debe ser mayor a 0'),
   fecha_propuesta_retiro: z.date().min(new Date(), 'La fecha debe ser futura'),
   mensaje_solicitud: z.string().optional(),
+  modalidad_entrega: z.enum(['domicilio', 'punto']),
 });
 
 interface OrdenFormProps {
@@ -37,6 +39,7 @@ export const OrdenForm: React.FC<OrdenFormProps> = ({
   onCancel
 }) => {
   const [loading, setLoading] = useState(false);
+  const [calendarOpen, setCalendarOpen] = useState(false);
   const { createOrden } = useOrdenes();
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -44,6 +47,7 @@ export const OrdenForm: React.FC<OrdenFormProps> = ({
     defaultValues: {
       cantidad_solicitada: 1,
       mensaje_solicitud: '',
+      modalidad_entrega: 'punto',
     },
   });
 
@@ -64,6 +68,13 @@ export const OrdenForm: React.FC<OrdenFormProps> = ({
       }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDateSelect = (date: Date | undefined) => {
+    if (date) {
+      form.setValue('fecha_propuesta_retiro', date);
+      setCalendarOpen(false);
     }
   };
 
@@ -91,11 +102,46 @@ export const OrdenForm: React.FC<OrdenFormProps> = ({
 
         <FormField
           control={form.control}
+          name="modalidad_entrega"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Modalidad de Entrega</FormLabel>
+              <div className="flex items-center space-x-4 mt-2">
+                <div className="flex items-center space-x-2">
+                  <span className={cn(
+                    "text-sm font-medium",
+                    field.value === 'punto' ? "text-primary" : "text-muted-foreground"
+                  )}>
+                    En punto
+                  </span>
+                  <FormControl>
+                    <Switch
+                      checked={field.value === 'domicilio'}
+                      onCheckedChange={(checked) => 
+                        field.onChange(checked ? 'domicilio' : 'punto')
+                      }
+                    />
+                  </FormControl>
+                  <span className={cn(
+                    "text-sm font-medium",
+                    field.value === 'domicilio' ? "text-primary" : "text-muted-foreground"
+                  )}>
+                    Domicilio
+                  </span>
+                </div>
+              </div>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
           name="fecha_propuesta_retiro"
           render={({ field }) => (
             <FormItem className="flex flex-col">
               <FormLabel>Fecha Propuesta de Retiro</FormLabel>
-              <Popover>
+              <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
                 <PopoverTrigger asChild>
                   <FormControl>
                     <Button
@@ -104,6 +150,8 @@ export const OrdenForm: React.FC<OrdenFormProps> = ({
                         "w-full pl-3 text-left font-normal",
                         !field.value && "text-muted-foreground"
                       )}
+                      onClick={() => setCalendarOpen(true)}
+                      type="button"
                     >
                       {field.value ? (
                         format(field.value, "PPP", { locale: es })
@@ -118,9 +166,10 @@ export const OrdenForm: React.FC<OrdenFormProps> = ({
                   <Calendar
                     mode="single"
                     selected={field.value}
-                    onSelect={field.onChange}
+                    onSelect={handleDateSelect}
                     disabled={(date) => date < new Date()}
                     initialFocus
+                    className={cn("p-3 pointer-events-auto")}
                   />
                 </PopoverContent>
               </Popover>
