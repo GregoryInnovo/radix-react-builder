@@ -10,6 +10,7 @@ import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { useSearchLotes } from '@/hooks/useSearchLotes';
 import { useTiposResiduo } from '@/hooks/useTiposResiduo';
 import { LoteDetailsModal } from '@/components/lotes/LoteDetailsModal';
+import { useAuth } from '@/hooks/useAuth';
 
 const Search = () => {
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
@@ -23,6 +24,7 @@ const Search = () => {
 
   const { searchLotes, loading, results } = useSearchLotes();
   const { tiposResiduos } = useTiposResiduo();
+  const { user } = useAuth();
 
   const detectLocation = () => {
     if (!navigator.geolocation) {
@@ -225,7 +227,7 @@ const Search = () => {
                           <div>
                             <h3 className="font-semibold text-lg text-green-800">
                               Lote de ROA
-                              {result.lote.user_id === userLocation && (
+                              {result.lote.user_id === user?.id && (
                                 <Badge variant="outline" className="ml-2 text-xs">
                                   Tu lote
                                 </Badge>
