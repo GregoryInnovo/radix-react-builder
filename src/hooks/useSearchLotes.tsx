@@ -170,7 +170,7 @@ export const useSearchLotes = () => {
         console.log('Found lotes after text search:', searchFilteredData.length);
       }
 
-      // Calculate distances, relevance scores and filter by radius
+      // Calculate distances and relevance scores
       const resultsWithDistance: SearchResult[] = searchFilteredData
         .map(lote => {
           const distance = calculateDistance(
@@ -193,6 +193,10 @@ export const useSearchLotes = () => {
           };
         })
         .filter(result => {
+          // For text-only searches with large radius, don't filter by distance
+          if (filters.radiusKm >= 1000) {
+            return true;
+          }
           const withinRadius = result.distance <= filters.radiusKm;
           console.log(`Lote ${result.lote.id}: distance=${result.distance}km, withinRadius=${withinRadius}`);
           return withinRadius;
@@ -218,10 +222,11 @@ export const useSearchLotes = () => {
 
       setResults(resultsWithDistance);
 
+      const isTextOnlySearch = filters.radiusKm >= 1000;
       const message = resultsWithDistance.length > 0 
-        ? `Se encontraron ${resultsWithDistance.length} lotes${filters.textSearch ? ' que coinciden con tu búsqueda' : ''} en un radio de ${filters.radiusKm}km`
+        ? `Se encontraron ${resultsWithDistance.length} lotes${filters.textSearch ? ' que coinciden con tu búsqueda' : ''}${!isTextOnlySearch ? ` en un radio de ${filters.radiusKm}km` : ''}`
         : filters.textSearch && filters.textSearch.trim()
-          ? "No se encontraron lotes con esas palabras. Prueba con otra descripción o revisa los filtros de categoría y ubicación."
+          ? "No se encontraron lotes con esas palabras. Prueba con otra descripción o combina con filtros de ubicación."
           : `No se encontraron lotes en el radio seleccionado. Se consultaron ${data.length} lotes en total.`;
 
       toast({

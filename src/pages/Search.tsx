@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,6 +11,7 @@ import { useSearchLotes } from '@/hooks/useSearchLotes';
 import { useTiposResiduo } from '@/hooks/useTiposResiduo';
 import { LoteDetailsModal } from '@/components/lotes/LoteDetailsModal';
 import { LocationMap } from '@/components/search/LocationMap';
+import { SearchResultsMap } from '@/components/search/SearchResultsMap';
 import { useAuth } from '@/hooks/useAuth';
 
 const Search = () => {
@@ -24,6 +24,7 @@ const Search = () => {
   const [locationError, setLocationError] = useState<string | null>(null);
   const [selectedLote, setSelectedLote] = useState<any>(null);
   const [selectedDistance, setSelectedDistance] = useState<number>(0);
+  const [searchMode, setSearchMode] = useState<'text' | 'location' | 'both'>('text');
 
   const { searchLotes, loading, results } = useSearchLotes();
   const { tiposResiduos } = useTiposResiduo();
@@ -69,24 +70,52 @@ const Search = () => {
   };
 
   const handleSearch = () => {
-    if (!userLocation) {
-      setLocationError('Debes proporcionar una ubicación para buscar');
+    // Text-only search
+    if (searchMode === 'text' && textSearch.trim()) {
+      // For text-only search, use a default center location (e.g., Bogotá)
+      const defaultLocation = { lat: 4.7110, lng: -74.0721 };
+      
+      const filters = {
+        lat: defaultLocation.lat,
+        lng: defaultLocation.lng,
+        radiusKm: 1000, // Large radius for text-only search
+        tipoResiduoId: selectedType === 'all' ? undefined : selectedType,
+        textSearch: textSearch.trim()
+      };
+
+      console.log('Text-only search filters:', filters);
+      searchLotes(filters);
       return;
     }
 
-    console.log('Search triggered with selectedType:', selectedType);
-    console.log('Text search:', textSearch);
+    // Location-based or combined search
+    if (!userLocation && (searchMode === 'location' || searchMode === 'both')) {
+      setLocationError('Debes proporcionar una ubicación para buscar por proximidad');
+      return;
+    }
 
-    const filters = {
-      lat: userLocation.lat,
-      lng: userLocation.lng,
-      radiusKm: parseInt(radius),
-      tipoResiduoId: selectedType === 'all' ? undefined : selectedType,
-      textSearch: textSearch.trim() || undefined
-    };
+    if (userLocation) {
+      const filters = {
+        lat: userLocation.lat,
+        lng: userLocation.lng,
+        radiusKm: parseInt(radius),
+        tipoResiduoId: selectedType === 'all' ? undefined : selectedType,
+        textSearch: textSearch.trim() || undefined
+      };
 
-    console.log('Search filters:', filters);
-    searchLotes(filters);
+      console.log('Location-based search filters:', filters);
+      searchLotes(filters);
+    }
+  };
+
+  const handleTextSearchKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (textSearch.trim()) {
+        setSearchMode('text');
+        handleSearch();
+      }
+    }
   };
 
   const formatDistance = (distance: number) => {
@@ -108,7 +137,7 @@ const Search = () => {
                 Buscar Lotes de ROA
               </h1>
               <p className="text-gray-600">
-                Encuentra residuos orgánicos aprovechables cerca de tu ubicación
+                Encuentra residuos orgánicos aprovechables por palabras clave o cerca de tu ubicación
               </p>
             </div>
 
@@ -120,7 +149,7 @@ const Search = () => {
                   Filtros de Búsqueda
                 </CardTitle>
                 <CardDescription>
-                  Configura tu ubicación y preferencias de búsqueda
+                  Busca por palabras clave o configura tu ubicación para búsqueda por proximidad
                 </CardDescription>
               </CardHeader>
               
@@ -128,21 +157,36 @@ const Search = () => {
                 {/* Text Search Field */}
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Buscar por palabras clave</label>
-                  <Input
-                    type="text"
-                    placeholder="Ej: cáscara naranja, posos café, compost, etc."
-                    value={textSearch}
-                    onChange={(e) => setTextSearch(e.target.value)}
-                    className="w-full"
-                  />
+                  <div className="flex gap-2">
+                    <Input
+                      type="text"
+                      placeholder="Ej: cáscara naranja, posos café, compost, etc."
+                      value={textSearch}
+                      onChange={(e) => setTextSearch(e.target.value)}
+                      onKeyPress={handleTextSearchKeyPress}
+                      className="flex-1"
+                    />
+                    <Button
+                      onClick={() => {
+                        if (textSearch.trim()) {
+                          setSearchMode('text');
+                          handleSearch();
+                        }
+                      }}
+                      disabled={!textSearch.trim() || loading}
+                      variant="outline"
+                    >
+                      <SearchIcon className="w-4 h-4" />
+                    </Button>
+                  </div>
                   <p className="text-xs text-gray-500">
-                    Busca por tipo de residuo, descripción, usos o características del lote
+                    Presiona Enter o haz clic en el botón para buscar solo por texto
                   </p>
                 </div>
 
                 {/* Location Input */}
                 <div className="space-y-3">
-                  <label className="text-sm font-medium">Ubicación</label>
+                  <label className="text-sm font-medium">Búsqueda por ubicación (opcional)</label>
                   
                   <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                     <div className="lg:col-span-2 space-y-3">
@@ -237,8 +281,11 @@ const Search = () => {
                 </div>
 
                 <Button
-                  onClick={handleSearch}
-                  disabled={!userLocation || loading}
+                  onClick={() => {
+                    setSearchMode(userLocation && textSearch.trim() ? 'both' : userLocation ? 'location' : 'text');
+                    handleSearch();
+                  }}
+                  disabled={loading || (!textSearch.trim() && !userLocation)}
                   className="w-full bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700"
                 >
                   <SearchIcon className="w-4 h-4 mr-2" />
@@ -246,6 +293,31 @@ const Search = () => {
                 </Button>
               </CardContent>
             </Card>
+
+            {/* Interactive Map */}
+            {(userLocation || results.length > 0) && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <MapPin className="w-5 h-5" />
+                    Mapa de Resultados
+                  </CardTitle>
+                  <CardDescription>
+                    Visualización de tu ubicación y los lotes encontrados
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <SearchResultsMap
+                    userLocation={userLocation}
+                    results={results}
+                    onLoteSelect={(lote, distance) => {
+                      setSelectedLote(lote);
+                      setSelectedDistance(distance);
+                    }}
+                  />
+                </CardContent>
+              </Card>
+            )}
 
             {/* Search Results */}
             {results.length > 0 && (
@@ -291,10 +363,12 @@ const Search = () => {
                           </div>
                           
                           <div className="text-right">
-                            <Badge variant="outline" className="mb-2">
-                              <MapPin className="w-3 h-3 mr-1" />
-                              {formatDistance(result.distance)}
-                            </Badge>
+                            {userLocation && (
+                              <Badge variant="outline" className="mb-2">
+                                <MapPin className="w-3 h-3 mr-1" />
+                                {formatDistance(result.distance)}
+                              </Badge>
+                            )}
                             <div className="flex flex-col gap-1">
                               <Badge className="bg-green-100 text-green-800">
                                 {result.lote.estado}
@@ -354,7 +428,7 @@ const Search = () => {
             )}
 
             {/* No Results */}
-            {results.length === 0 && !loading && userLocation && (
+            {results.length === 0 && !loading && (textSearch.trim() || userLocation) && (
               <Card className="border-dashed">
                 <CardContent className="flex flex-col items-center justify-center py-12">
                   <SearchIcon className="w-12 h-12 text-gray-400 mb-4" />
@@ -367,17 +441,15 @@ const Search = () => {
                   <p className="text-gray-500 text-center max-w-md">
                     {textSearch ? (
                       <>
-                        No hay lotes de ROA que coincidan con "<strong>{textSearch}</strong>" en el área seleccionada.
+                        No hay lotes de ROA que coincidan con "<strong>{textSearch}</strong>".
                         <br /><br />
                         <strong>Prueba con:</strong>
                         <br />
                         • Otras palabras clave (ej: "cáscara", "orgánico", "compost")
                         <br />
-                        • Ampliar el radio de búsqueda
-                        <br />
                         • Seleccionar "Todos los tipos" de ROA
                         <br />
-                        • Revisar los filtros de ubicación
+                        • Combinar con búsqueda por ubicación
                       </>
                     ) : (
                       <>
