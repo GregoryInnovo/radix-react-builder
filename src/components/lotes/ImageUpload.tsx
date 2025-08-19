@@ -54,29 +54,29 @@ export const ImageUpload = ({ images, onImagesChange, disabled }: ImageUploadPro
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
-    if (!files) return;
+    if (!files || files.length === 0) return;
 
     // Validar que todos los archivos sean imágenes
     const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
     const allowedExtensions = ['.jpg', '.jpeg', '.png', '.webp'];
     
-    const invalidFiles = Array.from(files).filter(file => {
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
       const isValidType = allowedTypes.includes(file.type.toLowerCase());
       const isValidExtension = allowedExtensions.some(ext => 
         file.name.toLowerCase().endsWith(ext)
       );
-      return !isValidType || !isValidExtension;
-    });
-
-    if (invalidFiles.length > 0) {
-      toast({
-        title: "Archivo no válido",
-        description: "El archivo NO es una foto válida. Solo se permiten archivos JPG, PNG o WebP.",
-        variant: "destructive",
-      });
-      // Limpiar el input
-      e.target.value = '';
-      return;
+      
+      if (!isValidType && !isValidExtension) {
+        toast({
+          title: "Archivo no válido",
+          description: `El archivo "${file.name}" NO es una foto válida. Solo puedes subir archivos JPG, PNG o WebP.`,
+          variant: "destructive",
+        });
+        // Limpiar el input
+        e.target.value = '';
+        return;
+      }
     }
 
     const uploadPromises = Array.from(files).map(file => uploadImage(file));
@@ -129,7 +129,7 @@ export const ImageUpload = ({ images, onImagesChange, disabled }: ImageUploadPro
           <Input
             id="images"
             type="file"
-            accept="image/*"
+            accept="image/jpeg,image/jpg,image/png,image/webp"
             multiple
             onChange={handleFileSelect}
             disabled={disabled || uploading}
