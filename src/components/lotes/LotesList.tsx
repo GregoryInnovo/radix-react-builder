@@ -7,6 +7,7 @@ import { MapPin, Calendar, Weight, Eye, Edit, Trash2, Image as ImageIcon } from 
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { LoteImageGallery } from './LoteImageGallery';
+import { ConfirmModal } from '@/components/ui/confirm-modal';
 import type { Database } from '@/integrations/supabase/types';
 
 type Lote = Database['public']['Tables']['lotes']['Row'] & {
@@ -60,6 +61,9 @@ const getResiduoLabel = (lote: Lote) => {
 export const LotesList = ({ lotes, loading, onEdit, onView, onDelete }: LotesListProps) => {
   const [selectedLote, setSelectedLote] = useState<Lote | null>(null);
   const [isGalleryOpen, setIsGalleryOpen] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [loteToDelete, setLoteToDelete] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const handleViewImages = (lote: Lote) => {
     setSelectedLote(lote);
@@ -72,6 +76,26 @@ export const LotesList = ({ lotes, loading, onEdit, onView, onDelete }: LotesLis
     } else {
       onView(lote);
     }
+  };
+
+  const handleDeleteClick = (id: string) => {
+    setLoteToDelete(id);
+    setShowDeleteConfirm(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (loteToDelete) {
+      setIsDeleting(true);
+      await onDelete(loteToDelete);
+      setIsDeleting(false);
+      setShowDeleteConfirm(false);
+      setLoteToDelete(null);
+    }
+  };
+
+  const handleCancelDelete = () => {
+    setShowDeleteConfirm(false);
+    setLoteToDelete(null);
   };
   if (loading) {
     return (
@@ -198,7 +222,7 @@ export const LotesList = ({ lotes, loading, onEdit, onView, onDelete }: LotesLis
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => onDelete(lote.id)}
+                onClick={() => handleDeleteClick(lote.id)}
                 className="text-red-600 hover:text-red-700 hover:bg-red-50"
               >
                 <Trash2 className="w-4 h-4" />
@@ -214,6 +238,19 @@ export const LotesList = ({ lotes, loading, onEdit, onView, onDelete }: LotesLis
         onClose={() => setIsGalleryOpen(false)}
         images={selectedLote?.imagenes || []}
         loteTitle={selectedLote ? getResiduoLabel(selectedLote) : ''}
+      />
+      
+      {/* Modal de confirmación de eliminación */}
+      <ConfirmModal
+        isOpen={showDeleteConfirm}
+        title="Confirmar eliminación"
+        message="Esta acción es permanente. ¿Estás seguro de que quieres eliminar este lote?"
+        onConfirm={handleConfirmDelete}
+        onCancel={handleCancelDelete}
+        confirmLabel="Ok"
+        cancelLabel="Cancelar"
+        variant="destructive"
+        isLoading={isDeleting}
       />
     </div>
   );

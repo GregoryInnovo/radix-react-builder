@@ -10,6 +10,7 @@ import { MapPin, Loader2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { ImageUpload } from './ImageUpload';
 import { useTiposResiduo } from '@/hooks/useTiposResiduo';
+import { ConfirmModal } from '@/components/ui/confirm-modal';
 import type { Database } from '@/integrations/supabase/types';
 
 type Lote = Database['public']['Tables']['lotes']['Row'];
@@ -23,6 +24,8 @@ interface LoteFormProps {
 
 export const LoteForm = ({ lote, onSubmit, loading, onCancel }: LoteFormProps) => {
   const { tiposResiduos, loading: loadingTipos } = useTiposResiduo();
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [pendingSubmitData, setPendingSubmitData] = useState<any>(null);
   const [formData, setFormData] = useState({
     tipo_residuo_id: '', // Cambiar para usar el nuevo campo
     peso_estimado: lote?.peso_estimado?.toString() || '',
@@ -114,7 +117,21 @@ export const LoteForm = ({ lote, onSubmit, loading, onCancel }: LoteFormProps) =
       imagenes: formData.imagenes,
     };
 
-    await onSubmit(submitData);
+    setPendingSubmitData(submitData);
+    setShowConfirm(true);
+  };
+
+  const handleConfirmSubmit = async () => {
+    if (pendingSubmitData) {
+      await onSubmit(pendingSubmitData);
+      setShowConfirm(false);
+      setPendingSubmitData(null);
+    }
+  };
+
+  const handleCancelConfirm = () => {
+    setShowConfirm(false);
+    setPendingSubmitData(null);
   };
 
   return (
@@ -250,6 +267,17 @@ export const LoteForm = ({ lote, onSubmit, loading, onCancel }: LoteFormProps) =
           </div>
         </form>
       </CardContent>
+      
+      <ConfirmModal
+        isOpen={showConfirm}
+        title={lote ? "Confirmar actualización" : "Confirmar creación"}
+        message={lote ? "¿Estás seguro de que quieres actualizar este lote?" : "¿Estás seguro de que quieres crear este lote?"}
+        onConfirm={handleConfirmSubmit}
+        onCancel={handleCancelConfirm}
+        confirmLabel="Ok"
+        cancelLabel="Cancelar"
+        isLoading={loading}
+      />
     </Card>
   );
 };
