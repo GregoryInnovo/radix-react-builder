@@ -15,6 +15,9 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { useOrdenes } from '@/hooks/useOrdenes';
+import type { Database } from '@/integrations/supabase/types';
+
+type Producto = Database['public']['Tables']['productos']['Row'];
 
 const formSchema = z.object({
   cantidad_solicitada: z.number().min(1, 'La cantidad debe ser mayor a 0'),
@@ -27,6 +30,7 @@ interface OrdenFormProps {
   tipo_item: 'lote' | 'producto';
   item_id: string;
   proveedor_id: string;
+  producto?: Producto | null;
   onSuccess?: () => void;
   onCancel?: () => void;
 }
@@ -35,12 +39,16 @@ export const OrdenForm: React.FC<OrdenFormProps> = ({
   tipo_item,
   item_id,
   proveedor_id,
+  producto,
   onSuccess,
   onCancel
 }) => {
   const [loading, setLoading] = useState(false);
   const [calendarOpen, setCalendarOpen] = useState(false);
   const { createOrden } = useOrdenes();
+
+  // Check if the product includes delivery (only for products)
+  const showDeliveryOptions = tipo_item === 'producto' && producto?.incluye_domicilio;
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -100,40 +108,42 @@ export const OrdenForm: React.FC<OrdenFormProps> = ({
           )}
         />
 
-        <FormField
-          control={form.control}
-          name="modalidad_entrega"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Modalidad de Entrega</FormLabel>
-              <div className="flex items-center space-x-4 mt-2">
-                <div className="flex items-center space-x-2">
-                  <span className={cn(
-                    "text-sm font-medium",
-                    field.value === 'punto' ? "text-primary" : "text-muted-foreground"
-                  )}>
-                    En punto
-                  </span>
-                  <FormControl>
-                    <Switch
-                      checked={field.value === 'domicilio'}
-                      onCheckedChange={(checked) => 
-                        field.onChange(checked ? 'domicilio' : 'punto')
-                      }
-                    />
-                  </FormControl>
-                  <span className={cn(
-                    "text-sm font-medium",
-                    field.value === 'domicilio' ? "text-primary" : "text-muted-foreground"
-                  )}>
-                    Domicilio
-                  </span>
+        {showDeliveryOptions && (
+          <FormField
+            control={form.control}
+            name="modalidad_entrega"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Modalidad de Entrega</FormLabel>
+                <div className="flex items-center space-x-4 mt-2">
+                  <div className="flex items-center space-x-2">
+                    <span className={cn(
+                      "text-sm font-medium",
+                      field.value === 'punto' ? "text-primary" : "text-muted-foreground"
+                    )}>
+                      En punto
+                    </span>
+                    <FormControl>
+                      <Switch
+                        checked={field.value === 'domicilio'}
+                        onCheckedChange={(checked) => 
+                          field.onChange(checked ? 'domicilio' : 'punto')
+                        }
+                      />
+                    </FormControl>
+                    <span className={cn(
+                      "text-sm font-medium",
+                      field.value === 'domicilio' ? "text-primary" : "text-muted-foreground"
+                    )}>
+                      Domicilio
+                    </span>
+                  </div>
                 </div>
-              </div>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
 
         <FormField
           control={form.control}
