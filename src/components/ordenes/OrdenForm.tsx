@@ -10,6 +10,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Switch } from '@/components/ui/switch';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { CalendarIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -45,10 +46,14 @@ export const OrdenForm: React.FC<OrdenFormProps> = ({
 }) => {
   const [loading, setLoading] = useState(false);
   const [calendarOpen, setCalendarOpen] = useState(false);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [existingOrdersCount, setExistingOrdersCount] = useState(0);
+  const [pendingOrderData, setPendingOrderData] = useState<any>(null);
   const { createOrden } = useOrdenes();
 
-  // Check if the product includes delivery (only for products)
-  const showDeliveryOptions = tipo_item === 'producto' && producto?.incluye_domicilio;
+  // Only show delivery options if it's a product AND it includes delivery
+  // If product doesn't include delivery, user must go to seller's address
+  const showDeliveryOptions = tipo_item === 'producto' && producto?.incluye_domicilio === true;
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -61,17 +66,42 @@ export const OrdenForm: React.FC<OrdenFormProps> = ({
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setLoading(true);
-    try {
-      const { error } = await createOrden({
-        tipo_item,
-        item_id,
-        proveedor_id,
-        cantidad_solicitada: values.cantidad_solicitada,
-        fecha_propuesta_retiro: values.fecha_propuesta_retiro.toISOString().split('T')[0],
-        mensaje_solicitud: values.mensaje_solicitud || null,
-      });
+    const orderData = {
+      tipo_item,
+      item_id,
+      proveedor_id,
+      cantidad_solicitada: values.cantidad_solicitada,
+      fecha_propuesta_retiro: values.fecha_propuesta_retiro.toISOString().split('T')[0],
+      mensaje_solicitud: values.mensaje_solicitud || null,
+    };
 
-      if (!error) {
+    try {
+      const result = await createOrden(orderData);
+
+      if (result.requiresConfirmation) {
+        setPendingOrderData(orderData);
+        setExistingOrdersCount(result.existingOrdersCount || 0);
+        setShowConfirmDialog(true);
+        setLoading(false);
+        return;
+      }
+
+      if (!result.error) {
+        onSuccess?.();
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleConfirmOrder = async () => {
+    if (!pendingOrderData) return;
+    
+    setLoading(true);
+    try {
+      const result = await createOrden(pendingOrderData, true);
+      if (!result.error) {
+        setShowConfirmDialog(false);
         onSuccess?.();
       }
     } finally {
@@ -217,6 +247,23 @@ export const OrdenForm: React.FC<OrdenFormProps> = ({
           )}
         </div>
       </form>
+
+      <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar Nueva Solicitud</AlertDialogTitle>
+            <AlertDialogDescription>
+              Ya has realizado {existingOrdersCount} solicitud{existingOrdersCount > 1 ? 'es' : ''} de intercambio para este {tipo_item === 'producto' ? 'producto' : 'lote'}. ¿Deseas continuar y crear una nueva solicitud?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmOrder} disabled={loading}>
+              {loading ? 'Creando...' : 'Sí, continuar'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Form>
   );
 };

@@ -38,8 +38,40 @@ export const useOrdenes = () => {
     }
   };
 
-  const createOrden = async (ordenData: Omit<OrdenInsert, 'solicitante_id'>) => {
+  const checkExistingOrders = async (proveedor_id: string, item_id: string) => {
+    if (!user) return 0;
+    
+    try {
+      const { data, error } = await supabase
+        .from('ordenes')
+        .select('id')
+        .eq('solicitante_id', user.id)
+        .eq('proveedor_id', proveedor_id)
+        .eq('item_id', item_id)
+        .in('estado', ['pendiente', 'aceptada']);
+      
+      if (error) throw error;
+      return data?.length || 0;
+    } catch (error) {
+      console.error('Error checking existing orders:', error);
+      return 0;
+    }
+  };
+
+  const createOrden = async (ordenData: Omit<OrdenInsert, 'solicitante_id'>, skipConfirmation = false) => {
     if (!user) return { data: null, error: new Error('Usuario no autenticado') };
+
+    // Check for existing orders
+    const existingOrdersCount = await checkExistingOrders(ordenData.proveedor_id, ordenData.item_id);
+    
+    if (existingOrdersCount > 0 && !skipConfirmation) {
+      return { 
+        data: null, 
+        error: null, 
+        requiresConfirmation: true, 
+        existingOrdersCount 
+      };
+    }
 
     try {
       const { data, error } = await supabase
@@ -123,6 +155,7 @@ export const useOrdenes = () => {
     loading,
     createOrden,
     updateOrden,
+    checkExistingOrders,
     refreshOrdenes: fetchOrdenes
   };
 };
