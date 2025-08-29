@@ -112,6 +112,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({ onSuccess, onCancel })
         costo_domicilio: formData.incluye_domicilio ? parseInt(formData.costo_domicilio) : 0,
         direccion_vendedor: formData.incluye_domicilio ? formData.direccion_vendedor : null,
         imagenes: validUrls,
+        status: formData.disponible ? 'aprobado' : 'pendiente', // Auto-approve available products
       });
 
       if (producto) {
