@@ -21,6 +21,10 @@ export const ProductForm: React.FC<ProductFormProps> = ({ onSuccess, onCancel })
     descripcion: '',
     disponible: true,
     origen_roa: '',
+    precio_unidad: '',
+    incluye_domicilio: false,
+    direccion_vendedor: '',
+    costo_domicilio: '',
   });
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
@@ -41,6 +45,19 @@ export const ProductForm: React.FC<ProductFormProps> = ({ onSuccess, onCancel })
 
     if (selectedFiles.length === 0) {
       newErrors.imagenes = 'Debe subir al menos una imagen';
+    }
+
+    if (!formData.precio_unidad || parseInt(formData.precio_unidad) <= 0) {
+      newErrors.precio_unidad = 'El precio por unidad es requerido y debe ser mayor a 0';
+    }
+
+    if (formData.incluye_domicilio) {
+      if (!formData.direccion_vendedor.trim()) {
+        newErrors.direccion_vendedor = 'La dirección es requerida cuando se incluye domicilio';
+      }
+      if (!formData.costo_domicilio || parseInt(formData.costo_domicilio) < 0 || parseInt(formData.costo_domicilio) > 20000) {
+        newErrors.costo_domicilio = 'El costo de domicilio debe estar entre 0 y 20,000 COP';
+      }
     }
 
     setErrors(newErrors);
@@ -91,6 +108,9 @@ export const ProductForm: React.FC<ProductFormProps> = ({ onSuccess, onCancel })
       // Create product with uploaded image URLs
       const producto = await createProducto({
         ...formData,
+        precio_unidad: parseInt(formData.precio_unidad),
+        costo_domicilio: formData.incluye_domicilio ? parseInt(formData.costo_domicilio) : 0,
+        direccion_vendedor: formData.incluye_domicilio ? formData.direccion_vendedor : null,
         imagenes: validUrls,
       });
 
@@ -169,6 +189,69 @@ export const ProductForm: React.FC<ProductFormProps> = ({ onSuccess, onCancel })
               onChange={(e) => handleInputChange('origen_roa', e.target.value)}
               placeholder="ej. Cáscaras de frutas del mercado local"
             />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="precio_unidad">Precio por Unidad (COP) *</Label>
+            <Input
+              id="precio_unidad"
+              type="number"
+              min="1"
+              value={formData.precio_unidad}
+              onChange={(e) => handleInputChange('precio_unidad', e.target.value)}
+              placeholder="ej. 15000"
+              className={errors.precio_unidad ? 'border-red-500' : ''}
+            />
+            {errors.precio_unidad && (
+              <p className="text-sm text-red-600">{errors.precio_unidad}</p>
+            )}
+          </div>
+
+          <div className="space-y-4">
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="incluye_domicilio"
+                checked={formData.incluye_domicilio}
+                onCheckedChange={(checked) => handleInputChange('incluye_domicilio', checked)}
+              />
+              <Label htmlFor="incluye_domicilio">Incluye domicilio</Label>
+            </div>
+
+            {formData.incluye_domicilio && (
+              <div className="space-y-4 pl-6 border-l-2 border-green-200">
+                <div className="space-y-2">
+                  <Label htmlFor="direccion_vendedor">Dirección del Vendedor *</Label>
+                  <Input
+                    id="direccion_vendedor"
+                    value={formData.direccion_vendedor}
+                    onChange={(e) => handleInputChange('direccion_vendedor', e.target.value)}
+                    placeholder="ej. Calle 59 #1c-125"
+                    className={errors.direccion_vendedor ? 'border-red-500' : ''}
+                  />
+                  {errors.direccion_vendedor && (
+                    <p className="text-sm text-red-600">{errors.direccion_vendedor}</p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="costo_domicilio">Costo de Domicilio (COP) *</Label>
+                  <Input
+                    id="costo_domicilio"
+                    type="number"
+                    min="0"
+                    max="20000"
+                    value={formData.costo_domicilio}
+                    onChange={(e) => handleInputChange('costo_domicilio', e.target.value)}
+                    placeholder="ej. 5000"
+                    className={errors.costo_domicilio ? 'border-red-500' : ''}
+                  />
+                  <p className="text-xs text-gray-500">Entre 0 y 20,000 COP</p>
+                  {errors.costo_domicilio && (
+                    <p className="text-sm text-red-600">{errors.costo_domicilio}</p>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="space-y-3">

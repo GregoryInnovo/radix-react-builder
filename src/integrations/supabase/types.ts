@@ -7,10 +7,10 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "12.2.12 (cd3cf9e)"
+    PostgrestVersion: "13.0.4"
   }
   public: {
     Tables: {
@@ -88,13 +88,6 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "calificaciones_orden_id_fkey"
-            columns: ["orden_id"]
-            isOneToOne: false
-            referencedRelation: "ordenes"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "calificaciones_producto_id_fkey"
             columns: ["producto_id"]
@@ -251,37 +244,49 @@ export type Database = {
       }
       productos: {
         Row: {
+          costo_domicilio: number | null
           created_at: string
           descripcion: string
+          direccion_vendedor: string | null
           disponible: boolean
           id: string
           imagenes: string[]
+          incluye_domicilio: boolean | null
           nombre: string
           origen_roa: string | null
+          precio_unidad: number | null
           status: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          costo_domicilio?: number | null
           created_at?: string
           descripcion: string
+          direccion_vendedor?: string | null
           disponible?: boolean
           id?: string
           imagenes?: string[]
+          incluye_domicilio?: boolean | null
           nombre: string
           origen_roa?: string | null
+          precio_unidad?: number | null
           status?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          costo_domicilio?: number | null
           created_at?: string
           descripcion?: string
+          direccion_vendedor?: string | null
           disponible?: boolean
           id?: string
           imagenes?: string[]
+          incluye_domicilio?: boolean | null
           nombre?: string
           origen_roa?: string | null
+          precio_unidad?: number | null
           status?: string | null
           updated_at?: string
           user_id?: string
@@ -336,6 +341,21 @@ export type Database = {
           phone?: string | null
           updated_at?: string | null
           user_type?: string | null
+        }
+        Relationships: []
+      }
+      test: {
+        Row: {
+          created_at: string
+          id: number
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+        }
+        Update: {
+          created_at?: string
+          id?: number
         }
         Relationships: []
       }

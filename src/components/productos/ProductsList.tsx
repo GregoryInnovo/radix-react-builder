@@ -86,6 +86,20 @@ export const ProductsList: React.FC<ProductsListProps> = ({
                 {producto.disponible ? 'Disponible' : 'No disponible'}
               </Badge>
             </div>
+            
+            {/* Precio destacado */}
+            {producto.precio_unidad && (
+              <div className="mt-2 p-3 bg-green-50 border border-green-200 rounded-lg">
+                <div className="text-xl font-bold text-green-800">
+                  $ {producto.precio_unidad.toLocaleString('es-CO')} COP
+                </div>
+                {producto.incluye_domicilio && producto.costo_domicilio > 0 && (
+                  <div className="text-sm text-green-600 mt-1">
+                    + $ {producto.costo_domicilio.toLocaleString('es-CO')} COP domicilio
+                  </div>
+                )}
+              </div>
+            )}
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-gray-600 text-sm line-clamp-3">
@@ -95,6 +109,13 @@ export const ProductsList: React.FC<ProductsListProps> = ({
             {producto.origen_roa && (
               <div className="text-sm text-green-600 bg-green-50 px-2 py-1 rounded">
                 <strong>Origen ROA:</strong> {producto.origen_roa}
+              </div>
+            )}
+
+            {/* Dirección del vendedor si incluye domicilio */}
+            {producto.incluye_domicilio && producto.direccion_vendedor && (
+              <div className="text-sm text-blue-600 bg-blue-50 px-2 py-1 rounded">
+                <strong>Dirección:</strong> {producto.direccion_vendedor}
               </div>
             )}
 
