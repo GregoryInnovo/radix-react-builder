@@ -52,11 +52,13 @@ export const ProductForm: React.FC<ProductFormProps> = ({ onSuccess, onCancel })
     }
 
     if (formData.incluye_domicilio) {
-      if (!formData.direccion_vendedor.trim()) {
-        newErrors.direccion_vendedor = 'La dirección es requerida cuando se incluye domicilio';
-      }
       if (!formData.costo_domicilio || parseInt(formData.costo_domicilio) < 0 || parseInt(formData.costo_domicilio) > 20000) {
         newErrors.costo_domicilio = 'El costo de domicilio debe estar entre 0 y 20,000 COP';
+      }
+    } else {
+      // Cuando NO incluye domicilio, la dirección es obligatoria
+      if (!formData.direccion_vendedor.trim()) {
+        newErrors.direccion_vendedor = 'La dirección es requerida cuando no se incluye domicilio';
       }
     }
 
@@ -110,7 +112,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({ onSuccess, onCancel })
         ...formData,
         precio_unidad: parseInt(formData.precio_unidad),
         costo_domicilio: formData.incluye_domicilio ? parseInt(formData.costo_domicilio) : 0,
-        direccion_vendedor: formData.incluye_domicilio ? formData.direccion_vendedor : null,
+        direccion_vendedor: formData.direccion_vendedor,
         imagenes: validUrls,
         status: formData.disponible ? 'aprobado' : 'pendiente', // Auto-approve available products
       });
@@ -218,22 +220,29 @@ export const ProductForm: React.FC<ProductFormProps> = ({ onSuccess, onCancel })
               <Label htmlFor="incluye_domicilio">Incluye domicilio</Label>
             </div>
 
-            {formData.incluye_domicilio && (
-              <div className="space-y-4 pl-6 border-l-2 border-green-200">
-                <div className="space-y-2">
-                  <Label htmlFor="direccion_vendedor">Dirección del Vendedor *</Label>
-                  <Input
-                    id="direccion_vendedor"
-                    value={formData.direccion_vendedor}
-                    onChange={(e) => handleInputChange('direccion_vendedor', e.target.value)}
-                    placeholder="ej. Calle 59 #1c-125"
-                    className={errors.direccion_vendedor ? 'border-red-500' : ''}
-                  />
-                  {errors.direccion_vendedor && (
-                    <p className="text-sm text-red-600">{errors.direccion_vendedor}</p>
-                  )}
-                </div>
+            <div className="space-y-2">
+              <Label htmlFor="direccion_vendedor">
+                Dirección del Vendedor *
+                {!formData.incluye_domicilio && (
+                  <span className="text-xs text-gray-500 ml-2">
+                    (Requerida para recoger el producto)
+                  </span>
+                )}
+              </Label>
+              <Input
+                id="direccion_vendedor"
+                value={formData.direccion_vendedor}
+                onChange={(e) => handleInputChange('direccion_vendedor', e.target.value)}
+                placeholder="ej. Calle 59 #1c-125"
+                className={errors.direccion_vendedor ? 'border-red-500' : ''}
+              />
+              {errors.direccion_vendedor && (
+                <p className="text-sm text-red-600">{errors.direccion_vendedor}</p>
+              )}
+            </div>
 
+            {formData.incluye_domicilio && (
+              <div className="space-y-2 pl-6 border-l-2 border-green-200">
                 <div className="space-y-2">
                   <Label htmlFor="costo_domicilio">Costo de Domicilio (COP) *</Label>
                   <Input
