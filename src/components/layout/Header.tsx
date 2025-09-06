@@ -71,15 +71,19 @@ export const Header = () => {
                   <div className="mt-8 space-y-4">
                     {isAuthenticated ? (
                       <>
-                        {/* User Info */}
-                        <div className="flex items-center space-x-3 p-3 lg:p-4 bg-green-50 rounded-lg">
-                          <User className="h-5 w-5 lg:h-6 lg:w-6 text-green-600" />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm lg:text-base font-medium text-gray-900 truncate">
-                              {user?.email}
-                            </p>
-                          </div>
-                        </div>
+                         {/* User Info */}
+                         <button
+                           onClick={() => handleNavigation(`/perfil/${user?.id}`)}
+                           className="flex items-center space-x-3 p-3 lg:p-4 bg-green-50 rounded-lg hover:bg-green-100 transition-colors w-full text-left"
+                         >
+                           <User className="h-5 w-5 lg:h-6 lg:w-6 text-green-600" />
+                           <div className="flex-1 min-w-0">
+                             <p className="text-sm lg:text-base font-medium text-gray-900 truncate">
+                               {user?.email}
+                             </p>
+                             <p className="text-xs text-green-600">Ver mi perfil</p>
+                           </div>
+                         </button>
 
                         {/* Navigation Items */}
                         <nav className="space-y-2">
@@ -164,11 +168,14 @@ export const Header = () => {
           <div className="flex items-center space-x-4">
             {isAuthenticated ? (
               <>
-                <NotificacionesDropdown />
-                <div className="flex items-center space-x-2">
-                  <User className="h-4 w-4 text-gray-600" />
-                  <span className="text-sm text-gray-600">{user?.email}</span>
-                </div>
+                 <NotificacionesDropdown />
+                 <Link 
+                   to={`/perfil/${user?.id}`}
+                   className="flex items-center space-x-2 hover:bg-gray-100 px-3 py-2 rounded-md transition-colors"
+                 >
+                   <User className="h-4 w-4 text-gray-600" />
+                   <span className="text-sm text-gray-600">{user?.email}</span>
+                 </Link>
                 <Button variant="outline" size="sm" onClick={handleSignOut}>
                   <LogOut className="h-4 w-4 mr-2" />
                   Salir
