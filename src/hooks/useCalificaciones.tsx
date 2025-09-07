@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from '@/hooks/use-toast';
@@ -80,7 +80,7 @@ export const useCalificaciones = () => {
     }
   };
 
-  const getUserRating = async (userId: string): Promise<number> => {
+  const getUserRating = useCallback(async (userId: string): Promise<number> => {
     try {
       const { data } = await supabase.rpc('get_user_average_rating', { user_id: userId });
       return data || 0;
@@ -88,9 +88,9 @@ export const useCalificaciones = () => {
       console.error('Error getting user rating:', error);
       return 0;
     }
-  };
+  }, []);
 
-  const getUserRatingCount = async (userId: string): Promise<number> => {
+  const getUserRatingCount = useCallback(async (userId: string): Promise<number> => {
     try {
       const { data } = await supabase.rpc('get_user_rating_count', { user_id: userId });
       return data || 0;
@@ -98,9 +98,9 @@ export const useCalificaciones = () => {
       console.error('Error getting user rating count:', error);
       return 0;
     }
-  };
+  }, []);
 
-  const getCalificacionesByUser = async (userId: string) => {
+  const getCalificacionesByUser = useCallback(async (userId: string) => {
     setLoading(true);
     try {
       const { data, error } = await supabase
@@ -123,7 +123,7 @@ export const useCalificaciones = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   const deleteCalificacion = async (id: string) => {
     try {

@@ -32,7 +32,7 @@ export const Header = () => {
   };
 
   const navigationItems = [
-    { path: "/search", label: "Buscar Lotes", icon: Search },
+    { path: "/search", label: "Buscar ROA", icon: Search },
     { path: "/lotes", label: "Mis Lotes", icon: Package },
     { path: "/productos", label: "Productos", icon: ShoppingBag },
     { path: "/ordenes", label: "Órdenes", icon: ClipboardList },
@@ -143,7 +143,7 @@ export const Header = () => {
           <nav className="hidden xl:flex items-center space-x-6">
             <Link to="/search" className="flex items-center gap-2 text-gray-600 hover:text-green-600">
               <Search className="h-4 w-4" />
-              Buscar Lotes
+              Buscar ROA
             </Link>
             <Link to="/lotes" className="flex items-center gap-2 text-gray-600 hover:text-green-600">
               <Package className="h-4 w-4" />

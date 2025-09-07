@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Header } from '@/components/layout/Header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -37,65 +37,70 @@ const UserProfile = () => {
   const [userRating, setUserRating] = useState(0);
   const [ratingCount, setRatingCount] = useState(0);
 
-  useEffect(() => {
+  const fetchUserProfile = useCallback(async () => {
     if (!userId) return;
+    
+    setLoading(true);
+    try {
+      // Fetch user profile
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .maybeSingle();
 
-    const fetchUserProfile = async () => {
-      setLoading(true);
-      try {
-        // Fetch user profile
-        const { data: profileData, error: profileError } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', userId)
-          .single();
+      if (profileError) throw profileError;
+      setProfile(profileData);
 
-        if (profileError) throw profileError;
-        setProfile(profileData);
-
-        // Fetch user stats
-        const [lotesResponse, productosResponse, ordenesResponse] = await Promise.all([
-          supabase
-            .from('lotes')
-            .select('id', { count: 'exact' })
-            .eq('user_id', userId),
-          supabase
-            .from('productos')
-            .select('id', { count: 'exact' })
-            .eq('user_id', userId),
-          supabase
-            .from('ordenes')
-            .select('id', { count: 'exact' })
-            .or(`solicitante_id.eq.${userId},proveedor_id.eq.${userId}`)
-        ]);
-
-        setStats({
-          totalLotes: lotesResponse.count || 0,
-          totalProductos: productosResponse.count || 0,
-          totalOrdenes: ordenesResponse.count || 0
-        });
-
-        // Fetch ratings data
-        const [avgRating, ratingCount] = await Promise.all([
-          getUserRating(userId),
-          getUserRatingCount(userId)
-        ]);
-
-        setUserRating(avgRating);
-        setRatingCount(ratingCount);
-
-        // Fetch user reviews
-        await getCalificacionesByUser(userId);
-
-      } catch (error: any) {
-        console.error('Error fetching user profile:', error);
-      } finally {
+      if (!profileData) {
         setLoading(false);
+        return;
       }
-    };
 
-    fetchUserProfile();
+      // Fetch user stats
+      const [lotesResponse, productosResponse, ordenesResponse] = await Promise.all([
+        supabase
+          .from('lotes')
+          .select('id', { count: 'exact' })
+          .eq('user_id', userId),
+        supabase
+          .from('productos')
+          .select('id', { count: 'exact' })
+          .eq('user_id', userId),
+        supabase
+          .from('ordenes')
+          .select('id', { count: 'exact' })
+          .or(`solicitante_id.eq.${userId},proveedor_id.eq.${userId}`)
+      ]);
+
+      setStats({
+        totalLotes: lotesResponse.count || 0,
+        totalProductos: productosResponse.count || 0,
+        totalOrdenes: ordenesResponse.count || 0
+      });
+
+      // Fetch ratings data
+      const [avgRating, ratingCount] = await Promise.all([
+        getUserRating(userId),
+        getUserRatingCount(userId)
+      ]);
+
+      setUserRating(avgRating);
+      setRatingCount(ratingCount);
+
+      // Fetch user reviews
+      await getCalificacionesByUser(userId);
+
+    } catch (error: any) {
+      console.error('Error fetching user profile:', error);
+    } finally {
+      setLoading(false);
+    }
   }, [userId, getUserRating, getUserRatingCount, getCalificacionesByUser]);
+
+  useEffect(() => {
+    fetchUserProfile();
+  }, [fetchUserProfile]);
 
   if (loading) {
     return (
