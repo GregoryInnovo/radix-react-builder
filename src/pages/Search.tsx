@@ -12,6 +12,7 @@ import { useTiposResiduo } from '@/hooks/useTiposResiduo';
 import { LoteDetailsModal } from '@/components/lotes/LoteDetailsModal';
 import { LocationMap } from '@/components/search/LocationMap';
 import { SearchResultsMap } from '@/components/search/SearchResultsMap';
+import { ReservarLote } from '@/components/lotes/ReservarLote';
 import { useAuth } from '@/hooks/useAuth';
 
 const Search = () => {
@@ -370,9 +371,14 @@ const Search = () => {
                               </Badge>
                             )}
                             <div className="flex flex-col gap-1">
-                              <Badge className="bg-green-100 text-green-800">
-                                {result.lote.estado}
-                              </Badge>
+                              <div className="flex items-center gap-1">
+                                <Badge className="bg-green-100 text-green-800">
+                                  {result.lote.estado}
+                                </Badge>
+                                {result.lote.estado === 'disponible' && (
+                                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                                )}
+                              </div>
                               <Badge variant={result.lote.status === 'aprobado' ? 'default' : 'secondary'} className="text-xs">
                                 {result.lote.status || 'pendiente'}
                               </Badge>
@@ -412,13 +418,10 @@ const Search = () => {
                           >
                             Ver Detalles
                           </Button>
-                          <Button 
-                            size="sm"
-                            className="flex-1 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700"
-                            disabled
-                          >
-                            Próximamente
-                          </Button>
+                          <ReservarLote 
+                            lote={result.lote}
+                            className="flex-1 text-xs px-2"
+                          />
                         </div>
                       </CardContent>
                     </Card>
