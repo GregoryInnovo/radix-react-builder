@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Leaf, Recycle, Users, MapPin, Star, TrendingUp, User } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { GuiasPreviewSection } from '@/components/guias/GuiasPreviewSection';
 
 const Index = () => {
   const { isAuthenticated, user } = useAuth();
@@ -231,6 +232,9 @@ const Index = () => {
           </div>
         </div>
       </section>
+
+      {/* Guides Section */}
+      <GuiasPreviewSection />
 
       {/* CTA Section */}
       <section className="py-16 bg-green-600 text-white">

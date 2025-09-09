@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdmin } from "@/hooks/useAdmin";
-import { LogOut, User, Package, Search, ShoppingBag, ClipboardList, Settings, Menu, X } from "lucide-react";
+import { LogOut, User, Package, Search, ShoppingBag, ClipboardList, Settings, Menu, X, BookOpen } from "lucide-react";
 import { NotificacionesDropdown } from "@/components/notificaciones/NotificacionesDropdown";
 import { useState } from "react";
 import {
@@ -33,6 +33,7 @@ export const Header = () => {
 
   const navigationItems = [
     { path: "/search", label: "Buscar ROA", icon: Search },
+    { path: "/guias", label: "Guías", icon: BookOpen },
     { path: "/lotes", label: "Mis Lotes", icon: Package },
     { path: "/productos", label: "Productos", icon: ShoppingBag },
     { path: "/ordenes", label: "Órdenes", icon: ClipboardList },
@@ -144,6 +145,10 @@ export const Header = () => {
             <Link to="/search" className="flex items-center gap-2 text-gray-600 hover:text-green-600">
               <Search className="h-4 w-4" />
               Buscar ROA
+            </Link>
+            <Link to="/guias" className="flex items-center gap-2 text-gray-600 hover:text-green-600">
+              <BookOpen className="h-4 w-4" />
+              Guías
             </Link>
             <Link to="/lotes" className="flex items-center gap-2 text-gray-600 hover:text-green-600">
               <Package className="h-4 w-4" />

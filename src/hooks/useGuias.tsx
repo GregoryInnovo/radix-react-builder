@@ -175,8 +175,20 @@ export const useGuias = (filters: UseGuiasFilters = {}) => {
 
   const incrementViewsMutation = useMutation({
     mutationFn: async (guiaId: string) => {
-      const { error } = await supabase.rpc('increment_guia_views', { guia_id: guiaId });
-      if (error) throw error;
+      // Simple implementation without SQL functions for now
+      const { data: currentGuia } = await supabase
+        .from('guias')
+        .select('vistas')
+        .eq('id', guiaId)
+        .single();
+      
+      if (currentGuia) {
+        const { error } = await supabase
+          .from('guias')
+          .update({ vistas: currentGuia.vistas + 1 })
+          .eq('id', guiaId);
+        if (error) throw error;
+      }
     },
   });
 

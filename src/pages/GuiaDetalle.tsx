@@ -50,7 +50,20 @@ export default function GuiaDetalle() {
   // Increment views when component mounts
   useEffect(() => {
     if (guia?.id) {
-      supabase.rpc('increment_guia_views', { guia_id: guia.id });
+      // Simple implementation without SQL functions for now
+      supabase
+        .from('guias')
+        .select('vistas')
+        .eq('id', guia.id)
+        .single()
+        .then(({ data }) => {
+          if (data) {
+            supabase
+              .from('guias')
+              .update({ vistas: data.vistas + 1 })
+              .eq('id', guia.id);
+          }
+        });
     }
   }, [guia?.id]);
 
