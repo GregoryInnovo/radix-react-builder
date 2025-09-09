@@ -97,6 +97,98 @@ export type Database = {
           },
         ]
       }
+      guias: {
+        Row: {
+          activa: boolean
+          autor_id: string
+          categoria: string
+          contenido: string
+          created_at: string
+          descripcion: string
+          destacada: boolean
+          id: string
+          imagenes: string[] | null
+          nivel: string
+          portada_url: string | null
+          tags: string[] | null
+          tiempo_lectura: number | null
+          tipo: string
+          titulo: string
+          updated_at: string
+          video_url: string | null
+          vistas: number
+        }
+        Insert: {
+          activa?: boolean
+          autor_id: string
+          categoria: string
+          contenido: string
+          created_at?: string
+          descripcion: string
+          destacada?: boolean
+          id?: string
+          imagenes?: string[] | null
+          nivel?: string
+          portada_url?: string | null
+          tags?: string[] | null
+          tiempo_lectura?: number | null
+          tipo: string
+          titulo: string
+          updated_at?: string
+          video_url?: string | null
+          vistas?: number
+        }
+        Update: {
+          activa?: boolean
+          autor_id?: string
+          categoria?: string
+          contenido?: string
+          created_at?: string
+          descripcion?: string
+          destacada?: boolean
+          id?: string
+          imagenes?: string[] | null
+          nivel?: string
+          portada_url?: string | null
+          tags?: string[] | null
+          tiempo_lectura?: number | null
+          tipo?: string
+          titulo?: string
+          updated_at?: string
+          video_url?: string | null
+          vistas?: number
+        }
+        Relationships: []
+      }
+      guias_guardadas: {
+        Row: {
+          created_at: string
+          guia_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          guia_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          guia_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "guias_guardadas_guia_id_fkey"
+            columns: ["guia_id"]
+            isOneToOne: false
+            referencedRelation: "guias"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lotes: {
         Row: {
           created_at: string | null
