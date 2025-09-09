@@ -2,8 +2,10 @@ import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { MapPin, Weight, Calendar, Clock, User, FileText, Image } from 'lucide-react';
+import { MapPin, Weight, Calendar, Clock, User, FileText, Image, History } from 'lucide-react';
 import { LoteImageGallery } from './LoteImageGallery';
+import { LoteStatusHistory } from './LoteStatusHistory';
+import { ReservarLote } from './ReservarLote';
 import { useState } from 'react';
 import type { Database } from '@/integrations/supabase/types';
 
@@ -29,6 +31,7 @@ export const LoteDetailsModal: React.FC<LoteDetailsModalProps> = ({
   distance
 }) => {
   const [showImageGallery, setShowImageGallery] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
 
   const formatDistance = (distance: number) => {
     if (distance < 1) {
@@ -224,19 +227,31 @@ export const LoteDetailsModal: React.FC<LoteDetailsModalProps> = ({
             )}
 
             {/* Action Buttons */}
-            <div className="flex gap-3 pt-4 border-t">
+            <div className="flex flex-col gap-3 pt-4 border-t">
+              <div className="flex gap-3">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowHistory(!showHistory)}
+                  className="flex-1"
+                >
+                  <History className="w-4 h-4 mr-2" />
+                  {showHistory ? 'Ocultar' : 'Ver'} Historial
+                </Button>
+                <ReservarLote lote={lote} className="flex-1" />
+              </div>
+              
+              {showHistory && (
+                <div className="mt-4">
+                  <LoteStatusHistory loteId={lote.id} />
+                </div>
+              )}
+
               <Button
                 variant="outline"
                 onClick={onClose}
-                className="flex-1"
+                className="w-full"
               >
                 Cerrar
-              </Button>
-              <Button
-                className="flex-1 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700"
-                disabled
-              >
-                Solicitar (Próximamente)
               </Button>
             </div>
           </div>

@@ -45,41 +45,41 @@ export const LoteStatusHistory = ({ loteId }: LoteStatusHistoryProps) => {
 
   const fetchStatusHistory = async () => {
     try {
-      // Por ahora simulamos el historial basado en la fecha de creación y actualización
-      // En una implementación completa, tendríamos una tabla separada para el historial
-      const { data: lote, error } = await supabase
+      // Get lote info for creation date and current state
+      const { data: lote, error: loteError } = await supabase
         .from('lotes')
-        .select('*')
+        .select('created_at, updated_at, estado')
         .eq('id', loteId)
         .single();
 
-      if (error) throw error;
+      if (loteError) throw loteError;
 
-      // Simular historial básico
-      const mockHistory: StatusChange[] = [
-        {
-          id: '1',
-          lote_id: loteId,
-          estado_anterior: null,
-          estado_nuevo: 'disponible' as BatchStatus,
-          fecha_cambio: lote.created_at || '',
-          created_at: lote.created_at || ''
-        }
-      ];
+      // Create basic history based on available data
+      const history: StatusChange[] = [];
 
-      // Si el lote fue actualizado y tiene un estado diferente a disponible, agregar ese cambio
-      if (lote.estado !== 'disponible' && lote.updated_at !== lote.created_at) {
-        mockHistory.push({
-          id: '2',
+      // Always add creation entry
+      history.push({
+        id: 'creation',
+        lote_id: loteId,
+        estado_anterior: null,
+        estado_nuevo: 'disponible' as BatchStatus,
+        fecha_cambio: lote.created_at || '',
+        created_at: lote.created_at || ''
+      });
+
+      // If the lote was updated and has a different state, add that change
+      if (lote.estado !== 'disponible' && lote.updated_at && lote.updated_at !== lote.created_at) {
+        history.push({
+          id: 'update',
           lote_id: loteId,
           estado_anterior: 'disponible' as BatchStatus,
           estado_nuevo: lote.estado,
-          fecha_cambio: lote.updated_at || '',
-          created_at: lote.updated_at || ''
+          fecha_cambio: lote.updated_at,
+          created_at: lote.updated_at
         });
       }
 
-      setHistory(mockHistory);
+      setHistory(history);
     } catch (error) {
       console.error('Error fetching status history:', error);
     } finally {

@@ -118,10 +118,10 @@ export const SearchResultsMap: React.FC<SearchResultsMapProps> = ({
               }}
             >
               <div className="flex flex-col items-center">
-                <div className="bg-blue-500 rounded-full p-2 shadow-lg border-2 border-white">
-                  <User className="w-4 h-4 text-white" />
+                <div className="bg-blue-600 rounded-full p-3 shadow-xl border-3 border-white ring-2 ring-blue-300">
+                  <User className="w-5 h-5 text-white" />
                 </div>
-                <div className="mt-1 bg-blue-500 text-white text-xs px-2 py-1 rounded shadow-lg whitespace-nowrap">
+                <div className="mt-1 bg-blue-600 text-white text-xs px-3 py-1 rounded shadow-lg whitespace-nowrap font-medium">
                   Tu ubicación
                 </div>
               </div>
@@ -146,13 +146,13 @@ export const SearchResultsMap: React.FC<SearchResultsMapProps> = ({
                 onClick={() => onLoteSelect(result.lote, result.distance)}
               >
                 <div className="flex flex-col items-center">
-                  <div className="bg-green-500 rounded-full p-2 shadow-lg border-2 border-white hover:bg-green-600">
-                    <MapPin className="w-4 h-4 text-white fill-white" />
+                  <div className="bg-emerald-600 rounded-full p-3 shadow-xl border-3 border-white ring-2 ring-emerald-300 hover:bg-emerald-700 transition-all">
+                    <MapPin className="w-5 h-5 text-white fill-white" />
                   </div>
-                  <div className="mt-1 bg-green-500 text-white text-xs px-2 py-1 rounded shadow-lg whitespace-nowrap max-w-32 truncate hover:bg-green-600">
+                  <div className="mt-1 bg-emerald-600 text-white text-xs px-3 py-1 rounded shadow-lg whitespace-nowrap max-w-32 truncate hover:bg-emerald-700 font-medium">
                     {result.lote.tipos_residuo?.nombre || 'Lote ROA'}
                     {userLocation && (
-                      <span className="block text-green-100">
+                      <span className="block text-emerald-100">
                         {formatDistance(result.distance)}
                       </span>
                     )}
@@ -194,7 +194,7 @@ export const SearchResultsMap: React.FC<SearchResultsMapProps> = ({
       </div>
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-center">
         <div className="bg-white rounded-lg p-3 border">
           <div className="text-lg font-semibold text-blue-600">{results.length}</div>
           <div className="text-xs text-gray-600">Lotes encontrados</div>
@@ -212,12 +212,6 @@ export const SearchResultsMap: React.FC<SearchResultsMapProps> = ({
                 {formatDistance(Math.max(...results.map(r => r.distance)))}
               </div>
               <div className="text-xs text-gray-600">Más lejano</div>
-            </div>
-            <div className="bg-white rounded-lg p-3 border">
-              <div className="text-lg font-semibold text-purple-600">
-                {formatDistance(results.reduce((sum, r) => sum + r.distance, 0) / results.length)}
-              </div>
-              <div className="text-xs text-gray-600">Distancia promedio</div>
             </div>
           </>
         )}

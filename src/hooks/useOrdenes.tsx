@@ -61,16 +61,18 @@ export const useOrdenes = () => {
   const createOrden = async (ordenData: Omit<OrdenInsert, 'solicitante_id'>, skipConfirmation = false) => {
     if (!user) return { data: null, error: new Error('Usuario no autenticado') };
 
-    // Check for existing orders
-    const existingOrdersCount = await checkExistingOrders(ordenData.proveedor_id, ordenData.item_id);
-    
-    if (existingOrdersCount > 0 && !skipConfirmation) {
-      return { 
-        data: null, 
-        error: null, 
-        requiresConfirmation: true, 
-        existingOrdersCount 
-      };
+    // Check for existing orders only for non-lot items or when not skipping confirmation
+    if (ordenData.tipo_item !== 'lote') {
+      const existingOrdersCount = await checkExistingOrders(ordenData.proveedor_id, ordenData.item_id);
+      
+      if (existingOrdersCount > 0 && !skipConfirmation) {
+        return { 
+          data: null, 
+          error: null, 
+          requiresConfirmation: true, 
+          existingOrdersCount 
+        };
+      }
     }
 
     try {
@@ -85,9 +87,23 @@ export const useOrdenes = () => {
 
       if (error) throw error;
 
+      // If this is a lot reservation, update the lot status to 'reservado'
+      if (ordenData.tipo_item === 'lote') {
+        const { error: updateError } = await supabase
+          .from('lotes')
+          .update({ estado: 'reservado' })
+          .eq('id', ordenData.item_id);
+
+        if (updateError) {
+          console.error('Error updating lot status:', updateError);
+        }
+      }
+
+      const messageType = ordenData.tipo_item === 'lote' ? 'reserva' : 'intercambio';
+      
       toast({
-        title: "Solicitud enviada",
-        description: "Tu solicitud de intercambio ha sido enviada correctamente.",
+        title: `Solicitud de ${messageType} enviada`,
+        description: `Tu solicitud de ${messageType} ha sido enviada correctamente.`,
       });
 
       await fetchOrdenes();
