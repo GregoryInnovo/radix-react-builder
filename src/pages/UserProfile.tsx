@@ -29,6 +29,7 @@ const UserProfile = () => {
   const { 
     calificaciones, 
     getCalificacionesByUser, 
+    getCalificacionesRecientes,
     getUserRating, 
     getUserRatingCount,
     loading: ratingsLoading 
@@ -36,6 +37,7 @@ const UserProfile = () => {
 
   const [userRating, setUserRating] = useState(0);
   const [ratingCount, setRatingCount] = useState(0);
+  const [recentComments, setRecentComments] = useState<any[]>([]);
 
   const fetchUserProfile = useCallback(async () => {
     if (!userId) return;
@@ -80,15 +82,17 @@ const UserProfile = () => {
       });
 
       // Fetch ratings data
-      const [avgRating, ratingCount] = await Promise.all([
+      const [avgRating, ratingCount, recentComments] = await Promise.all([
         getUserRating(userId),
-        getUserRatingCount(userId)
+        getUserRatingCount(userId),
+        getCalificacionesRecientes(userId, 3)
       ]);
 
       setUserRating(avgRating);
       setRatingCount(ratingCount);
+      setRecentComments(recentComments);
 
-      // Fetch user reviews
+      // Fetch user reviews for "Ver más" functionality
       await getCalificacionesByUser(userId);
 
     } catch (error: any) {
@@ -96,7 +100,7 @@ const UserProfile = () => {
     } finally {
       setLoading(false);
     }
-  }, [userId, getUserRating, getUserRatingCount, getCalificacionesByUser]);
+  }, [userId, getUserRating, getUserRatingCount, getCalificacionesByUser, getCalificacionesRecientes]);
 
   useEffect(() => {
     fetchUserProfile();
@@ -277,25 +281,41 @@ const UserProfile = () => {
             </CardHeader>
             <CardContent>
               {ratingCount > 0 ? (
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                      <UserRating userId={userId!} showCount={true} size="lg" />
-                    </div>
-                    <Collapsible open={showReviews} onOpenChange={setShowReviews}>
-                      <CollapsibleTrigger asChild>
-                        <Button variant="outline" size="sm">
-                          {showReviews ? 'Ocultar reseñas' : 'Ver todas las reseñas'}
-                        </Button>
-                      </CollapsibleTrigger>
-                      <CollapsibleContent className="mt-4">
-                        <CalificacionesList 
-                          calificaciones={calificaciones}
-                          showDeleteButton={false}
-                        />
-                      </CollapsibleContent>
-                    </Collapsible>
+                <div className="space-y-6">
+                  {/* Rating centrado */}
+                  <div className="text-center">
+                    <UserRating userId={userId!} showCount={true} size="lg" />
                   </div>
+                  
+                  {/* Comentarios recientes */}
+                  {recentComments.length > 0 && (
+                    <div className="space-y-4">
+                      <h4 className="font-medium text-gray-900">Comentarios recientes</h4>
+                      <CalificacionesList 
+                        calificaciones={recentComments}
+                        showDeleteButton={false}
+                        defaultLimit={3}
+                        showExpandButton={true}
+                      />
+                      
+                      {/* Botón Ver más solo si hay más comentarios que los mostrados */}
+                      {calificaciones.length > 3 && (
+                        <Collapsible open={showReviews} onOpenChange={setShowReviews}>
+                          <CollapsibleTrigger asChild>
+                            <Button variant="outline" className="w-full">
+                              {showReviews ? 'Ocultar todas las reseñas' : `Ver todas las reseñas (${calificaciones.length})`}
+                            </Button>
+                          </CollapsibleTrigger>
+                          <CollapsibleContent className="mt-4">
+                            <CalificacionesList 
+                              calificaciones={calificaciones}
+                              showDeleteButton={false}
+                            />
+                          </CollapsibleContent>
+                        </Collapsible>
+                      )}
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="text-center py-8">

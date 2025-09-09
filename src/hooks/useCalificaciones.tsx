@@ -107,11 +107,12 @@ export const useCalificaciones = () => {
         .from('calificaciones')
         .select(`
           *,
-          calificador:calificador_id(full_name),
-          orden:orden_id(*)
+          calificador:profiles!calificaciones_calificador_id_fkey(full_name, avatar_url),
+          orden:ordenes!calificaciones_orden_id_fkey(tipo_item, created_at)
         `)
         .eq('calificado_id', userId)
         .eq('reportada', false)
+        .eq('oculta', false)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -152,6 +153,85 @@ export const useCalificaciones = () => {
     }
   };
 
+  const reportarCalificacion = async (calificacionId: string, motivo: string) => {
+    if (!user) throw new Error('Usuario no autenticado');
+
+    const { error } = await supabase
+      .from('calificaciones')
+      .update({ reportada: true })
+      .eq('id', calificacionId);
+
+    if (error) throw error;
+  };
+
+  const getCalificacionesRecientes = async (userId: string, limit: number = 3) => {
+    const { data, error } = await supabase
+      .from('calificaciones')
+      .select(`
+        *,
+        calificador:profiles!calificaciones_calificador_id_fkey(full_name, avatar_url),
+        orden:ordenes!calificaciones_orden_id_fkey(tipo_item, created_at)
+      `)
+      .eq('calificado_id', userId)
+      .eq('reportada', false)
+      .eq('oculta', false)
+      .not('comentario', 'is', null)
+      .order('created_at', { ascending: false })
+      .limit(limit);
+
+    if (error) throw error;
+    return data || [];
+  };
+
+  const hideCalificacion = async (calificacionId: string) => {
+    if (!user) throw new Error('Usuario no autenticado');
+
+    const { error } = await supabase
+      .from('calificaciones')
+      .update({ oculta: true })
+      .eq('id', calificacionId);
+
+    if (error) throw error;
+  };
+
+  const unhideCalificacion = async (calificacionId: string) => {
+    if (!user) throw new Error('Usuario no autenticado');
+
+    const { error } = await supabase
+      .from('calificaciones')
+      .update({ oculta: false })
+      .eq('id', calificacionId);
+
+    if (error) throw error;
+  };
+
+  const dismissReport = async (calificacionId: string) => {
+    if (!user) throw new Error('Usuario no autenticado');
+
+    const { error } = await supabase
+      .from('calificaciones')
+      .update({ reportada: false })
+      .eq('id', calificacionId);
+
+    if (error) throw error;
+  };
+
+  const getReportedCalificaciones = async () => {
+    const { data, error } = await supabase
+      .from('calificaciones')
+      .select(`
+        *,
+        calificador:profiles!calificaciones_calificador_id_fkey(full_name),
+        calificado:profiles!calificaciones_calificado_id_fkey(full_name),
+        orden:ordenes!calificaciones_orden_id_fkey(tipo_item)
+      `)
+      .eq('reportada', true)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return data || [];
+  };
+
   return {
     calificaciones,
     loading,
@@ -160,6 +240,12 @@ export const useCalificaciones = () => {
     getUserRating,
     getUserRatingCount,
     getCalificacionesByUser,
-    deleteCalificacion
+    deleteCalificacion,
+    reportarCalificacion,
+    getCalificacionesRecientes,
+    hideCalificacion,
+    unhideCalificacion,
+    dismissReport,
+    getReportedCalificaciones
   };
 };

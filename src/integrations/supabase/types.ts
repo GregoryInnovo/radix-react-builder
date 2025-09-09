@@ -57,6 +57,7 @@ export type Database = {
           comentario: string | null
           created_at: string
           id: string
+          oculta: boolean
           orden_id: string
           producto_id: string | null
           puntuacion: number
@@ -69,6 +70,7 @@ export type Database = {
           comentario?: string | null
           created_at?: string
           id?: string
+          oculta?: boolean
           orden_id: string
           producto_id?: string | null
           puntuacion: number
@@ -81,6 +83,7 @@ export type Database = {
           comentario?: string | null
           created_at?: string
           id?: string
+          oculta?: boolean
           orden_id?: string
           producto_id?: string | null
           puntuacion?: number
