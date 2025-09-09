@@ -194,7 +194,7 @@ export const SearchResultsMap: React.FC<SearchResultsMapProps> = ({
       </div>
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-center">
         <div className="bg-white rounded-lg p-3 border">
           <div className="text-lg font-semibold text-blue-600">{results.length}</div>
           <div className="text-xs text-gray-600">Lotes encontrados</div>
@@ -212,12 +212,6 @@ export const SearchResultsMap: React.FC<SearchResultsMapProps> = ({
                 {formatDistance(Math.max(...results.map(r => r.distance)))}
               </div>
               <div className="text-xs text-gray-600">Más lejano</div>
-            </div>
-            <div className="bg-white rounded-lg p-3 border">
-              <div className="text-lg font-semibold text-purple-600">
-                {formatDistance(results.reduce((sum, r) => sum + r.distance, 0) / results.length)}
-              </div>
-              <div className="text-xs text-gray-600">Distancia promedio</div>
             </div>
           </>
         )}

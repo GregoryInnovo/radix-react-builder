@@ -1,42 +1,46 @@
-
-import { useEffect, useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { History, Clock } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import type { Database } from '@/integrations/supabase/types';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Clock, User, History } from 'lucide-react';
+import { toast } from '@/hooks/use-toast';
 
-type BatchStatus = Database['public']['Enums']['batch_status'];
-
-interface StatusChange {
+interface StatusHistoryEntry {
   id: string;
-  lote_id: string;
-  estado_anterior: BatchStatus | null;
-  estado_nuevo: BatchStatus;
-  fecha_cambio: string;
+  estado_anterior: string | null;
+  estado_nuevo: string;
+  usuario_accion_id: string | null;
+  notas: string | null;
   created_at: string;
+  usuario?: {
+    full_name: string | null;
+  } | null;
 }
 
 interface LoteStatusHistoryProps {
   loteId: string;
 }
 
-const STATUS_LABELS: Record<BatchStatus, string> = {
+const STATUS_LABELS: Record<string, string> = {
   'disponible': 'Disponible',
   'reservado': 'Reservado',
-  'recogido': 'Recogido',
-  'cancelado': 'Cancelado',
+  'recolectado': 'Recolectado',
+  'completado': 'Completado',
+  'cancelado': 'Cancelado'
 };
 
-const STATUS_COLORS: Record<BatchStatus, string> = {
+const STATUS_COLORS: Record<string, string> = {
   'disponible': 'bg-green-100 text-green-800',
-  'reservado': 'bg-yellow-100 text-yellow-800',
-  'recogido': 'bg-blue-100 text-blue-800',
-  'cancelado': 'bg-red-100 text-red-800',
+  'reservado': 'bg-orange-100 text-orange-800',
+  'recolectado': 'bg-blue-100 text-blue-800',
+  'completado': 'bg-purple-100 text-purple-800',
+  'cancelado': 'bg-red-100 text-red-800'
 };
 
-export const LoteStatusHistory = ({ loteId }: LoteStatusHistoryProps) => {
-  const [history, setHistory] = useState<StatusChange[]>([]);
+export const LoteStatusHistory: React.FC<LoteStatusHistoryProps> = ({
+  loteId
+}) => {
+  const [history, setHistory] = useState<StatusHistoryEntry[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -45,57 +49,76 @@ export const LoteStatusHistory = ({ loteId }: LoteStatusHistoryProps) => {
 
   const fetchStatusHistory = async () => {
     try {
-      // Por ahora simulamos el historial basado en la fecha de creación y actualización
-      // En una implementación completa, tendríamos una tabla separada para el historial
-      const { data: lote, error } = await supabase
-        .from('lotes')
-        .select('*')
-        .eq('id', loteId)
-        .single();
+      setLoading(true);
+      
+      // Fetch status history with user information
+      const { data: historyData, error } = await supabase
+        .from('lotes_historial')
+        .select(`
+          id,
+          estado_anterior,
+          estado_nuevo,
+          usuario_accion_id,
+          notas,
+          created_at
+        `)
+        .eq('lote_id', loteId)
+        .order('created_at', { ascending: true });
 
       if (error) throw error;
 
-      // Simular historial básico
-      const mockHistory: StatusChange[] = [
-        {
-          id: '1',
-          lote_id: loteId,
-          estado_anterior: null,
-          estado_nuevo: 'disponible' as BatchStatus,
-          fecha_cambio: lote.created_at || '',
-          created_at: lote.created_at || ''
-        }
-      ];
-
-      // Si el lote fue actualizado y tiene un estado diferente a disponible, agregar ese cambio
-      if (lote.estado !== 'disponible' && lote.updated_at !== lote.created_at) {
-        mockHistory.push({
-          id: '2',
-          lote_id: loteId,
-          estado_anterior: 'disponible' as BatchStatus,
-          estado_nuevo: lote.estado,
-          fecha_cambio: lote.updated_at || '',
-          created_at: lote.updated_at || ''
-        });
+      // Fetch user profiles for the history entries
+      const userIds = historyData?.map(h => h.usuario_accion_id).filter(Boolean) || [];
+      
+      let userProfiles: Record<string, { full_name: string | null }> = {};
+      
+      if (userIds.length > 0) {
+        const { data: profilesData } = await supabase
+          .from('profiles')
+          .select('id, full_name')
+          .in('id', userIds);
+        
+        userProfiles = Object.fromEntries(
+          (profilesData || []).map(p => [p.id, { full_name: p.full_name }])
+        );
       }
 
-      setHistory(mockHistory);
-    } catch (error) {
+      // Combine history with user profiles
+      const historyWithUsers = (historyData || []).map(entry => ({
+        ...entry,
+        usuario: entry.usuario_accion_id ? userProfiles[entry.usuario_accion_id] || null : null
+      }));
+
+      setHistory(historyWithUsers);
+    } catch (error: any) {
       console.error('Error fetching status history:', error);
+      toast({
+        title: "Error al cargar historial",
+        description: error.message,
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleString('es-ES', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    const date = new Date(dateString);
+    return {
+      date: date.toLocaleDateString('es-ES', { 
+        year: 'numeric', 
+        month: 'short', 
+        day: 'numeric' 
+      }),
+      time: date.toLocaleTimeString('es-ES', { 
+        hour: '2-digit', 
+        minute: '2-digit' 
+      })
+    };
   };
+
+  const getStatusLabel = (status: string) => STATUS_LABELS[status] || status;
+  const getStatusColor = (status: string) => STATUS_COLORS[status] || 'bg-gray-100 text-gray-800';
 
   if (loading) {
     return (
@@ -103,12 +126,12 @@ export const LoteStatusHistory = ({ loteId }: LoteStatusHistoryProps) => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <History className="w-5 h-5" />
-            Historial de Estados
+            Historial del Lote
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center justify-center p-4">
-            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-green-600"></div>
+          <div className="flex items-center justify-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           </div>
         </CardContent>
       </Card>
@@ -120,44 +143,83 @@ export const LoteStatusHistory = ({ loteId }: LoteStatusHistoryProps) => {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <History className="w-5 h-5" />
-          Historial de Estados
+          Historial del Lote
         </CardTitle>
-        <CardDescription>
-          Registro de todos los cambios de estado de este lote
-        </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-4">
+        {/* Status History */}
         {history.length === 0 ? (
-          <p className="text-gray-500 text-center py-4">
-            No hay cambios de estado registrados
-          </p>
+          <div className="text-center py-8 text-gray-500">
+            <History className="w-12 h-12 mx-auto mb-3 opacity-30" />
+            <p className="text-sm">No hay cambios de estado registrados aún</p>
+            <p className="text-xs text-gray-400 mt-1">
+              El historial aparecerá cuando se realicen cambios en el estado del lote
+            </p>
+          </div>
         ) : (
           <div className="space-y-3">
-            {history.map((change, index) => (
-              <div key={change.id} className="flex items-center gap-3 p-3 border rounded-lg">
-                <div className="flex-shrink-0">
-                  <Clock className="w-4 h-4 text-gray-400" />
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    {change.estado_anterior && (
-                      <>
-                        <Badge variant="outline" className="text-xs">
-                          {STATUS_LABELS[change.estado_anterior]}
-                        </Badge>
-                        <span className="text-gray-400">→</span>
-                      </>
+            {history.map((entry, index) => {
+              const { date, time } = formatDate(entry.created_at);
+              const isCreation = entry.estado_anterior === null;
+              
+              return (
+                <div
+                  key={entry.id}
+                  className="flex items-start gap-3 p-3 bg-white border rounded-lg relative"
+                >
+                  {/* Timeline dot */}
+                  <div className="flex flex-col items-center">
+                    <div className={`w-3 h-3 rounded-full ${
+                      index === history.length - 1 ? 'bg-primary' : 'bg-gray-300'
+                    }`} />
+                    {index < history.length - 1 && (
+                      <div className="w-px h-8 bg-gray-200 mt-2" />
                     )}
-                    <Badge className={STATUS_COLORS[change.estado_nuevo] + " text-xs"}>
-                      {STATUS_LABELS[change.estado_nuevo]}
-                    </Badge>
                   </div>
-                  <p className="text-sm text-gray-600">
-                    {formatDate(change.fecha_cambio)}
-                  </p>
+
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Clock className="w-4 h-4 text-gray-400" />
+                      <span className="text-sm font-medium">{date}</span>
+                      <span className="text-sm text-gray-500">{time}</span>
+                    </div>
+
+                    <div className="flex items-center gap-2 mb-2">
+                      {isCreation ? (
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-gray-600">Lote creado con estado:</span>
+                          <Badge className={getStatusColor(entry.estado_nuevo)}>
+                            {getStatusLabel(entry.estado_nuevo)}
+                          </Badge>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className="text-xs">
+                            {getStatusLabel(entry.estado_anterior!)}
+                          </Badge>
+                          <span className="text-sm text-gray-500">→</span>
+                          <Badge className={getStatusColor(entry.estado_nuevo)}>
+                            {getStatusLabel(entry.estado_nuevo)}
+                          </Badge>
+                        </div>
+                      )}
+                    </div>
+
+                    {entry.usuario?.full_name && (
+                      <div className="text-xs text-gray-500">
+                        Por: {entry.usuario.full_name}
+                      </div>
+                    )}
+
+                    {entry.notas && (
+                      <div className="text-sm text-gray-600 mt-2 p-2 bg-gray-50 rounded">
+                        {entry.notas}
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </CardContent>

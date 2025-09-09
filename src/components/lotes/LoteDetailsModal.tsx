@@ -4,7 +4,10 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { MapPin, Weight, Calendar, Clock, User, FileText, Image } from 'lucide-react';
 import { LoteImageGallery } from './LoteImageGallery';
+import { LoteStatusHistory } from './LoteStatusHistory';
+import { ReservarLote } from './ReservarLote';
 import { useState } from 'react';
+import { useAuth } from '@/hooks/useAuth';
 import type { Database } from '@/integrations/supabase/types';
 
 type Lote = Database['public']['Tables']['lotes']['Row'] & {
@@ -20,15 +23,19 @@ interface LoteDetailsModalProps {
   onClose: () => void;
   lote: Lote;
   distance?: number;
+  showReservarButton?: boolean;
 }
 
 export const LoteDetailsModal: React.FC<LoteDetailsModalProps> = ({
   isOpen,
   onClose,
   lote,
-  distance
+  distance,
+  showReservarButton = false
 }) => {
   const [showImageGallery, setShowImageGallery] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
+  const { user } = useAuth();
 
   const formatDistance = (distance: number) => {
     if (distance < 1) {
@@ -223,6 +230,26 @@ export const LoteDetailsModal: React.FC<LoteDetailsModalProps> = ({
               </div>
             )}
 
+            {/* Status History Section */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="font-semibold">Historial del Lote</h3>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowHistory(!showHistory)}
+                >
+                  {showHistory ? 'Ocultar' : 'Ver'} Historial
+                </Button>
+              </div>
+              
+              {showHistory && (
+                <LoteStatusHistory 
+                  loteId={lote.id}
+                />
+              )}
+            </div>
+
             {/* Action Buttons */}
             <div className="flex gap-3 pt-4 border-t">
               <Button
@@ -232,12 +259,12 @@ export const LoteDetailsModal: React.FC<LoteDetailsModalProps> = ({
               >
                 Cerrar
               </Button>
-              <Button
-                className="flex-1 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700"
-                disabled
-              >
-                Solicitar (Próximamente)
-              </Button>
+              {showReservarButton && (
+                <ReservarLote 
+                  lote={lote} 
+                  onSuccess={onClose}
+                />
+              )}
             </div>
           </div>
         </DialogContent>

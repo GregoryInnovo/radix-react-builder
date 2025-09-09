@@ -10,8 +10,10 @@ import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { useSearchLotes } from '@/hooks/useSearchLotes';
 import { useTiposResiduo } from '@/hooks/useTiposResiduo';
 import { LoteDetailsModal } from '@/components/lotes/LoteDetailsModal';
+import { ReservarLote } from '@/components/lotes/ReservarLote';
 import { LocationMap } from '@/components/search/LocationMap';
 import { SearchResultsMap } from '@/components/search/SearchResultsMap';
+import { MapboxMap } from '@/components/search/MapboxMap';
 import { useAuth } from '@/hooks/useAuth';
 
 const Search = () => {
@@ -307,7 +309,7 @@ const Search = () => {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <SearchResultsMap
+                  <MapboxMap
                     userLocation={userLocation}
                     results={results}
                     onLoteSelect={(lote, distance) => {
@@ -412,13 +414,25 @@ const Search = () => {
                           >
                             Ver Detalles
                           </Button>
-                          <Button 
-                            size="sm"
-                            className="flex-1 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700"
-                            disabled
-                          >
-                            Próximamente
-                          </Button>
+                          {result.lote.user_id !== user?.id && result.lote.estado === 'disponible' ? (
+                            <ReservarLote 
+                              lote={result.lote}
+                              onSuccess={() => {
+                                // Refresh results or show success message
+                                console.log('Lote reserved successfully');
+                              }}
+                            />
+                          ) : (
+                            <Button 
+                              size="sm"
+                              className="flex-1"
+                              disabled
+                              variant="outline"
+                            >
+                              {result.lote.user_id === user?.id ? 'Tu lote' : 
+                               result.lote.estado !== 'disponible' ? 'No disponible' : 'No disponible'}
+                            </Button>
+                          )}
                         </div>
                       </CardContent>
                     </Card>
