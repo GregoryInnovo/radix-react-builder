@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { useOrdenes } from '@/hooks/useOrdenes';
 import { CalificarOrden } from '@/components/calificaciones/CalificarOrden';
+import { OrdenChat } from '@/components/ordenes/OrdenChat';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Clock, Package, MapPin, MessageSquare } from 'lucide-react';
@@ -45,88 +46,78 @@ export const OrdenesList: React.FC = () => {
     });
   };
 
-  const OrdenCard = ({ orden, isProvider = false }: { orden: any; isProvider?: boolean }) => (
-    <Card key={orden.id} className="mb-4">
-      <CardHeader>
-        <div className="flex justify-between items-start">
-          <div>
-            <CardTitle className="text-lg">
-              {orden.tipo_item === 'lote' ? 'Lote de ROA' : 'Producto'}
-            </CardTitle>
-            <div className="flex items-center gap-2 text-sm text-gray-600 mt-1">
-              <Clock className="h-4 w-4" />
-              {format(new Date(orden.created_at), 'PPp', { locale: es })}
+  const OrdenCard = ({ orden, isProvider = false }: { orden: any; isProvider?: boolean }) => {
+    const canSendMessages = orden.estado === 'pendiente' || orden.estado === 'aceptada';
+    
+    return (
+      <Card key={orden.id} className="mb-4">
+        <CardHeader>
+          <div className="flex justify-between items-start">
+            <div>
+              <CardTitle className="text-lg">
+                {orden.tipo_item === 'lote' ? 'Lote de ROA' : 'Producto'}
+              </CardTitle>
+              <div className="flex items-center gap-2 text-sm text-gray-600 mt-1">
+                <Clock className="h-4 w-4" />
+                {format(new Date(orden.created_at), 'PPp', { locale: es })}
+              </div>
             </div>
+            <Badge className={getStatusColor(orden.estado)}>
+              {getStatusText(orden.estado)}
+            </Badge>
           </div>
-          <Badge className={getStatusColor(orden.estado)}>
-            {getStatusText(orden.estado)}
-          </Badge>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        <div className="grid grid-cols-2 gap-4 text-sm">
-          <div className="flex items-center gap-2">
-            <Package className="h-4 w-4 text-gray-500" />
-            <span>Cantidad: {orden.cantidad_solicitada}</span>
-          </div>
-          {orden.fecha_propuesta_retiro && (
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-2 gap-4 text-sm">
             <div className="flex items-center gap-2">
-              <MapPin className="h-4 w-4 text-gray-500" />
-              <span>Retiro: {format(new Date(orden.fecha_propuesta_retiro), 'PP', { locale: es })}</span>
+              <Package className="h-4 w-4 text-gray-500" />
+              <span>Cantidad: {orden.cantidad_solicitada}</span>
+            </div>
+            {orden.fecha_propuesta_retiro && (
+              <div className="flex items-center gap-2">
+                <MapPin className="h-4 w-4 text-gray-500" />
+                <span>Retiro: {format(new Date(orden.fecha_propuesta_retiro), 'PP', { locale: es })}</span>
+              </div>
+            )}
+          </div>
+
+          {/* Chat component replaces individual message displays */}
+          <OrdenChat 
+            ordenId={orden.id}
+            orden={orden}
+            canSendMessages={canSendMessages}
+          />
+
+          {isProvider && orden.estado === 'pendiente' && (
+            <div className="border-t pt-3 space-y-3">
+              <Textarea
+                placeholder="Mensaje de respuesta (opcional)..."
+                value={responseMessages[orden.id] || ''}
+                onChange={(e) => setResponseMessages(prev => ({
+                  ...prev,
+                  [orden.id]: e.target.value
+                }))}
+                className="text-sm"
+              />
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => handleStatusUpdate(orden.id, 'aceptada', responseMessages[orden.id])}
+                  className="flex-1"
+                  size="sm"
+                >
+                  Aceptar
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={() => handleStatusUpdate(orden.id, 'cancelada', responseMessages[orden.id])}
+                  className="flex-1"
+                  size="sm"
+                >
+                  Rechazar
+                </Button>
+              </div>
             </div>
           )}
-        </div>
-
-        {orden.mensaje_solicitud && (
-          <div className="p-3 bg-gray-50 rounded-lg">
-            <div className="flex items-center gap-2 text-sm font-medium mb-1">
-              <MessageSquare className="h-4 w-4" />
-              Mensaje de solicitud:
-            </div>
-            <p className="text-sm text-gray-700">{orden.mensaje_solicitud}</p>
-          </div>
-        )}
-
-        {orden.mensaje_respuesta && (
-          <div className="p-3 bg-blue-50 rounded-lg">
-            <div className="flex items-center gap-2 text-sm font-medium mb-1">
-              <MessageSquare className="h-4 w-4" />
-              Respuesta del proveedor:
-            </div>
-            <p className="text-sm text-gray-700">{orden.mensaje_respuesta}</p>
-          </div>
-        )}
-
-        {isProvider && orden.estado === 'pendiente' && (
-          <div className="border-t pt-3 space-y-3">
-            <Textarea
-              placeholder="Mensaje de respuesta (opcional)..."
-              value={responseMessages[orden.id] || ''}
-              onChange={(e) => setResponseMessages(prev => ({
-                ...prev,
-                [orden.id]: e.target.value
-              }))}
-              className="text-sm"
-            />
-            <div className="flex gap-2">
-              <Button
-                onClick={() => handleStatusUpdate(orden.id, 'aceptada', responseMessages[orden.id])}
-                className="flex-1"
-                size="sm"
-              >
-                Aceptar
-              </Button>
-              <Button
-                variant="destructive"
-                onClick={() => handleStatusUpdate(orden.id, 'cancelada', responseMessages[orden.id])}
-                className="flex-1"
-                size="sm"
-              >
-                Rechazar
-              </Button>
-            </div>
-          </div>
-        )}
 
         {orden.estado === 'aceptada' && (
           <div className="border-t pt-3">
@@ -176,9 +167,10 @@ export const OrdenesList: React.FC = () => {
             </div>
           </div>
         )}
-      </CardContent>
-    </Card>
-  );
+        </CardContent>
+      </Card>
+    );
+  };
 
   if (loading) {
     return <div className="flex justify-center p-8">Cargando órdenes...</div>;

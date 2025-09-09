@@ -251,6 +251,44 @@ export type Database = {
           },
         ]
       }
+      lotes_historial: {
+        Row: {
+          created_at: string
+          estado_anterior: Database["public"]["Enums"]["batch_status"] | null
+          estado_nuevo: Database["public"]["Enums"]["batch_status"]
+          id: string
+          lote_id: string
+          notas: string | null
+          usuario_accion_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          estado_anterior?: Database["public"]["Enums"]["batch_status"] | null
+          estado_nuevo: Database["public"]["Enums"]["batch_status"]
+          id?: string
+          lote_id: string
+          notas?: string | null
+          usuario_accion_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          estado_anterior?: Database["public"]["Enums"]["batch_status"] | null
+          estado_nuevo?: Database["public"]["Enums"]["batch_status"]
+          id?: string
+          lote_id?: string
+          notas?: string | null
+          usuario_accion_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lotes_historial_lote_id_fkey"
+            columns: ["lote_id"]
+            isOneToOne: false
+            referencedRelation: "lotes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notificaciones: {
         Row: {
           created_at: string
@@ -292,6 +330,33 @@ export type Database = {
           },
         ]
       }
+      orden_mensajes: {
+        Row: {
+          created_at: string
+          id: string
+          mensaje: string
+          orden_id: string
+          updated_at: string
+          usuario_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          mensaje: string
+          orden_id: string
+          updated_at?: string
+          usuario_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          mensaje?: string
+          orden_id?: string
+          updated_at?: string
+          usuario_id?: string
+        }
+        Relationships: []
+      }
       ordenes: {
         Row: {
           cantidad_solicitada: number
@@ -302,6 +367,7 @@ export type Database = {
           item_id: string
           mensaje_respuesta: string | null
           mensaje_solicitud: string | null
+          modalidad_entrega: string | null
           proveedor_id: string
           solicitante_id: string
           tipo_item: Database["public"]["Enums"]["item_type"]
@@ -316,6 +382,7 @@ export type Database = {
           item_id: string
           mensaje_respuesta?: string | null
           mensaje_solicitud?: string | null
+          modalidad_entrega?: string | null
           proveedor_id: string
           solicitante_id: string
           tipo_item: Database["public"]["Enums"]["item_type"]
@@ -330,6 +397,7 @@ export type Database = {
           item_id?: string
           mensaje_respuesta?: string | null
           mensaje_solicitud?: string | null
+          modalidad_entrega?: string | null
           proveedor_id?: string
           solicitante_id?: string
           tipo_item?: Database["public"]["Enums"]["item_type"]
