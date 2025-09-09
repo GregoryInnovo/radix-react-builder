@@ -20,33 +20,35 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <div className="min-h-screen pb-16 lg:pb-20 xl:pb-0">
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/lotes" element={<Lotes />} />
-            <Route path="/search" element={<Search />} />
-            <Route path="/productos" element={<Productos />} />
-            <Route path="/ordenes" element={<Ordenes />} />
-            <Route path="/admin" element={<Admin />} />
-            <Route path="/guias" element={<Guias />} />
-            <Route path="/guias/:id" element={<GuiaDetalle />} />
-            <Route path="/guias/nueva" element={<GuiaForm />} />
-            <Route path="/perfil/:userId" element={<UserProfile />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-          <MobileNavigation />
-        </div>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <div className="min-h-screen pb-16 lg:pb-20 xl:pb-0">
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/lotes" element={<Lotes />} />
+              <Route path="/search" element={<Search />} />
+              <Route path="/productos" element={<Productos />} />
+              <Route path="/ordenes" element={<Ordenes />} />
+              <Route path="/admin" element={<Admin />} />
+              <Route path="/guias" element={<Guias />} />
+              <Route path="/guias/:id" element={<GuiaDetalle />} />
+              <Route path="/guias/nueva" element={<GuiaForm />} />
+              <Route path="/perfil/:userId" element={<UserProfile />} />
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+            <MobileNavigation />
+          </div>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+}
 
 export default App;
