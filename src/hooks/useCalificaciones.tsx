@@ -103,23 +103,56 @@ export const useCalificaciones = () => {
   const getCalificacionesByUser = useCallback(async (userId: string) => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      // First, get all calificaciones for the user
+      const { data: calificacionesData, error: calificacionesError } = await supabase
         .from('calificaciones')
-        .select(`
-          *,
-          calificador:profiles!calificaciones_calificador_id_fkey(full_name, avatar_url),
-          orden:ordenes!calificaciones_orden_id_fkey(tipo_item, created_at)
-        `)
+        .select('*')
         .eq('calificado_id', userId)
         .eq('reportada', false)
         .eq('oculta', false)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      setCalificaciones(data || []);
-      return data || [];
+      if (calificacionesError) throw calificacionesError;
+
+      if (!calificacionesData || calificacionesData.length === 0) {
+        setCalificaciones([]);
+        return [];
+      }
+
+      // Get unique calificador IDs
+      const calificadorIds = [...new Set(calificacionesData.map(c => c.calificador_id))];
+      
+      // Get unique orden IDs
+      const ordenIds = [...new Set(calificacionesData.map(c => c.orden_id))];
+
+      // Fetch profiles and ordenes separately
+      const [profilesResponse, ordenesResponse] = await Promise.all([
+        supabase
+          .from('profiles')
+          .select('id, full_name, avatar_url')
+          .in('id', calificadorIds),
+        supabase
+          .from('ordenes')
+          .select('id, tipo_item, created_at')
+          .in('id', ordenIds)
+      ]);
+
+      // Create lookup maps
+      const profilesMap = new Map(profilesResponse.data?.map(p => [p.id, p]) || []);
+      const ordenesMap = new Map(ordenesResponse.data?.map(o => [o.id, o]) || []);
+
+      // Enrich calificaciones with profile and orden data
+      const enrichedData = calificacionesData.map(calificacion => ({
+        ...calificacion,
+        calificador: profilesMap.get(calificacion.calificador_id) || null,
+        orden: ordenesMap.get(calificacion.orden_id) || null
+      }));
+
+      setCalificaciones(enrichedData);
+      return enrichedData;
     } catch (error: any) {
       console.error('Error fetching ratings:', error);
+      setCalificaciones([]);
       return [];
     } finally {
       setLoading(false);
@@ -164,24 +197,56 @@ export const useCalificaciones = () => {
     if (error) throw error;
   };
 
-  const getCalificacionesRecientes = async (userId: string, limit: number = 3) => {
-    const { data, error } = await supabase
-      .from('calificaciones')
-      .select(`
-        *,
-        calificador:profiles!calificaciones_calificador_id_fkey(full_name, avatar_url),
-        orden:ordenes!calificaciones_orden_id_fkey(tipo_item, created_at)
-      `)
-      .eq('calificado_id', userId)
-      .eq('reportada', false)
-      .eq('oculta', false)
-      .not('comentario', 'is', null)
-      .order('created_at', { ascending: false })
-      .limit(limit);
+  const getCalificacionesRecientes = useCallback(async (userId: string, limit: number = 3) => {
+    try {
+      // First, get recent calificaciones with comments
+      const { data: calificacionesData, error: calificacionesError } = await supabase
+        .from('calificaciones')
+        .select('*')
+        .eq('calificado_id', userId)
+        .eq('reportada', false)
+        .eq('oculta', false)
+        .not('comentario', 'is', null)
+        .order('created_at', { ascending: false })
+        .limit(limit);
 
-    if (error) throw error;
-    return data || [];
-  };
+      if (calificacionesError) throw calificacionesError;
+
+      if (!calificacionesData || calificacionesData.length === 0) {
+        return [];
+      }
+
+      // Get unique calificador IDs and orden IDs
+      const calificadorIds = [...new Set(calificacionesData.map(c => c.calificador_id))];
+      const ordenIds = [...new Set(calificacionesData.map(c => c.orden_id))];
+
+      // Fetch profiles and ordenes separately
+      const [profilesResponse, ordenesResponse] = await Promise.all([
+        supabase
+          .from('profiles')
+          .select('id, full_name, avatar_url')
+          .in('id', calificadorIds),
+        supabase
+          .from('ordenes')
+          .select('id, tipo_item, created_at')
+          .in('id', ordenIds)
+      ]);
+
+      // Create lookup maps
+      const profilesMap = new Map(profilesResponse.data?.map(p => [p.id, p]) || []);
+      const ordenesMap = new Map(ordenesResponse.data?.map(o => [o.id, o]) || []);
+
+      // Enrich calificaciones with profile and orden data
+      return calificacionesData.map(calificacion => ({
+        ...calificacion,
+        calificador: profilesMap.get(calificacion.calificador_id) || null,
+        orden: ordenesMap.get(calificacion.orden_id) || null
+      }));
+    } catch (error) {
+      console.error('Error fetching recent ratings:', error);
+      return [];
+    }
+  }, []);
 
   const hideCalificacion = async (calificacionId: string) => {
     if (!user) throw new Error('Usuario no autenticado');

@@ -100,11 +100,11 @@ const UserProfile = () => {
     } finally {
       setLoading(false);
     }
-  }, [userId, getUserRating, getUserRatingCount, getCalificacionesByUser, getCalificacionesRecientes]);
+  }, [userId]);
 
   useEffect(() => {
     fetchUserProfile();
-  }, [fetchUserProfile]);
+  }, [userId]);
 
   if (loading) {
     return (
