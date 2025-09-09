@@ -58,15 +58,19 @@ export const useOrdenes = () => {
     }
   };
 
-  const createOrden = async (ordenData: Omit<OrdenInsert, 'solicitante_id'>, skipConfirmation = false): Promise<any> => {
-    if (!user) return null;
+  const createOrden = async (ordenData: Omit<OrdenInsert, 'solicitante_id'>, skipConfirmation = false) => {
+    if (!user) return { data: null, error: new Error('Usuario no autenticado') };
 
     // Check for existing orders
     const existingOrdersCount = await checkExistingOrders(ordenData.proveedor_id, ordenData.item_id);
     
     if (existingOrdersCount > 0 && !skipConfirmation) {
-      // For now, we'll just proceed with the order creation
-      // The confirmation logic can be added later if needed
+      return { 
+        data: null, 
+        error: null, 
+        requiresConfirmation: true, 
+        existingOrdersCount 
+      };
     }
 
     try {
@@ -87,7 +91,7 @@ export const useOrdenes = () => {
       });
 
       await fetchOrdenes();
-      return data;
+      return { data, error: null };
     } catch (error: any) {
       console.error('Error creating order:', error);
       toast({
@@ -95,7 +99,7 @@ export const useOrdenes = () => {
         description: error.message,
         variant: "destructive",
       });
-      return null;
+      return { data: null, error };
     }
   };
 
