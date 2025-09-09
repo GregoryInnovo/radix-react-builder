@@ -164,8 +164,7 @@ export const useCalificaciones = () => {
       const { error } = await supabase
         .from('calificaciones')
         .delete()
-        .eq('id', id)
-        .eq('calificador_id', user?.id);
+        .eq('id', id);
 
       if (error) throw error;
 
@@ -282,19 +281,35 @@ export const useCalificaciones = () => {
   };
 
   const getReportedCalificaciones = async () => {
-    const { data, error } = await supabase
+    const { data: calificacionesData, error } = await supabase
       .from('calificaciones')
-      .select(`
-        *,
-        calificador:profiles!calificaciones_calificador_id_fkey(full_name),
-        calificado:profiles!calificaciones_calificado_id_fkey(full_name),
-        orden:ordenes!calificaciones_orden_id_fkey(tipo_item)
-      `)
+      .select('*')
       .eq('reportada', true)
       .order('created_at', { ascending: false });
 
     if (error) throw error;
-    return data || [];
+    if (!calificacionesData || calificacionesData.length === 0) return [];
+
+    const calificadorIds = [...new Set(calificacionesData.map(c => c.calificador_id))];
+    const calificadoIds = [...new Set(calificacionesData.map(c => c.calificado_id))];
+    const ordenIds = [...new Set(calificacionesData.map(c => c.orden_id))];
+
+    const [calificadoresRes, calificadosRes, ordenesRes] = await Promise.all([
+      supabase.from('profiles').select('id, full_name').in('id', calificadorIds),
+      supabase.from('profiles').select('id, full_name').in('id', calificadoIds),
+      supabase.from('ordenes').select('id, tipo_item').in('id', ordenIds)
+    ]);
+
+    const calificadorMap = new Map(calificadoresRes.data?.map(p => [p.id, p]) || []);
+    const calificadoMap = new Map(calificadosRes.data?.map(p => [p.id, p]) || []);
+    const ordenMap = new Map(ordenesRes.data?.map(o => [o.id, o]) || []);
+
+    return calificacionesData.map(c => ({
+      ...c,
+      calificador: calificadorMap.get(c.calificador_id) || null,
+      calificado: calificadoMap.get(c.calificado_id) || null,
+      orden: ordenMap.get(c.orden_id) || null
+    }));
   };
 
   return {
