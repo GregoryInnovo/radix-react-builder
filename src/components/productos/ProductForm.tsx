@@ -7,8 +7,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Separator } from '@/components/ui/separator';
 import { Upload, X, ImagePlus } from 'lucide-react';
 import { useProductos } from '@/hooks/useProductos';
+import { CATEGORIAS_FUNCIONALIDAD, CATEGORIAS_TIPO } from './ProductsFilter';
 
 interface ProductFormProps {
   onSuccess?: () => void;
@@ -25,6 +28,8 @@ export const ProductForm: React.FC<ProductFormProps> = ({ onSuccess, onCancel })
     incluye_domicilio: false,
     direccion_vendedor: '',
     costo_domicilio: '',
+    categoria_funcionalidad: [] as string[],
+    categoria_tipo: [] as string[],
   });
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
@@ -60,6 +65,14 @@ export const ProductForm: React.FC<ProductFormProps> = ({ onSuccess, onCancel })
       if (!formData.direccion_vendedor.trim()) {
         newErrors.direccion_vendedor = 'La dirección es requerida cuando no se incluye domicilio';
       }
+    }
+
+    if (formData.categoria_funcionalidad.length === 0) {
+      newErrors.categoria_funcionalidad = 'Debe seleccionar al menos una funcionalidad';
+    }
+
+    if (formData.categoria_tipo.length === 0) {
+      newErrors.categoria_tipo = 'Debe seleccionar al menos un tipo de producto';
     }
 
     setErrors(newErrors);
@@ -128,11 +141,20 @@ export const ProductForm: React.FC<ProductFormProps> = ({ onSuccess, onCancel })
     }
   };
 
-  const handleInputChange = (field: string, value: string | boolean) => {
+  const handleInputChange = (field: string, value: string | boolean | string[]) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: '' }));
     }
+  };
+
+  const handleCategoryToggle = (categoryType: 'categoria_funcionalidad' | 'categoria_tipo', category: string) => {
+    const currentCategories = formData[categoryType];
+    const newCategories = currentCategories.includes(category)
+      ? currentCategories.filter(c => c !== category)
+      : [...currentCategories, category];
+    
+    handleInputChange(categoryType, newCategories);
   };
 
   return (
@@ -310,6 +332,65 @@ export const ProductForm: React.FC<ProductFormProps> = ({ onSuccess, onCancel })
             {errors.imagenes && (
               <p className="text-sm text-red-600">{errors.imagenes}</p>
             )}
+          </div>
+
+          <Separator />
+
+          {/* Categorías */}
+          <div className="space-y-6">
+            <h3 className="text-lg font-medium">Categorías del producto</h3>
+            
+            {/* Funcionalidad */}
+            <div className="space-y-3">
+              <Label className="text-base font-medium">Funcionalidad *</Label>
+              <p className="text-sm text-muted-foreground">Selecciona una o más funcionalidades que describe tu producto</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                {CATEGORIAS_FUNCIONALIDAD.map((categoria) => (
+                  <div key={categoria} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`func-${categoria}`}
+                      checked={formData.categoria_funcionalidad.includes(categoria)}
+                      onCheckedChange={() => handleCategoryToggle('categoria_funcionalidad', categoria)}
+                    />
+                    <label
+                      htmlFor={`func-${categoria}`}
+                      className="text-sm cursor-pointer leading-relaxed"
+                    >
+                      {categoria}
+                    </label>
+                  </div>
+                ))}
+              </div>
+              {errors.categoria_funcionalidad && (
+                <p className="text-sm text-red-600">{errors.categoria_funcionalidad}</p>
+              )}
+            </div>
+
+            {/* Tipo de producto */}
+            <div className="space-y-3">
+              <Label className="text-base font-medium">Tipo de producto *</Label>
+              <p className="text-sm text-muted-foreground">Selecciona uno o más tipos que describe tu producto</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                {CATEGORIAS_TIPO.map((categoria) => (
+                  <div key={categoria} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`tipo-${categoria}`}
+                      checked={formData.categoria_tipo.includes(categoria)}
+                      onCheckedChange={() => handleCategoryToggle('categoria_tipo', categoria)}
+                    />
+                    <label
+                      htmlFor={`tipo-${categoria}`}
+                      className="text-sm cursor-pointer leading-relaxed"
+                    >
+                      {categoria}
+                    </label>
+                  </div>
+                ))}
+              </div>
+              {errors.categoria_tipo && (
+                <p className="text-sm text-red-600">{errors.categoria_tipo}</p>
+              )}
+            </div>
           </div>
 
           <div className="flex items-center space-x-2">

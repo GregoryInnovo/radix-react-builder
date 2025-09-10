@@ -3,36 +3,61 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Search as SearchIcon } from 'lucide-react';
+import { Plus, Search as SearchIcon, Filter } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { ProductForm } from '@/components/productos/ProductForm';
 import { ProductsList } from '@/components/productos/ProductsList';
+import { ProductsFilter } from '@/components/productos/ProductsFilter';
 import { useProductos } from '@/hooks/useProductos';
 import { useAuth } from '@/hooks/useAuth';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const Productos = () => {
   const [showForm, setShowForm] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('public');
+  const [selectedFuncionalidad, setSelectedFuncionalidad] = useState<string[]>([]);
+  const [selectedTipo, setSelectedTipo] = useState<string[]>([]);
   const { productos, loading, refreshProductos } = useProductos();
   const { user } = useAuth();
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     refreshProductos(activeTab === 'my-products');
   }, [activeTab]);
 
-  const filteredProductos = productos.filter(producto =>
-    producto.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    producto.descripcion.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (producto.origen_roa && producto.origen_roa.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  const filteredProductos = productos.filter(producto => {
+    // Text search filter
+    const matchesSearch = producto.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      producto.descripcion.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (producto.origen_roa && producto.origen_roa.toLowerCase().includes(searchTerm.toLowerCase()));
+
+    // Category filters
+    const matchesFuncionalidad = selectedFuncionalidad.length === 0 || 
+      (producto.categoria_funcionalidad && 
+       selectedFuncionalidad.some(cat => producto.categoria_funcionalidad?.includes(cat)));
+
+    const matchesTipo = selectedTipo.length === 0 || 
+      (producto.categoria_tipo && 
+       selectedTipo.some(cat => producto.categoria_tipo?.includes(cat)));
+
+    return matchesSearch && matchesFuncionalidad && matchesTipo;
+  });
 
   const handleFormSuccess = () => {
     setShowForm(false);
     refreshProductos(activeTab === 'my-products');
   };
+
+  const handleClearFilters = () => {
+    setSelectedFuncionalidad([]);
+    setSelectedTipo([]);
+  };
+
+  const hasActiveFilters = selectedFuncionalidad.length > 0 || selectedTipo.length > 0;
 
   return (
     <ProtectedRoute>
@@ -72,7 +97,7 @@ const Productos = () => {
               </Sheet>
             </div>
 
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center gap-4">
               <div className="relative flex-1 max-w-md">
                 <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                 <Input
@@ -82,34 +107,105 @@ const Productos = () => {
                   className="pl-10"
                 />
               </div>
+              
+              {isMobile && (
+                <Sheet open={showFilters} onOpenChange={setShowFilters}>
+                  <SheetTrigger asChild>
+                    <Button variant="outline" size="icon" className="relative">
+                      <Filter className="h-4 w-4" />
+                      {hasActiveFilters && (
+                        <span className="absolute -top-1 -right-1 h-2 w-2 bg-primary rounded-full" />
+                      )}
+                    </Button>
+                  </SheetTrigger>
+                  <SheetContent side="left" className="w-full sm:max-w-md">
+                    <SheetHeader>
+                      <SheetTitle>Filtros</SheetTitle>
+                    </SheetHeader>
+                    <div className="mt-6">
+                      <ProductsFilter
+                        selectedFuncionalidad={selectedFuncionalidad}
+                        selectedTipo={selectedTipo}
+                        onFuncionalidadChange={setSelectedFuncionalidad}
+                        onTipoChange={setSelectedTipo}
+                        onClearFilters={handleClearFilters}
+                      />
+                    </div>
+                  </SheetContent>
+                </Sheet>
+              )}
             </div>
 
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="public">Productos Públicos</TabsTrigger>
-                <TabsTrigger value="my-products">Mis Productos</TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="public" className="space-y-6">
-                <div className="text-sm text-gray-600">
-                  Mostrando {filteredProductos.length} producto(s) disponible(s)
+            <div className="flex gap-6">
+              {/* Desktop Filters Sidebar */}
+              {!isMobile && (
+                <div className="w-80 flex-shrink-0">
+                  <div className="sticky top-4">
+                    <ProductsFilter
+                      selectedFuncionalidad={selectedFuncionalidad}
+                      selectedTipo={selectedTipo}
+                      onFuncionalidadChange={setSelectedFuncionalidad}
+                      onTipoChange={setSelectedTipo}
+                      onClearFilters={handleClearFilters}
+                    />
+                  </div>
                 </div>
-                <ProductsList 
-                  productos={filteredProductos}
-                  showOwnerActions={false}
-                />
-              </TabsContent>
+              )}
+              
+              {/* Main Content */}
+              <div className="flex-1 min-w-0">
+                <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="public">Productos Públicos</TabsTrigger>
+                    <TabsTrigger value="my-products">Mis Productos</TabsTrigger>
+                  </TabsList>
 
-              <TabsContent value="my-products" className="space-y-6">
-                <div className="text-sm text-gray-600">
-                  Mostrando {filteredProductos.length} de tus producto(s)
-                </div>
-                <ProductsList 
-                  productos={filteredProductos}
-                  showOwnerActions={true}
-                />
-              </TabsContent>
-            </Tabs>
+                  <TabsContent value="public" className="space-y-6">
+                    <div className="flex items-center justify-between">
+                      <div className="text-sm text-gray-600">
+                        Mostrando {filteredProductos.length} producto(s) disponible(s)
+                      </div>
+                      {hasActiveFilters && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={handleClearFilters}
+                          className="text-muted-foreground hover:text-foreground"
+                        >
+                          Limpiar filtros
+                        </Button>
+                      )}
+                    </div>
+                    <ProductsList 
+                      productos={filteredProductos}
+                      showOwnerActions={false}
+                    />
+                  </TabsContent>
+
+                  <TabsContent value="my-products" className="space-y-6">
+                    <div className="flex items-center justify-between">
+                      <div className="text-sm text-gray-600">
+                        Mostrando {filteredProductos.length} de tus producto(s)
+                      </div>
+                      {hasActiveFilters && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={handleClearFilters}
+                          className="text-muted-foreground hover:text-foreground"
+                        >
+                          Limpiar filtros
+                        </Button>
+                      )}
+                    </div>
+                    <ProductsList 
+                      productos={filteredProductos}
+                      showOwnerActions={true}
+                    />
+                  </TabsContent>
+                </Tabs>
+              </div>
+            </div>
 
             {loading && (
               <div className="flex justify-center py-8">
