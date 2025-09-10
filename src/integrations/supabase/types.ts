@@ -407,6 +407,8 @@ export type Database = {
       }
       productos: {
         Row: {
+          categoria_funcionalidad: string[] | null
+          categoria_tipo: string[] | null
           costo_domicilio: number | null
           created_at: string
           descripcion: string
@@ -423,6 +425,8 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          categoria_funcionalidad?: string[] | null
+          categoria_tipo?: string[] | null
           costo_domicilio?: number | null
           created_at?: string
           descripcion: string
@@ -439,6 +443,8 @@ export type Database = {
           user_id: string
         }
         Update: {
+          categoria_funcionalidad?: string[] | null
+          categoria_tipo?: string[] | null
           costo_domicilio?: number | null
           created_at?: string
           descripcion?: string
