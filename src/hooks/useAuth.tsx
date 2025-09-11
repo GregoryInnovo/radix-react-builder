@@ -34,6 +34,7 @@ export const useAuth = () => {
     setLoading(true);
     try {
       const redirectUrl = `${window.location.origin}/`;
+      console.log('Iniciando registro para:', email, 'con redirect:', redirectUrl);
       
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -47,19 +48,55 @@ export const useAuth = () => {
         }
       });
 
-      if (error) throw error;
+      console.log('Resultado del registro:', { data, error });
+
+      if (error) {
+        // Manejar casos específicos de error
+        if (error.message.includes('User already registered')) {
+          toast({
+            title: "Usuario ya registrado",
+            description: "Este email ya está registrado. ¿Deseas reenviar el email de verificación?",
+            variant: "destructive",
+          });
+          return { data: null, error: { ...error, code: 'user_already_exists' } };
+        }
+        throw error;
+      }
+
+      // Si no hay error pero tampoco hay usuario, significa que el usuario ya existe
+      if (!data.user && !error) {
+        console.log('Usuario ya existe, sin error específico');
+        toast({
+          title: "Email ya registrado",
+          description: "Este email ya está en uso. Revisa tu bandeja de entrada o reenvía el email de verificación.",
+        });
+        return { data: null, error: { message: 'User already exists', code: 'user_already_exists' } };
+      }
 
       toast({
         title: "¡Registro exitoso!",
-        description: "Revisa tu email para verificar tu cuenta antes de continuar.",
+        description: `Hemos enviado un email de verificación a ${email}. Revisa tu bandeja de entrada y spam.`,
       });
 
       return { data, error: null };
     } catch (error: any) {
       console.error('Sign up error:', error);
+      
+      // Mensajes de error más específicos
+      let errorMessage = "Ocurrió un error inesperado";
+      if (error.message.includes('Email rate limit exceeded')) {
+        errorMessage = "Se han enviado demasiados emails. Espera unos minutos antes de intentar de nuevo.";
+      } else if (error.message.includes('Invalid email')) {
+        errorMessage = "El formato del email no es válido.";
+      } else if (error.message.includes('Password should be at least')) {
+        errorMessage = "La contraseña debe tener al menos 6 caracteres.";
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
       toast({
         title: "Error en el registro",
-        description: error.message || "Ocurrió un error inesperado",
+        description: errorMessage,
         variant: "destructive",
       });
       return { data: null, error };
@@ -160,6 +197,8 @@ export const useAuth = () => {
   const resendConfirmation = async (email: string) => {
     setLoading(true);
     try {
+      console.log('Reenviando confirmación para:', email);
+      
       const { error } = await supabase.auth.resend({
         type: 'signup',
         email,
@@ -168,17 +207,29 @@ export const useAuth = () => {
         }
       });
 
-      if (error) throw error;
+      console.log('Resultado del reenvío:', { error });
+
+      if (error) {
+        if (error.message.includes('Email rate limit exceeded')) {
+          toast({
+            title: "Límite de emails alcanzado",
+            description: "Espera unos minutos antes de solicitar otro email de verificación.",
+            variant: "destructive",
+          });
+          return;
+        }
+        throw error;
+      }
 
       toast({
-        title: "Email reenviado",
-        description: "Revisa tu bandeja de entrada para el enlace de verificación.",
+        title: "Email reenviado exitosamente",
+        description: `Hemos enviado otro email de verificación a ${email}. Revisa tu bandeja de entrada y carpeta de spam.`,
       });
     } catch (error: any) {
       console.error('Resend confirmation error:', error);
       toast({
         title: "Error al reenviar",
-        description: error.message,
+        description: error.message || "No se pudo reenviar el email de verificación",
         variant: "destructive",
       });
     } finally {

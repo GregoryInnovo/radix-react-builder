@@ -49,7 +49,9 @@ export const AuthForm = ({ mode, onToggleMode }: AuthFormProps) => {
 
   const handleConfirmRegistration = async () => {
     const result = await signUp(email, password, fullName, selectedUserType);
-    if (result.data) {
+    
+    // Si el registro fue exitoso o el usuario ya existe, mostrar el panel de reenvío
+    if (result.data || (result.error?.code === 'user_already_exists')) {
       setShowResend(true);
       setShowConfirmation(false);
     } else {
@@ -86,27 +88,46 @@ export const AuthForm = ({ mode, onToggleMode }: AuthFormProps) => {
         </CardHeader>
 
         <CardContent className="space-y-6">
-          {showResend && mode === 'register' ? (
+            {showResend && mode === 'register' ? (
             <div className="text-center space-y-4">
               <div className="p-4 bg-green-50 rounded-lg border border-green-200">
                 <Mail className="w-8 h-8 text-green-600 mx-auto mb-2" />
                 <p className="text-sm text-green-800 font-medium">
-                  ¡Registro exitoso!
+                  Email de verificación enviado
                 </p>
                 <p className="text-xs text-green-700 mt-1">
                   Revisa tu email <strong>{email}</strong> para verificar tu cuenta.
                 </p>
+                <p className="text-xs text-green-600 mt-2 bg-green-100 p-2 rounded">
+                  💡 <strong>Tip:</strong> Si no encuentras el email, revisa tu carpeta de spam o correo no deseado.
+                </p>
               </div>
+              
+              <div className="text-xs text-gray-600 bg-yellow-50 p-3 rounded-lg border border-yellow-200">
+                <p className="font-medium text-yellow-800 mb-1">⚠️ Problema con los emails?</p>
+                <p className="text-yellow-700">
+                  El sistema de emails puede tener demoras. Si después de 10 minutos no recibes el email, 
+                  prueba reenviar la verificación o contacta al administrador.
+                </p>
+              </div>
+
               <Button
                 onClick={handleResendConfirmation}
                 variant="outline"
                 disabled={loading}
-                className="w-full"
+                className="w-full border-green-200 hover:bg-green-50"
               >
-                Reenviar email de verificación
+                {loading ? 'Reenviando...' : 'Reenviar email de verificación'}
               </Button>
+              
               <Button
-                onClick={() => setShowResend(false)}
+                onClick={() => {
+                  setShowResend(false);
+                  setEmail('');
+                  setPassword('');
+                  setFullName('');
+                  setSelectedUserType('');
+                }}
                 variant="ghost"
                 className="w-full text-green-600 hover:text-green-700"
               >
