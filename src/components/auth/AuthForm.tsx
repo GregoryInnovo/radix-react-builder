@@ -5,8 +5,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { Leaf, Mail, Lock, User, Chrome } from 'lucide-react';
+import { ConfirmModal } from '@/components/ui/confirm-modal';
+import { Leaf, Mail, Lock, User, Chrome, Factory, Recycle, Users } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { cn } from '@/lib/utils';
 
 interface AuthFormProps {
   mode: 'login' | 'register';
@@ -17,9 +19,17 @@ export const AuthForm = ({ mode, onToggleMode }: AuthFormProps) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
+  const [selectedUserType, setSelectedUserType] = useState<string>('');
   const [showResend, setShowResend] = useState(false);
+  const [showConfirmation, setShowConfirmation] = useState(false);
   
   const { signIn, signUp, signInWithGoogle, resendConfirmation, loading } = useAuth();
+
+  const userTypes = [
+    { id: 'generator', label: 'Generador', icon: Recycle, description: 'Genero residuos orgánicos aprovechables' },
+    { id: 'transformer', label: 'Transformador', icon: Factory, description: 'Proceso y transformo ROA' },
+    { id: 'consumer', label: 'Consumidor', icon: Users, description: 'Compro productos transformados' }
+  ];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,12 +38,22 @@ export const AuthForm = ({ mode, onToggleMode }: AuthFormProps) => {
       if (!fullName.trim()) {
         return;
       }
-      const result = await signUp(email, password, fullName);
-      if (result.data) {
-        setShowResend(true);
+      if (!selectedUserType) {
+        return;
       }
+      setShowConfirmation(true);
     } else {
       await signIn(email, password);
+    }
+  };
+
+  const handleConfirmRegistration = async () => {
+    const result = await signUp(email, password, fullName, selectedUserType);
+    if (result.data) {
+      setShowResend(true);
+      setShowConfirmation(false);
+    } else {
+      setShowConfirmation(false);
     }
   };
 
@@ -134,34 +154,86 @@ export const AuthForm = ({ mode, onToggleMode }: AuthFormProps) => {
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="password" className="text-sm font-medium text-gray-700">
-                    Contraseña
-                  </Label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                    <Input
-                      id="password"
-                      type="password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder="Tu contraseña"
-                      className="pl-10 border-gray-200 focus:border-green-500 focus:ring-green-500"
-                      required
-                      minLength={6}
-                    />
+                  <div className="space-y-2">
+                    <Label htmlFor="password" className="text-sm font-medium text-gray-700">
+                      Contraseña
+                    </Label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                      <Input
+                        id="password"
+                        type="password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="Tu contraseña"
+                        className="pl-10 border-gray-200 focus:border-green-500 focus:ring-green-500"
+                        required
+                        minLength={6}
+                      />
+                    </div>
+                    {mode === 'register' && (
+                      <p className="text-xs text-gray-500">
+                        Mínimo 6 caracteres
+                      </p>
+                    )}
                   </div>
+
                   {mode === 'register' && (
-                    <p className="text-xs text-gray-500">
-                      Mínimo 6 caracteres
-                    </p>
+                    <div className="space-y-3">
+                      <Label className="text-sm font-medium text-gray-700">
+                        Tipo de usuario
+                      </Label>
+                      <div className="grid grid-cols-1 gap-2">
+                        {userTypes.map((type) => {
+                          const Icon = type.icon;
+                          return (
+                            <button
+                              key={type.id}
+                              type="button"
+                              onClick={() => setSelectedUserType(type.id)}
+                              className={cn(
+                                "p-3 border rounded-lg text-left transition-all duration-200 hover:border-green-300",
+                                selectedUserType === type.id
+                                  ? "border-green-500 bg-green-50 text-green-900"
+                                  : "border-gray-200 hover:bg-gray-50"
+                              )}
+                            >
+                              <div className="flex items-center space-x-3">
+                                <Icon className={cn(
+                                  "w-5 h-5",
+                                  selectedUserType === type.id ? "text-green-600" : "text-gray-400"
+                                )} />
+                                <div>
+                                  <div className={cn(
+                                    "font-medium text-sm",
+                                    selectedUserType === type.id ? "text-green-900" : "text-gray-900"
+                                  )}>
+                                    {type.label}
+                                  </div>
+                                  <div className={cn(
+                                    "text-xs",
+                                    selectedUserType === type.id ? "text-green-700" : "text-gray-500"
+                                  )}>
+                                    {type.description}
+                                  </div>
+                                </div>
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                      {mode === 'register' && !selectedUserType && (
+                        <p className="text-xs text-red-500">
+                          Selecciona un tipo de usuario
+                        </p>
+                      )}
+                    </div>
                   )}
-                </div>
 
                 <Button
                   type="submit"
-                  disabled={loading}
-                  className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-medium py-2.5 transition-all duration-200"
+                  disabled={loading || (mode === 'register' && !selectedUserType)}
+                  className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-medium py-2.5 transition-all duration-200 disabled:opacity-50"
                 >
                   {loading 
                     ? 'Procesando...' 
@@ -207,6 +279,17 @@ export const AuthForm = ({ mode, onToggleMode }: AuthFormProps) => {
           )}
         </CardContent>
       </Card>
+
+      <ConfirmModal
+        isOpen={showConfirmation}
+        title="Confirmar registro"
+        message={`¿Desea crear cuenta como ${userTypes.find(t => t.id === selectedUserType)?.label}?`}
+        onConfirm={handleConfirmRegistration}
+        onCancel={() => setShowConfirmation(false)}
+        confirmLabel="Confirmar"
+        cancelLabel="Cancelar"
+        isLoading={loading}
+      />
     </div>
   );
 };

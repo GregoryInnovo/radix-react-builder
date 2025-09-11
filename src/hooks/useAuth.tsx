@@ -30,7 +30,7 @@ export const useAuth = () => {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signUp = async (email: string, password: string, fullName: string) => {
+  const signUp = async (email: string, password: string, fullName: string, userType: string) => {
     setLoading(true);
     try {
       const redirectUrl = `${window.location.origin}/`;
@@ -41,7 +41,8 @@ export const useAuth = () => {
         options: {
           emailRedirectTo: redirectUrl,
           data: {
-            full_name: fullName
+            full_name: fullName,
+            user_type: userType
           }
         }
       });
