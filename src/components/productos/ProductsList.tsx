@@ -82,9 +82,22 @@ export const ProductsList: React.FC<ProductsListProps> = ({
               <CardTitle className="text-lg line-clamp-1">
                 {producto.nombre}
               </CardTitle>
-              <Badge variant={producto.disponible ? 'default' : 'secondary'}>
-                {producto.disponible ? 'Disponible' : 'No disponible'}
-              </Badge>
+              <div className="flex flex-col gap-1">
+                {showOwnerActions && (
+                  <Badge variant={
+                    producto.status === 'aprobado' ? 'default' : 
+                    producto.status === 'rechazado' ? 'destructive' : 
+                    producto.status === 'suspendido' ? 'secondary' : 'outline'
+                  }>
+                    {producto.status === 'aprobado' ? 'Aprobado' : 
+                     producto.status === 'rechazado' ? 'Rechazado' : 
+                     producto.status === 'suspendido' ? 'Suspendido' : 'Pendiente'}
+                  </Badge>
+                )}
+                <Badge variant={producto.disponible ? 'default' : 'secondary'}>
+                  {producto.disponible ? 'Disponible' : 'No disponible'}
+                </Badge>
+              </div>
             </div>
             
             {/* Precio destacado */}
@@ -158,13 +171,13 @@ export const ProductsList: React.FC<ProductsListProps> = ({
               </div>
             )}
 
-            {showOwnerActions && producto.user_id === user?.id && (
+            {showOwnerActions && producto.user_id === user?.id && producto.status !== 'rechazado' && producto.status !== 'suspendido' && (
               <div className="flex gap-2 pt-2">
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => handleToggleDisponible(producto)}
-                  disabled={loadingIds.has(producto.id)}
+                  disabled={loadingIds.has(producto.id) || producto.status !== 'aprobado'}
                   className="flex-1"
                 >
                   <Edit2 className="w-4 h-4 mr-1" />
@@ -178,6 +191,14 @@ export const ProductsList: React.FC<ProductsListProps> = ({
                 >
                   <Trash2 className="w-4 h-4" />
                 </Button>
+              </div>
+            )}
+            
+            {showOwnerActions && producto.user_id === user?.id && (producto.status === 'rechazado' || producto.status === 'suspendido') && (
+              <div className="text-center py-2">
+                <Badge variant="secondary" className="text-xs">
+                  {producto.status === 'rechazado' ? 'Producto rechazado por administración' : 'Producto suspendido por administración'}
+                </Badge>
               </div>
             )}
 

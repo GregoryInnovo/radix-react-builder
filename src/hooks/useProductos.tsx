@@ -24,9 +24,11 @@ export const useProductos = () => {
 
       if (onlyUserProducts && user) {
         query = query.eq('user_id', user.id);
+        // For user's own products, exclude suspended/rejected products
+        query = query.not('status', 'eq', 'suspendido');
       } else {
-        // Only show available products for public view
-        query = query.eq('disponible', true);
+        // Only show available and approved products for public view
+        query = query.eq('disponible', true).eq('status', 'aprobado');
       }
 
       const { data, error } = await query;
@@ -91,8 +93,8 @@ export const useProductos = () => {
       if (error) throw error;
 
       toast({
-        title: "¡Producto creado exitosamente!",
-        description: "Tu producto ha sido publicado.",
+        title: "¡Producto enviado para revisión!",
+        description: "Tu producto será revisado por nuestro equipo antes de ser publicado.",
       });
 
       await fetchProductos();

@@ -229,6 +229,21 @@ export const useAdmin = () => {
           .eq('id', entityId);
         
         if (error) throw error;
+
+        // Send notification for product status change
+        try {
+          await supabase.functions.invoke('notify-product-status', {
+            body: {
+              productId: entityId,
+              newStatus,
+              oldStatus: previousStatus,
+              adminNotes: notes
+            }
+          });
+        } catch (notifError) {
+          console.error('Error sending product notification:', notifError);
+          // Don't fail the main operation if notification fails
+        }
       } else if (entityType === 'usuario') {
         const current = profiles.find(p => p.id === entityId);
         previousStatus = current?.is_active ? 'activo' : 'suspendido';

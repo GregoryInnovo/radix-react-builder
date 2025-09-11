@@ -127,7 +127,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({ onSuccess, onCancel })
         costo_domicilio: formData.incluye_domicilio ? parseInt(formData.costo_domicilio) : 0,
         direccion_vendedor: formData.direccion_vendedor,
         imagenes: validUrls,
-        status: formData.disponible ? 'aprobado' : 'pendiente', // Auto-approve available products
+        status: 'pendiente', // All products need approval
       });
 
       if (producto) {
@@ -165,7 +165,8 @@ export const ProductForm: React.FC<ProductFormProps> = ({ onSuccess, onCancel })
           Publicar Producto
         </CardTitle>
         <CardDescription>
-          Comparte los productos que has creado a partir de residuos orgánicos aprovechables
+          Comparte los productos que has creado a partir de residuos orgánicos aprovechables.
+          Tu producto será revisado por nuestro equipo antes de ser publicado.
         </CardDescription>
       </CardHeader>
 
