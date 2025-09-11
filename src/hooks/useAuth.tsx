@@ -4,6 +4,35 @@ import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 
+// Función para normalizar user_type a valores válidos de BD
+const normalizeUserType = (userType: string): string => {
+  const userTypeLower = userType.toLowerCase();
+  
+  // Mapeo de variantes a valores válidos
+  const typeMapping: { [key: string]: string } = {
+    'consumer': 'citizen',
+    'consumidor': 'citizen',
+    'generador': 'generator',
+    'transformador': 'transformer',
+    'ciudadano': 'citizen'
+  };
+  
+  // Si hay un mapeo específico, usarlo
+  if (typeMapping[userTypeLower]) {
+    return typeMapping[userTypeLower];
+  }
+  
+  // Si ya es un valor válido, mantenerlo
+  const validTypes = ['generator', 'transformer', 'citizen', 'admin'];
+  if (validTypes.includes(userTypeLower)) {
+    return userTypeLower;
+  }
+  
+  // Por defecto, usar 'generator'
+  console.warn(`UserType no reconocido: ${userType}, usando 'generator' por defecto`);
+  return 'generator';
+};
+
 export const useAuth = () => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -36,6 +65,10 @@ export const useAuth = () => {
       const redirectUrl = `${window.location.origin}/`;
       console.log('Iniciando registro para:', email, 'con redirect:', redirectUrl);
       
+      // Normalizar userType para que coincida con la restricción de BD
+      const normalizedUserType = normalizeUserType(userType);
+      console.log('UserType normalizado:', userType, '->', normalizedUserType);
+      
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -43,7 +76,7 @@ export const useAuth = () => {
           emailRedirectTo: redirectUrl,
           data: {
             full_name: fullName,
-            user_type: userType
+            user_type: normalizedUserType
           }
         }
       });

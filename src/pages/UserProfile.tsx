@@ -146,7 +146,7 @@ const UserProfile = () => {
         return 'Generador';
       case 'transformer':
         return 'Transformador';
-      case 'consumer':
+      case 'citizen':
         return 'Consumidor';
       default:
         return 'Usuario';
@@ -159,7 +159,7 @@ const UserProfile = () => {
         return 'default';
       case 'transformer':
         return 'secondary';
-      case 'consumer':
+      case 'citizen':
         return 'outline';
       default:
         return 'outline';

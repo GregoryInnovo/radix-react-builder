@@ -28,7 +28,7 @@ export const AuthForm = ({ mode, onToggleMode }: AuthFormProps) => {
   const userTypes = [
     { id: 'generator', label: 'Generador', icon: Recycle, description: 'Genero residuos orgánicos aprovechables' },
     { id: 'transformer', label: 'Transformador', icon: Factory, description: 'Proceso y transformo ROA' },
-    { id: 'consumer', label: 'Consumidor', icon: Users, description: 'Compro productos transformados' }
+    { id: 'citizen', label: 'Consumidor', icon: Users, description: 'Compro productos transformados' }
   ];
 
   const handleSubmit = async (e: React.FormEvent) => {
