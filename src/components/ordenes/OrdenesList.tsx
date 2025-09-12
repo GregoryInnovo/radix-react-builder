@@ -131,39 +131,18 @@ export const OrdenesList: React.FC = () => {
           </div>
         )}
 
-        {orden.estado === 'completada' && (
+        {orden.estado === 'completada' && user?.id === orden.solicitante_id && (
           <div className="border-t pt-3 space-y-3">
             <div className="text-sm font-medium text-gray-700 mb-2">
-              Calificar participantes:
+              Calificar al proveedor:
             </div>
-            <div className="grid grid-cols-1 gap-2">
-              {/* Calificar al proveedor (si soy el solicitante) */}
-              {user?.id === orden.solicitante_id && (
-                <div className="p-2 bg-gray-50 rounded-lg">
-                  <div className="text-xs text-gray-600 mb-2">Calificar al proveedor:</div>
-                  <CalificarOrden 
-                    orden={{
-                      ...orden,
-                      // Override para que califique al proveedor
-                      calificado_id: orden.proveedor_id
-                    }} 
-                  />
-                </div>
-              )}
-              
-              {/* Calificar al solicitante (si soy el proveedor) */}
-              {user?.id === orden.proveedor_id && (
-                <div className="p-2 bg-gray-50 rounded-lg">
-                  <div className="text-xs text-gray-600 mb-2">Calificar al solicitante:</div>
-                  <CalificarOrden 
-                    orden={{
-                      ...orden,
-                      // Override para que califique al solicitante
-                      calificado_id: orden.solicitante_id
-                    }} 
-                  />
-                </div>
-              )}
+            <div className="p-2 bg-gray-50 rounded-lg">
+              <CalificarOrden 
+                orden={{
+                  ...orden,
+                  calificado_id: orden.proveedor_id
+                }} 
+              />
             </div>
           </div>
         )}

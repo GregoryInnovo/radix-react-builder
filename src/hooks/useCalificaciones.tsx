@@ -70,10 +70,8 @@ export const useCalificaciones = () => {
 
       if (!orden || orden.estado !== 'completada') return false;
 
-      // User must be either requester or provider
-      const userParticipated = orden.solicitante_id === user.id || orden.proveedor_id === user.id;
-      
-      return userParticipated;
+      // Only the requester (solicitante) can rate the provider
+      return orden.solicitante_id === user.id;
     } catch (error) {
       console.error('Error checking if can rate:', error);
       return false;

@@ -1,12 +1,14 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Edit2, Trash2, Package, Calendar, Image as ImageIcon, Eye } from 'lucide-react';
 import { SolicitarIntercambio } from '@/components/ordenes/SolicitarIntercambio';
 import { ProductImageGallery } from './ProductImageGallery';
+import { ProveedorInfo } from './ProveedorInfo';
 import { useProductos } from '@/hooks/useProductos';
+import { useProfiles } from '@/hooks/useProfiles';
 import { useAuth } from '@/hooks/useAuth';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -24,10 +26,25 @@ export const ProductsList: React.FC<ProductsListProps> = ({
   showOwnerActions
 }) => {
   const { updateProducto, deleteProducto } = useProductos();
+  const { getMultipleProfiles } = useProfiles();
   const { user } = useAuth();
   const [loadingIds, setLoadingIds] = useState<Set<string>>(new Set());
   const [selectedProduct, setSelectedProduct] = useState<Producto | null>(null);
   const [isGalleryOpen, setIsGalleryOpen] = useState(false);
+  const [profiles, setProfiles] = useState<Map<string, any>>(new Map());
+
+  useEffect(() => {
+    if (!showOwnerActions && productos.length > 0) {
+      const userIds = [...new Set(productos.map(p => p.user_id))];
+      getMultipleProfiles(userIds).then(profilesData => {
+        const profilesMap = new Map();
+        profilesData.forEach(profile => {
+          profilesMap.set(profile.id, profile);
+        });
+        setProfiles(profilesMap);
+      });
+    }
+  }, [productos, showOwnerActions, getMultipleProfiles]);
 
   const handleViewImages = (producto: Producto) => {
     setSelectedProduct(producto);
@@ -78,6 +95,11 @@ export const ProductsList: React.FC<ProductsListProps> = ({
       {productos.map((producto) => (
         <Card key={producto.id} className="hover:shadow-lg transition-shadow">
           <CardHeader>
+            {/* Mostrar información del proveedor solo en productos públicos */}
+            {!showOwnerActions && profiles.get(producto.user_id) && (
+              <ProveedorInfo profile={profiles.get(producto.user_id)} />
+            )}
+            
             <div className="flex justify-between items-start">
               <CardTitle className="text-lg line-clamp-1">
                 {producto.nombre}
