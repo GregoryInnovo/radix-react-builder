@@ -6,12 +6,12 @@ import { Leaf, Recycle, Users, MapPin, Star, TrendingUp, User } from 'lucide-rea
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { GuiasPreviewSection } from '@/components/guias/GuiasPreviewSection';
-
 const Index = () => {
-  const { isAuthenticated, user } = useAuth();
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-50">
+  const {
+    isAuthenticated,
+    user
+  } = useAuth();
+  return <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-50">
       {/* Header */}
       <header className="bg-white shadow-sm">
         <div className="container mx-auto px-4 py-4">
@@ -30,16 +30,12 @@ const Index = () => {
               <Button variant="ghost" asChild>
                 <Link to="/lotes">Mis Lotes</Link>
               </Button>
-              {isAuthenticated ? (
-                <div className="flex items-center space-x-2">
+              {isAuthenticated ? <div className="flex items-center space-x-2">
                   <User className="h-4 w-4 text-gray-600" />
                   <span className="text-sm text-gray-600">{user?.email}</span>
-                </div>
-              ) : (
-                <Button asChild>
+                </div> : <Button asChild>
                   <Link to="/auth">Iniciar Sesión</Link>
-                </Button>
-              )}
+                </Button>}
             </nav>
           </div>
         </div>
@@ -48,33 +44,27 @@ const Index = () => {
       {/* Hero Section */}
       <section className="py-20">
         <div className="container mx-auto px-4 text-center">
-          <h2 className="text-5xl font-bold text-green-800 mb-6">
-            Plataforma de Intercambio de ROA
-          </h2>
+          <h2 className="text-5xl text-green-800 mb-6 font-extrabold">¡Hola!</h2>
           <p className="text-xl text-green-600 mb-8 max-w-3xl mx-auto">
             Conectamos generadores y transformadores de Residuos Orgánicos Aprovechables 
             para crear un ecosistema circular sostenible
           </p>
           <div className="flex flex-wrap justify-center gap-4">
-            {!isAuthenticated ? (
-              <>
+            {!isAuthenticated ? <>
                 <Button size="lg" className="bg-green-600 hover:bg-green-700" asChild>
                   <Link to="/auth">Comenzar Ahora</Link>
                 </Button>
                 <Button size="lg" variant="outline" asChild>
                   <Link to="/search">Explorar ROA</Link>
                 </Button>
-              </>
-            ) : (
-              <>
+              </> : <>
                 <Button size="lg" className="bg-green-600 hover:bg-green-700" asChild>
                   <Link to="/lotes">Mis Lotes</Link>
                 </Button>
                 <Button size="lg" variant="outline" asChild>
                   <Link to="/search">Buscar ROA</Link>
                 </Button>
-              </>
-            )}
+              </>}
           </div>
         </div>
       </section>
@@ -211,15 +201,31 @@ const Index = () => {
           </div>
           
           <div className="grid md:grid-cols-3 lg:grid-cols-6 gap-4">
-            {[
-              { name: 'Cáscara de fruta', count: 145, color: 'bg-orange-100 text-orange-800' },
-              { name: 'Posos de café', count: 89, color: 'bg-amber-100 text-amber-800' },
-              { name: 'Restos vegetales', count: 234, color: 'bg-green-100 text-green-800' },
-              { name: 'Cáscara de huevo', count: 67, color: 'bg-yellow-100 text-yellow-800' },
-              { name: 'Restos cereales', count: 123, color: 'bg-amber-100 text-amber-800' },
-              { name: 'Otros', count: 89, color: 'bg-gray-100 text-gray-800' },
-            ].map((type, index) => (
-              <Card key={index} className="text-center hover:shadow-md transition-shadow cursor-pointer">
+            {[{
+            name: 'Cáscara de fruta',
+            count: 145,
+            color: 'bg-orange-100 text-orange-800'
+          }, {
+            name: 'Posos de café',
+            count: 89,
+            color: 'bg-amber-100 text-amber-800'
+          }, {
+            name: 'Restos vegetales',
+            count: 234,
+            color: 'bg-green-100 text-green-800'
+          }, {
+            name: 'Cáscara de huevo',
+            count: 67,
+            color: 'bg-yellow-100 text-yellow-800'
+          }, {
+            name: 'Restos cereales',
+            count: 123,
+            color: 'bg-amber-100 text-amber-800'
+          }, {
+            name: 'Otros',
+            count: 89,
+            color: 'bg-gray-100 text-gray-800'
+          }].map((type, index) => <Card key={index} className="text-center hover:shadow-md transition-shadow cursor-pointer">
                 <CardContent className="pt-6">
                   <div className="text-2xl mb-2">🌿</div>
                   <div className="font-semibold text-sm mb-2">{type.name}</div>
@@ -227,8 +233,7 @@ const Index = () => {
                     {type.count} lotes
                   </Badge>
                 </CardContent>
-              </Card>
-            ))}
+              </Card>)}
           </div>
         </div>
       </section>
@@ -245,25 +250,21 @@ const Index = () => {
           <p className="text-xl mb-8 opacity-90">
             Únete a nuestra comunidad de generadores y transformadores de ROA
           </p>
-          {!isAuthenticated ? (
-            <div className="flex flex-wrap justify-center gap-4">
+          {!isAuthenticated ? <div className="flex flex-wrap justify-center gap-4">
               <Button size="lg" variant="secondary" asChild>
                 <Link to="/auth">Registrarse como Generador</Link>
               </Button>
               <Button size="lg" className="bg-green-500 hover:bg-green-400 text-white border-green-500" asChild>
                 <Link to="/auth">Registrarse como Transformador</Link>
               </Button>
-            </div>
-          ) : (
-            <div className="flex flex-wrap justify-center gap-4">
+            </div> : <div className="flex flex-wrap justify-center gap-4">
               <Button size="lg" variant="secondary" asChild>
                 <Link to="/lotes">Gestionar Lotes</Link>
               </Button>
               <Button size="lg" className="bg-green-500 hover:bg-green-400 text-white border-green-500" asChild>
                 <Link to="/productos">Ver Productos</Link>
               </Button>
-            </div>
-          )}
+            </div>}
         </div>
       </section>
 
@@ -316,8 +317,6 @@ const Index = () => {
           </div>
         </div>
       </footer>
-    </div>
-  );
+    </div>;
 };
-
 export default Index;
