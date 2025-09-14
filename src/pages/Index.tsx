@@ -73,7 +73,8 @@ const Index = () => {
             <h3 className="text-3xl font-bold text-gray-900 mb-4">
               ¿Cómo funciona Natuvital?
             </h3>
-            <p className="text-lg text-gray-600">Una plataforma integral para la gestión de Residuos Orgánicos, su intercambio y aprovechamiento para crear productos y alternativas naturales.</p>
+            <p className="text-lg text-gray-600">Una plataforma integral para la gestión de Residuos Orgánicos, su intercambio y aprovechamiento para crear productos y alternativas naturales. 
+Hay usuarios generadores de estos residuos, quienes los transforman y quienes consumen sus productos derivados,así como otras variedades pensadas para la salud y bienestar de las personas.</p>
           </div>
           
           <div className="grid md:grid-cols-3 gap-8">
