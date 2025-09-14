@@ -27,24 +27,42 @@ serve(async (req) => {
 
     console.log(`New message notification for order ${ordenId} from user ${senderId}`)
 
-    // Get order details with profiles
+    // Get order details
     const { data: orden, error: ordenError } = await supabase
       .from('ordenes')
-      .select(`
-        *,
-        solicitante:profiles!ordenes_solicitante_id_fkey(full_name, email),
-        proveedor:profiles!ordenes_proveedor_id_fkey(full_name, email)
-      `)
+      .select('*')
       .eq('id', ordenId)
       .single()
 
     if (ordenError) {
+      console.error('Failed to fetch order:', ordenError)
       throw ordenError
     }
 
+    // Get solicitante profile
+    const { data: solicitanteProfile } = await supabase
+      .from('profiles')
+      .select('full_name, email')
+      .eq('id', orden.solicitante_id)
+      .single()
+
+    // Get proveedor profile
+    const { data: proveedorProfile } = await supabase
+      .from('profiles')
+      .select('full_name, email')
+      .eq('id', orden.proveedor_id)
+      .single()
+
+    // Add profile data to orden object
+    const ordenWithProfiles = {
+      ...orden,
+      solicitante: solicitanteProfile || { full_name: 'Usuario', email: '' },
+      proveedor: proveedorProfile || { full_name: 'Usuario', email: '' }
+    }
+
     // Determine recipient (the other party in the order)
-    const recipientId = senderId === orden.solicitante_id ? orden.proveedor_id : orden.solicitante_id
-    const senderName = senderId === orden.solicitante_id ? orden.solicitante.full_name : orden.proveedor.full_name
+    const recipientId = senderId === ordenWithProfiles.solicitante_id ? ordenWithProfiles.proveedor_id : ordenWithProfiles.solicitante_id
+    const senderName = senderId === ordenWithProfiles.solicitante_id ? ordenWithProfiles.solicitante.full_name : ordenWithProfiles.proveedor.full_name
 
     // Create notification
     const notification = {
@@ -60,7 +78,7 @@ serve(async (req) => {
         sender_id: senderId,
         sender_name: senderName,
         message_preview: mensaje.substring(0, 100),
-        tipo_item: orden.tipo_item
+        tipo_item: ordenWithProfiles.tipo_item
       }
     }
 

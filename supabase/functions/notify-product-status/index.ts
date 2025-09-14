@@ -29,16 +29,29 @@ serve(async (req) => {
 
     console.log(`Product status change notification: Product ${productId} changed from ${oldStatus} to ${newStatus}`)
 
-    // Get product details and owner
+    // Get product details
     const { data: product, error: productError } = await supabase
       .from('productos')
-      .select('*, profiles!productos_user_id_fkey(full_name, email)')
+      .select('*')
       .eq('id', productId)
       .single()
 
     if (productError) {
       console.error('Error fetching product:', productError)
       throw productError
+    }
+
+    // Get owner profile separately
+    const { data: ownerProfile } = await supabase
+      .from('profiles')
+      .select('full_name, email')
+      .eq('id', product.user_id)
+      .single()
+
+    // Add profile data to product object for backward compatibility
+    const productWithOwner = {
+      ...product,
+      profiles: ownerProfile || { full_name: 'Usuario', email: '' }
     }
 
     if (!product) {

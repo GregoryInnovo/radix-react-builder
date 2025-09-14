@@ -29,19 +29,37 @@ serve(async (req) => {
 
     console.log(`Order notification: ${notificationType} for order ${ordenId}`)
 
-    // Get order details with related data
+    // Get order details
     const { data: orden, error: ordenError } = await supabase
       .from('ordenes')
-      .select(`
-        *,
-        solicitante:profiles!ordenes_solicitante_id_fkey(full_name, email),
-        proveedor:profiles!ordenes_proveedor_id_fkey(full_name, email)
-      `)
+      .select('*')
       .eq('id', ordenId)
       .single()
 
     if (ordenError) {
+      console.error('Failed to fetch order:', ordenError)
       throw ordenError
+    }
+
+    // Get solicitante profile
+    const { data: solicitanteProfile } = await supabase
+      .from('profiles')
+      .select('full_name, email')
+      .eq('id', orden.solicitante_id)
+      .single()
+
+    // Get proveedor profile
+    const { data: proveedorProfile } = await supabase
+      .from('profiles')
+      .select('full_name, email')
+      .eq('id', orden.proveedor_id)
+      .single()
+
+    // Add profile data to orden object
+    const ordenWithProfiles = {
+      ...orden,
+      solicitante: solicitanteProfile || { full_name: 'Usuario', email: '' },
+      proveedor: proveedorProfile || { full_name: 'Usuario', email: '' }
     }
 
     let notifications = []
@@ -50,30 +68,30 @@ serve(async (req) => {
       case 'new_request':
         // Notify provider about new request
         notifications.push({
-          user_id: orden.proveedor_id,
+          user_id: ordenWithProfiles.proveedor_id,
           titulo: 'Nueva solicitud de intercambio',
-          mensaje: `${orden.solicitante.full_name} solicita intercambio de tu ${orden.tipo_item}`,
+          mensaje: `${ordenWithProfiles.solicitante.full_name} solicita intercambio de tu ${ordenWithProfiles.tipo_item}`,
           tipo: 'orden',
           entity_type: 'orden',
           entity_id: ordenId,
           redirect_url: '/ordenes',
           metadata: {
             orden_id: ordenId,
-            solicitante_name: orden.solicitante.full_name,
-            tipo_item: orden.tipo_item,
-            cantidad: orden.cantidad_solicitada
+            solicitante_name: ordenWithProfiles.solicitante.full_name,
+            tipo_item: ordenWithProfiles.tipo_item,
+            cantidad: ordenWithProfiles.cantidad_solicitada
           }
         })
         break
 
       case 'status_change':
         const targetUserId = newStatus === 'aceptada' || newStatus === 'rechazada' 
-          ? orden.solicitante_id 
-          : orden.proveedor_id
+          ? ordenWithProfiles.solicitante_id 
+          : ordenWithProfiles.proveedor_id
 
         const statusMessages = {
-          aceptada: `${orden.proveedor.full_name} aceptó tu solicitud de intercambio`,
-          rechazada: `${orden.proveedor.full_name} rechazó tu solicitud de intercambio`,
+          aceptada: `${ordenWithProfiles.proveedor.full_name} aceptó tu solicitud de intercambio`,
+          rechazada: `${ordenWithProfiles.proveedor.full_name} rechazó tu solicitud de intercambio`,
           cancelada: 'La orden ha sido cancelada'
         }
 
@@ -89,7 +107,7 @@ serve(async (req) => {
             orden_id: ordenId,
             old_status: oldStatus,
             new_status: newStatus,
-            tipo_item: orden.tipo_item
+            tipo_item: ordenWithProfiles.tipo_item
           }
         })
         break
@@ -97,17 +115,17 @@ serve(async (req) => {
       case 'completed':
         // Notify requester that order is completed
         notifications.push({
-          user_id: orden.solicitante_id,
+          user_id: ordenWithProfiles.solicitante_id,
           titulo: 'Orden completada',
-          mensaje: `${orden.proveedor.full_name} marcó como completada tu orden de ${orden.tipo_item}`,
+          mensaje: `${ordenWithProfiles.proveedor.full_name} marcó como completada tu orden de ${ordenWithProfiles.tipo_item}`,
           tipo: 'orden',
           entity_type: 'orden',
           entity_id: ordenId,
           redirect_url: '/ordenes',
           metadata: {
             orden_id: ordenId,
-            proveedor_name: orden.proveedor.full_name,
-            tipo_item: orden.tipo_item,
+            proveedor_name: ordenWithProfiles.proveedor.full_name,
+            tipo_item: ordenWithProfiles.tipo_item,
             can_rate: true
           }
         })
@@ -115,13 +133,13 @@ serve(async (req) => {
 
       case 'new_rating':
         // Notify the rated user
-        const ratedUserId = userId === orden.solicitante_id ? orden.proveedor_id : orden.solicitante_id
-        const raterName = userId === orden.solicitante_id ? orden.solicitante.full_name : orden.proveedor.full_name
+        const ratedUserId = userId === ordenWithProfiles.solicitante_id ? ordenWithProfiles.proveedor_id : ordenWithProfiles.solicitante_id
+        const raterName = userId === ordenWithProfiles.solicitante_id ? ordenWithProfiles.solicitante.full_name : ordenWithProfiles.proveedor.full_name
 
         notifications.push({
           user_id: ratedUserId,
           titulo: 'Nueva calificación recibida',
-          mensaje: `${raterName} te ha calificado por la orden de ${orden.tipo_item}`,
+          mensaje: `${raterName} te ha calificado por la orden de ${ordenWithProfiles.tipo_item}`,
           tipo: 'calificacion',
           entity_type: 'orden',
           entity_id: ordenId,
@@ -129,7 +147,7 @@ serve(async (req) => {
           metadata: {
             orden_id: ordenId,
             rater_name: raterName,
-            tipo_item: orden.tipo_item
+            tipo_item: ordenWithProfiles.tipo_item
           }
         })
         break
