@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -6,54 +5,63 @@ import { useAdmin } from "@/hooks/useAdmin";
 import { LogOut, User, Package, Search, ShoppingBag, ClipboardList, Settings, Menu, X, BookOpen } from "lucide-react";
 import { NotificacionesDropdown } from "@/components/notificaciones/NotificacionesDropdown";
 import { useState } from "react";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
-
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 export const Header = () => {
-  const { user, signOut, isAuthenticated } = useAuth();
-  const { isAdmin } = useAdmin();
+  const {
+    user,
+    signOut,
+    isAuthenticated
+  } = useAuth();
+  const {
+    isAdmin
+  } = useAdmin();
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
-
   const handleSignOut = async () => {
     await signOut();
     setIsOpen(false);
     navigate("/");
   };
-
   const handleNavigation = (path: string) => {
     navigate(path);
     setIsOpen(false);
   };
-
-  const navigationItems = [
-    { path: "/search", label: "Buscar ROA", icon: Search },
-    { path: "/guias", label: "Guías", icon: BookOpen },
-    { path: "/lotes", label: "Mis Lotes", icon: Package },
-    { path: "/productos", label: "Productos", icon: ShoppingBag },
-    { path: "/ordenes", label: "Órdenes", icon: ClipboardList },
-    ...(isAdmin ? [{ path: "/admin", label: "Admin", icon: Settings }] : []),
-  ];
+  const navigationItems = [{
+    path: "/search",
+    label: "Buscar ROA",
+    icon: Search
+  }, {
+    path: "/guias",
+    label: "Guías",
+    icon: BookOpen
+  }, {
+    path: "/lotes",
+    label: "Mis Lotes",
+    icon: Package
+  }, {
+    path: "/productos",
+    label: "Productos",
+    icon: ShoppingBag
+  }, {
+    path: "/ordenes",
+    label: "Órdenes",
+    icon: ClipboardList
+  }, ...(isAdmin ? [{
+    path: "/admin",
+    label: "Admin",
+    icon: Settings
+  }] : [])];
 
   // Show mobile layout for mobile and tablet (including iPad)
   const isMobileOrTablet = () => {
     if (typeof window === 'undefined') return false;
     return window.innerWidth <= 1024;
   };
-
   if (isMobileOrTablet()) {
-    return (
-      <header className="bg-white shadow-sm border-b sticky top-0 z-50">
+    return <header className="bg-white shadow-sm border-b sticky top-0 z-50">
         <div className="container mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
-            <Link to="/" className="text-xl lg:text-2xl font-bold text-green-600">
-              NatuVital 0.1.0
-            </Link>
+            <Link to="/" className="text-xl lg:text-2xl font-bold text-green-600">NatuVital</Link>
             
             <div className="flex items-center space-x-3">
               {isAuthenticated && <NotificacionesDropdown />}
@@ -70,13 +78,9 @@ export const Header = () => {
                   </SheetHeader>
                   
                   <div className="mt-8 space-y-4">
-                    {isAuthenticated ? (
-                      <>
+                    {isAuthenticated ? <>
                          {/* User Info */}
-                         <button
-                           onClick={() => handleNavigation(`/perfil/${user?.id}`)}
-                           className="flex items-center space-x-3 p-3 lg:p-4 bg-green-50 rounded-lg hover:bg-green-100 transition-colors w-full text-left"
-                         >
+                         <button onClick={() => handleNavigation(`/perfil/${user?.id}`)} className="flex items-center space-x-3 p-3 lg:p-4 bg-green-50 rounded-lg hover:bg-green-100 transition-colors w-full text-left">
                            <User className="h-5 w-5 lg:h-6 lg:w-6 text-green-600" />
                            <div className="flex-1 min-w-0">
                              <p className="text-sm lg:text-base font-medium text-gray-900 truncate">
@@ -88,53 +92,35 @@ export const Header = () => {
 
                         {/* Navigation Items */}
                         <nav className="space-y-2">
-                          {navigationItems.map((item) => (
-                            <button
-                              key={item.path}
-                              onClick={() => handleNavigation(item.path)}
-                              className="w-full flex items-center space-x-3 p-3 lg:p-4 text-left text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-                            >
+                          {navigationItems.map(item => <button key={item.path} onClick={() => handleNavigation(item.path)} className="w-full flex items-center space-x-3 p-3 lg:p-4 text-left text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
                               <item.icon className="h-5 w-5 lg:h-6 lg:w-6" />
                               <span className="text-sm lg:text-base">{item.label}</span>
-                            </button>
-                          ))}
+                            </button>)}
                         </nav>
 
                         {/* Logout Button */}
                         <div className="pt-4 border-t">
-                          <Button
-                            variant="outline"
-                            onClick={handleSignOut}
-                            className="w-full justify-start text-red-600 border-red-200 hover:bg-red-50 p-3 lg:p-4 text-sm lg:text-base"
-                          >
+                          <Button variant="outline" onClick={handleSignOut} className="w-full justify-start text-red-600 border-red-200 hover:bg-red-50 p-3 lg:p-4 text-sm lg:text-base">
                             <LogOut className="h-4 w-4 lg:h-5 lg:w-5 mr-3" />
                             Cerrar Sesión
                           </Button>
                         </div>
-                      </>
-                    ) : (
-                      <div className="space-y-4">
-                        <Button 
-                          onClick={() => handleNavigation("/auth")}
-                          className="w-full p-3 lg:p-4 text-sm lg:text-base"
-                        >
+                      </> : <div className="space-y-4">
+                        <Button onClick={() => handleNavigation("/auth")} className="w-full p-3 lg:p-4 text-sm lg:text-base">
                           Iniciar Sesión
                         </Button>
-                      </div>
-                    )}
+                      </div>}
                   </div>
                 </SheetContent>
               </Sheet>
             </div>
           </div>
         </div>
-      </header>
-    );
+      </header>;
   }
 
   // Desktop version remains the same
-  return (
-    <header className="bg-white shadow-sm border-b">
+  return <header className="bg-white shadow-sm border-b">
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
           <Link to="/" className="text-2xl font-bold text-green-600">
@@ -162,22 +148,16 @@ export const Header = () => {
               <ClipboardList className="h-4 w-4" />
               Órdenes
             </Link>
-            {isAdmin && (
-              <Link to="/admin" className="flex items-center gap-2 text-purple-600 hover:text-purple-700">
+            {isAdmin && <Link to="/admin" className="flex items-center gap-2 text-purple-600 hover:text-purple-700">
                 <Settings className="h-4 w-4" />
                 Admin
-              </Link>
-            )}
+              </Link>}
           </nav>
 
           <div className="flex items-center space-x-4">
-            {isAuthenticated ? (
-              <>
+            {isAuthenticated ? <>
                  <NotificacionesDropdown />
-                 <Link 
-                   to={`/perfil/${user?.id}`}
-                   className="flex items-center space-x-2 hover:bg-gray-100 px-3 py-2 rounded-md transition-colors"
-                 >
+                 <Link to={`/perfil/${user?.id}`} className="flex items-center space-x-2 hover:bg-gray-100 px-3 py-2 rounded-md transition-colors">
                    <User className="h-4 w-4 text-gray-600" />
                    <span className="text-sm text-gray-600">{user?.email}</span>
                  </Link>
@@ -185,15 +165,11 @@ export const Header = () => {
                   <LogOut className="h-4 w-4 mr-2" />
                   Salir
                 </Button>
-              </>
-            ) : (
-              <Button asChild>
+              </> : <Button asChild>
                 <Link to="/auth">Iniciar Sesión</Link>
-              </Button>
-            )}
+              </Button>}
           </div>
         </div>
       </div>
-    </header>
-  );
+    </header>;
 };
