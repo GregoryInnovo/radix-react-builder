@@ -78,8 +78,8 @@ Hay usuarios generadores de estos residuos, quienes los transforman y quienes co
           </div>
           
           <div className="grid md:grid-cols-3 gap-8">
-            <Card>
-              <CardHeader>
+            <Card className="bg-green-50">
+              <CardHeader className="bg-green-50">
                 <Recycle className="h-12 w-12 text-green-600 mb-4" />
                 <CardTitle>Registro de Lotes ROA</CardTitle>
                 <CardDescription>
@@ -89,15 +89,15 @@ Hay usuarios generadores de estos residuos, quienes los transforman y quienes co
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
-                  <Badge variant="secondary">Cáscara de fruta</Badge>
-                  <Badge variant="secondary">Posos de café</Badge>
-                  <Badge variant="secondary">Restos vegetales</Badge>
+                  <Badge variant="secondary" className="bg-green-400">Cáscara de fruta</Badge>
+                  <Badge variant="secondary" className="bg-green-400">Semillas</Badge>
+                  <Badge variant="secondary" className="bg-green-400">Restos vegetales</Badge>
                 </div>
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
+            <Card className="bg-green-50">
+              <CardHeader className="bg-green-50">
                 <Users className="h-12 w-12 text-blue-600 mb-4" />
                 <CardTitle>Intercambio y Órdenes</CardTitle>
                 <CardDescription>
@@ -108,7 +108,7 @@ Hay usuarios generadores de estos residuos, quienes los transforman y quienes co
               <CardContent>
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm">Órdenes pendientes</span>
+                    <span className="text-sm text-inherit">Órdenes pendientes</span>
                     <Badge variant="outline">24</Badge>
                   </div>
                   <div className="flex items-center justify-between">
@@ -119,14 +119,11 @@ Hay usuarios generadores de estos residuos, quienes los transforman y quienes co
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
+            <Card className="bg-green-50">
+              <CardHeader className="bg-green-50">
                 <Star className="h-12 w-12 text-yellow-600 mb-4" />
                 <CardTitle>Sistema de Calificaciones</CardTitle>
-                <CardDescription>
-                  Califica las transacciones y construye reputación en la comunidad 
-                  de intercambio de ROA
-                </CardDescription>
+                <CardDescription>Califica los intercambios y construye buena reputación en la comunidad natural, tu opinión es vital</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="flex items-center space-x-2">
@@ -144,45 +141,7 @@ Hay usuarios generadores de estos residuos, quienes los transforman y quienes co
       </section>
 
       {/* Stats Section */}
-      <section className="py-16 bg-green-50">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h3 className="text-3xl font-bold text-green-800 mb-4">
-              Impacto de la Comunidad
-            </h3>
-          </div>
-          
-          <div className="grid md:grid-cols-4 gap-6">
-            <Card className="text-center">
-              <CardContent className="pt-6">
-                <div className="text-3xl font-bold text-green-600 mb-2">2,547</div>
-                <div className="text-sm text-gray-600">Lotes ROA registrados</div>
-              </CardContent>
-            </Card>
-            
-            <Card className="text-center">
-              <CardContent className="pt-6">
-                <div className="text-3xl font-bold text-blue-600 mb-2">1,234</div>
-                <div className="text-sm text-gray-600">Productos transformados</div>
-              </CardContent>
-            </Card>
-            
-            <Card className="text-center">
-              <CardContent className="pt-6">
-                <div className="text-3xl font-bold text-yellow-600 mb-2">456</div>
-                <div className="text-sm text-gray-600">Usuarios activos</div>
-              </CardContent>
-            </Card>
-            
-            <Card className="text-center">
-              <CardContent className="pt-6">
-                <div className="text-3xl font-bold text-purple-600 mb-2">89%</div>
-                <div className="text-sm text-gray-600">Satisfacción promedio</div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </section>
+      
 
       {/* Types of ROA Section */}
       <section className="py-16 bg-white">
@@ -248,10 +207,10 @@ Hay usuarios generadores de estos residuos, quienes los transforman y quienes co
           </p>
           {!isAuthenticated ? <div className="flex flex-wrap justify-center gap-4">
               <Button size="lg" variant="secondary" asChild>
-                <Link to="/auth">Registrarse como Generador</Link>
+                
               </Button>
               <Button size="lg" className="bg-green-500 hover:bg-green-400 text-white border-green-500" asChild>
-                <Link to="/auth">Registrarse como Transformador</Link>
+                <Link to="/auth">¡Registrarse ahora!</Link>
               </Button>
             </div> : <div className="flex flex-wrap justify-center gap-4">
               <Button size="lg" variant="secondary" asChild>
@@ -273,9 +232,7 @@ Hay usuarios generadores de estos residuos, quienes los transforman y quienes co
                 <Leaf className="h-6 w-6 text-green-400" />
                 <span className="text-lg font-semibold">Natuvital</span>
               </div>
-              <p className="text-gray-400">
-                Conectando la comunidad de ROA para un futuro más sostenible
-              </p>
+              <p className="text-gray-400">Conectando la comunidad de ROA para un futuro más sostenible y saludable.</p>
             </div>
             
             <div>
@@ -309,7 +266,7 @@ Hay usuarios generadores de estos residuos, quienes los transforman y quienes co
           </div>
           
           <div className="border-t border-gray-800 mt-12 pt-8 text-center text-gray-400">
-            <p>&copy; 2024 Natuvital. Todos los derechos reservados.</p>
+            <p>© 2025 Natuvital. Todos los derechos reservados.</p>
           </div>
         </div>
       </footer>
