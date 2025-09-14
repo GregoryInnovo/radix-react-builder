@@ -87,6 +87,15 @@ export const useOrdenes = () => {
 
       if (error) throw error;
 
+      // Send notification to provider
+      await supabase.functions.invoke('notify-order-status', {
+        body: {
+          ordenId: data.id,
+          newStatus: 'pendiente',
+          notificationType: 'new_request'
+        }
+      });
+
       // If this is a lot reservation, update the lot status to 'reservado'
       if (ordenData.tipo_item === 'lote') {
         const { error: updateError } = await supabase
@@ -129,6 +138,26 @@ export const useOrdenes = () => {
         .single();
 
       if (error) throw error;
+
+      // Get current order to determine notification type
+      const currentOrden = ordenes.find(o => o.id === id);
+      
+      // Send appropriate notification
+      if (updates.estado && currentOrden) {
+        let notificationType = 'status_change';
+        if (updates.estado === 'completada') {
+          notificationType = 'completed';
+        }
+        
+        await supabase.functions.invoke('notify-order-status', {
+          body: {
+            ordenId: id,
+            newStatus: updates.estado,
+            oldStatus: currentOrden.estado,
+            notificationType
+          }
+        });
+      }
 
       const statusMessages = {
         aceptada: "Solicitud aceptada correctamente",

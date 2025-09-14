@@ -1,7 +1,5 @@
-
 import React from 'react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { Bell, Package, ShoppingCart, MessageSquare, Check, MapPin, Star, AlertTriangle, CheckCheck } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,27 +7,44 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Bell, Check, CheckCheck, Package, ShoppingCart, FileText } from 'lucide-react';
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { useNotificaciones } from '@/hooks/useNotificaciones';
-import { format } from 'date-fns';
+import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { useNavigate } from 'react-router-dom';
 
 export const NotificacionesDropdown: React.FC = () => {
   const { notificaciones, unreadCount, markAsRead, markAllAsRead } = useNotificaciones();
+  const navigate = useNavigate();
 
-  const recentNotifications = notificaciones.slice(0, 5);
-
-  const getNotificationIcon = (tipo: string) => {
+  const getNotificationIcon = (tipo: string, entityType?: string) => {
     switch (tipo) {
       case 'producto':
-        return <Package className="h-4 w-4 text-blue-600" />;
+        return <Package className="h-4 w-4 text-blue-500" />;
       case 'orden':
-        return <ShoppingCart className="h-4 w-4 text-green-600" />;
+        return <ShoppingCart className="h-4 w-4 text-green-500" />;
+      case 'lote':
+        return <MapPin className="h-4 w-4 text-orange-500" />;
+      case 'mensaje':
+        return <MessageSquare className="h-4 w-4 text-purple-500" />;
+      case 'calificacion':
+        return <Star className="h-4 w-4 text-yellow-500" />;
       default:
-        return <FileText className="h-4 w-4 text-gray-600" />;
+        return <Bell className="h-4 w-4 text-gray-500" />;
     }
   };
+
+  const handleNotificationClick = async (notificacion: any) => {
+    await markAsRead(notificacion.id);
+    
+    if (notificacion.redirect_url) {
+      navigate(notificacion.redirect_url);
+    }
+  };
+
+  const recentNotifications = notificaciones.slice(0, 5);
 
   return (
     <DropdownMenu>
@@ -37,21 +52,21 @@ export const NotificacionesDropdown: React.FC = () => {
         <Button variant="ghost" size="sm" className="relative">
           <Bell className="h-5 w-5" />
           {unreadCount > 0 && (
-            <Badge className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 text-xs">
+            <Badge className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 text-xs bg-red-500 hover:bg-red-500">
               {unreadCount > 9 ? '9+' : unreadCount}
             </Badge>
           )}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-80" align="end">
-        <DropdownMenuLabel className="flex items-center justify-between">
-          <span>Notificaciones</span>
+      <DropdownMenuContent className="w-80 max-h-96 overflow-y-auto bg-white z-50" align="end">
+        <DropdownMenuLabel className="flex items-center justify-between px-4 py-2">
+          <span className="font-semibold">Notificaciones</span>
           {unreadCount > 0 && (
             <Button
               variant="ghost"
               size="sm"
               onClick={markAllAsRead}
-              className="h-6 px-2 text-xs"
+              className="h-6 px-2 text-xs hover:bg-gray-100"
             >
               <CheckCheck className="h-3 w-3 mr-1" />
               Marcar todas
@@ -61,43 +76,45 @@ export const NotificacionesDropdown: React.FC = () => {
         <DropdownMenuSeparator />
         
         {notificaciones.length === 0 ? (
-          <DropdownMenuItem disabled>
+          <DropdownMenuItem disabled className="text-center py-8 text-gray-500">
             No tienes notificaciones
           </DropdownMenuItem>
         ) : (
           <>
             {recentNotifications.map((notificacion) => (
-              <DropdownMenuItem
+              <DropdownMenuItem 
                 key={notificacion.id}
-                className={`flex flex-col items-start p-3 cursor-pointer ${
-                  !notificacion.leida ? 'bg-blue-50' : ''
-                }`}
-                onClick={() => !notificacion.leida && markAsRead(notificacion.id)}
+                className={`flex items-start space-x-3 p-3 cursor-pointer hover:bg-gray-50 border-none ${!notificacion.leida ? 'bg-blue-50 border-l-4 border-blue-400' : ''}`}
+                onClick={() => handleNotificationClick(notificacion)}
               >
-                <div className="flex w-full items-start justify-between">
-                  <div className="flex items-start gap-2 flex-1">
-                    {getNotificationIcon(notificacion.tipo)}
-                    <div className="flex-1">
-                      <div className="font-medium text-sm">{notificacion.titulo}</div>
-                      <div className="text-xs text-gray-600 mt-1">{notificacion.mensaje}</div>
-                      <div className="text-xs text-gray-400 mt-1">
-                        {format(new Date(notificacion.created_at), 'PPp', { locale: es })}
-                      </div>
-                    </div>
+                <div className="flex-shrink-0 mt-1">
+                  {getNotificationIcon(notificacion.tipo, notificacion.entity_type)}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between">
+                    <p className={`text-sm font-medium truncate ${!notificacion.leida ? 'text-gray-900' : 'text-gray-700'}`}>
+                      {notificacion.titulo}
+                    </p>
+                    {!notificacion.leida && (
+                      <div className="h-2 w-2 bg-blue-500 rounded-full ml-2 flex-shrink-0"></div>
+                    )}
                   </div>
-                  {!notificacion.leida && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-6 w-6 p-0 ml-2"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        markAsRead(notificacion.id);
-                      }}
-                    >
-                      <Check className="h-3 w-3" />
-                    </Button>
-                  )}
+                  <p className="text-sm text-gray-600 mt-1 line-clamp-2">
+                    {notificacion.mensaje}
+                  </p>
+                  <div className="flex items-center justify-between mt-2">
+                    <p className="text-xs text-gray-400">
+                      {formatDistanceToNow(new Date(notificacion.created_at), { 
+                        addSuffix: true, 
+                        locale: es 
+                      })}
+                    </p>
+                    {notificacion.entity_type && (
+                      <Badge variant="outline" className="text-xs">
+                        {notificacion.entity_type}
+                      </Badge>
+                    )}
+                  </div>
                 </div>
               </DropdownMenuItem>
             ))}
@@ -105,7 +122,7 @@ export const NotificacionesDropdown: React.FC = () => {
             {notificaciones.length > 5 && (
               <>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem className="text-center text-sm text-gray-500">
+                <DropdownMenuItem className="text-center text-sm text-gray-500 cursor-pointer hover:bg-gray-50" onClick={() => navigate('/notificaciones')}>
                   Ver todas las notificaciones
                 </DropdownMenuItem>
               </>

@@ -53,6 +53,15 @@ export const useOrdenMensajes = (ordenId: string) => {
 
       if (error) throw error;
 
+      // Send notification to the other party
+      await supabase.functions.invoke('notify-new-message', {
+        body: {
+          ordenId,
+          senderId: user?.id,
+          mensaje
+        }
+      });
+
       toast({
         title: "Mensaje enviado",
         description: "Tu mensaje ha sido enviado correctamente.",

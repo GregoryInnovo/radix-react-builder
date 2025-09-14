@@ -292,30 +292,42 @@ export type Database = {
       notificaciones: {
         Row: {
           created_at: string
+          entity_id: string | null
+          entity_type: string | null
           id: string
           leida: boolean
           mensaje: string
+          metadata: Json | null
           orden_id: string | null
+          redirect_url: string | null
           tipo: string
           titulo: string
           user_id: string
         }
         Insert: {
           created_at?: string
+          entity_id?: string | null
+          entity_type?: string | null
           id?: string
           leida?: boolean
           mensaje: string
+          metadata?: Json | null
           orden_id?: string | null
+          redirect_url?: string | null
           tipo?: string
           titulo: string
           user_id: string
         }
         Update: {
           created_at?: string
+          entity_id?: string | null
+          entity_type?: string | null
           id?: string
           leida?: boolean
           mensaje?: string
+          metadata?: Json | null
           orden_id?: string | null
+          redirect_url?: string | null
           tipo?: string
           titulo?: string
           user_id?: string

@@ -74,7 +74,17 @@ serve(async (req) => {
         user_id: product.user_id,
         titulo,
         mensaje,
-        tipo: 'producto'
+        tipo: 'producto',
+        entity_type: 'producto',
+        entity_id: productId,
+        redirect_url: '/productos',
+        metadata: {
+          product_id: productId,
+          product_name: product.nombre,
+          old_status: oldStatus,
+          new_status: newStatus,
+          admin_notes: adminNotes
+        }
       })
 
     if (notificationError) {

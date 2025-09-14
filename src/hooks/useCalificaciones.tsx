@@ -28,6 +28,16 @@ export const useCalificaciones = () => {
 
       if (error) throw error;
 
+      // Send notification to the rated user
+      await supabase.functions.invoke('notify-order-status', {
+        body: {
+          ordenId: calificacionData.orden_id,
+          newStatus: 'rated',
+          notificationType: 'new_rating',
+          userId: user?.id
+        }
+      });
+
       toast({
         title: "Calificación enviada",
         description: "Tu calificación ha sido registrada correctamente.",
