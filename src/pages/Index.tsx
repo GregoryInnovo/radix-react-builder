@@ -18,7 +18,7 @@ const Index = () => {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <Leaf className="h-8 w-8 text-green-600" />
-              <h1 className="text-2xl font-bold text-green-800">Natuvital</h1>
+              <h1 className="text-2xl font-bold text-green-800">NatuVital</h1>
             </div>
             <nav className="flex items-center space-x-4">
               <Button variant="ghost" asChild>
@@ -42,13 +42,10 @@ const Index = () => {
       </header>
 
       {/* Hero Section */}
-      <section className="py-20">
+      <section className="py-20 bg-inherit">
         <div className="container mx-auto px-4 text-center">
-          <h2 className="text-5xl text-green-800 mb-6 font-extrabold">¡Hola!</h2>
-          <p className="text-xl text-green-600 mb-8 max-w-3xl mx-auto">
-            Conectamos generadores y transformadores de Residuos Orgánicos Aprovechables 
-            para crear un ecosistema circular sostenible
-          </p>
+          <h2 className="mb-6 font-extrabold text-6xl text-green-600">¡Hola!</h2>
+          <p className="mb-8 max-w-3xl mx-auto text-2xl text-green-800">Conectamos generadores y transformadores de Residuos Orgánicos Aprovechables (ROA), creando un ecosistema circular sostenible</p>
           <div className="flex flex-wrap justify-center gap-4">
             {!isAuthenticated ? <>
                 <Button size="lg" className="bg-green-600 hover:bg-green-700" asChild>
@@ -76,9 +73,7 @@ const Index = () => {
             <h3 className="text-3xl font-bold text-gray-900 mb-4">
               ¿Cómo funciona Natuvital?
             </h3>
-            <p className="text-lg text-gray-600">
-              Una plataforma integral para la gestión de residuos orgánicos aprovechables
-            </p>
+            <p className="text-lg text-gray-600">Una plataforma integral para la gestión de Residuos Orgánicos, su intercambio y aprovechamiento para crear productos y alternativas naturales.</p>
           </div>
           
           <div className="grid md:grid-cols-3 gap-8">
