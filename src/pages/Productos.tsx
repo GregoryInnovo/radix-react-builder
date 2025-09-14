@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,7 +12,6 @@ import { useProductos } from '@/hooks/useProductos';
 import { useAuth } from '@/hooks/useAuth';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { useIsMobile } from '@/hooks/use-mobile';
-
 const Productos = () => {
   const [showForm, setShowForm] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
@@ -21,46 +19,37 @@ const Productos = () => {
   const [activeTab, setActiveTab] = useState('public');
   const [selectedFuncionalidad, setSelectedFuncionalidad] = useState<string[]>([]);
   const [selectedTipo, setSelectedTipo] = useState<string[]>([]);
-  const { productos, loading, refreshProductos } = useProductos();
-  const { user } = useAuth();
+  const {
+    productos,
+    loading,
+    refreshProductos
+  } = useProductos();
+  const {
+    user
+  } = useAuth();
   const isMobile = useIsMobile();
-
   useEffect(() => {
     refreshProductos(activeTab === 'my-products');
   }, [activeTab]);
-
   const filteredProductos = productos.filter(producto => {
     // Text search filter
-    const matchesSearch = producto.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      producto.descripcion.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (producto.origen_roa && producto.origen_roa.toLowerCase().includes(searchTerm.toLowerCase()));
+    const matchesSearch = producto.nombre.toLowerCase().includes(searchTerm.toLowerCase()) || producto.descripcion.toLowerCase().includes(searchTerm.toLowerCase()) || producto.origen_roa && producto.origen_roa.toLowerCase().includes(searchTerm.toLowerCase());
 
     // Category filters
-    const matchesFuncionalidad = selectedFuncionalidad.length === 0 || 
-      (producto.categoria_funcionalidad && 
-       selectedFuncionalidad.some(cat => producto.categoria_funcionalidad?.includes(cat)));
-
-    const matchesTipo = selectedTipo.length === 0 || 
-      (producto.categoria_tipo && 
-       selectedTipo.some(cat => producto.categoria_tipo?.includes(cat)));
-
+    const matchesFuncionalidad = selectedFuncionalidad.length === 0 || producto.categoria_funcionalidad && selectedFuncionalidad.some(cat => producto.categoria_funcionalidad?.includes(cat));
+    const matchesTipo = selectedTipo.length === 0 || producto.categoria_tipo && selectedTipo.some(cat => producto.categoria_tipo?.includes(cat));
     return matchesSearch && matchesFuncionalidad && matchesTipo;
   });
-
   const handleFormSuccess = () => {
     setShowForm(false);
     refreshProductos(activeTab === 'my-products');
   };
-
   const handleClearFilters = () => {
     setSelectedFuncionalidad([]);
     setSelectedTipo([]);
   };
-
   const hasActiveFilters = selectedFuncionalidad.length > 0 || selectedTipo.length > 0;
-
-  return (
-    <ProtectedRoute>
+  return <ProtectedRoute>
       <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-50">
         <Header />
         
@@ -68,12 +57,8 @@ const Productos = () => {
           <div className="space-y-6">
             <div className="flex justify-between items-start">
               <div>
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                  Productos ROA
-                </h1>
-                <p className="text-gray-600">
-                  Descubre productos creados a partir de residuos orgánicos aprovechables
-                </p>
+                <h1 className="text-3xl font-bold text-gray-900 mb-2">Productos</h1>
+                <p className="text-gray-600 mx-[20px] my-[10px] px-0 py-0 text-left text-base">Descubre productos creados a partir de Residuos Orgánicos Aprovechables, entre otros productos pensados para la salud y el bienestar.</p>
               </div>
 
               <Sheet open={showForm} onOpenChange={setShowForm}>
@@ -88,10 +73,7 @@ const Productos = () => {
                     <SheetTitle>Nuevo Producto</SheetTitle>
                   </SheetHeader>
                   <div className="mt-6">
-                    <ProductForm
-                      onSuccess={handleFormSuccess}
-                      onCancel={() => setShowForm(false)}
-                    />
+                    <ProductForm onSuccess={handleFormSuccess} onCancel={() => setShowForm(false)} />
                   </div>
                 </SheetContent>
               </Sheet>
@@ -100,22 +82,14 @@ const Productos = () => {
             <div className="flex items-center gap-4">
               <div className="relative flex-1 max-w-md">
                 <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <Input
-                  placeholder="Buscar productos..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
+                <Input placeholder="Buscar productos..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="pl-10" />
               </div>
               
-              {isMobile && (
-                <Sheet open={showFilters} onOpenChange={setShowFilters}>
+              {isMobile && <Sheet open={showFilters} onOpenChange={setShowFilters}>
                   <SheetTrigger asChild>
                     <Button variant="outline" size="icon" className="relative">
                       <Filter className="h-4 w-4" />
-                      {hasActiveFilters && (
-                        <span className="absolute -top-1 -right-1 h-2 w-2 bg-primary rounded-full" />
-                      )}
+                      {hasActiveFilters && <span className="absolute -top-1 -right-1 h-2 w-2 bg-primary rounded-full" />}
                     </Button>
                   </SheetTrigger>
                   <SheetContent side="left" className="w-full sm:max-w-md">
@@ -123,34 +97,19 @@ const Productos = () => {
                       <SheetTitle>Filtros</SheetTitle>
                     </SheetHeader>
                     <div className="mt-6">
-                      <ProductsFilter
-                        selectedFuncionalidad={selectedFuncionalidad}
-                        selectedTipo={selectedTipo}
-                        onFuncionalidadChange={setSelectedFuncionalidad}
-                        onTipoChange={setSelectedTipo}
-                        onClearFilters={handleClearFilters}
-                      />
+                      <ProductsFilter selectedFuncionalidad={selectedFuncionalidad} selectedTipo={selectedTipo} onFuncionalidadChange={setSelectedFuncionalidad} onTipoChange={setSelectedTipo} onClearFilters={handleClearFilters} />
                     </div>
                   </SheetContent>
-                </Sheet>
-              )}
+                </Sheet>}
             </div>
 
             <div className="flex gap-6">
               {/* Desktop Filters Sidebar */}
-              {!isMobile && (
-                <div className="w-80 flex-shrink-0">
+              {!isMobile && <div className="w-80 flex-shrink-0">
                   <div className="sticky top-4">
-                    <ProductsFilter
-                      selectedFuncionalidad={selectedFuncionalidad}
-                      selectedTipo={selectedTipo}
-                      onFuncionalidadChange={setSelectedFuncionalidad}
-                      onTipoChange={setSelectedTipo}
-                      onClearFilters={handleClearFilters}
-                    />
+                    <ProductsFilter selectedFuncionalidad={selectedFuncionalidad} selectedTipo={selectedTipo} onFuncionalidadChange={setSelectedFuncionalidad} onTipoChange={setSelectedTipo} onClearFilters={handleClearFilters} />
                   </div>
-                </div>
-              )}
+                </div>}
               
               {/* Main Content */}
               <div className="flex-1 min-w-0">
@@ -165,21 +124,11 @@ const Productos = () => {
                       <div className="text-sm text-gray-600">
                         Mostrando {filteredProductos.length} producto(s) disponible(s)
                       </div>
-                      {hasActiveFilters && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={handleClearFilters}
-                          className="text-muted-foreground hover:text-foreground"
-                        >
+                      {hasActiveFilters && <Button variant="ghost" size="sm" onClick={handleClearFilters} className="text-muted-foreground hover:text-foreground">
                           Limpiar filtros
-                        </Button>
-                      )}
+                        </Button>}
                     </div>
-                    <ProductsList 
-                      productos={filteredProductos}
-                      showOwnerActions={false}
-                    />
+                    <ProductsList productos={filteredProductos} showOwnerActions={false} />
                   </TabsContent>
 
                   <TabsContent value="my-products" className="space-y-6">
@@ -187,36 +136,22 @@ const Productos = () => {
                       <div className="text-sm text-gray-600">
                         Mostrando {filteredProductos.length} de tus producto(s)
                       </div>
-                      {hasActiveFilters && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={handleClearFilters}
-                          className="text-muted-foreground hover:text-foreground"
-                        >
+                      {hasActiveFilters && <Button variant="ghost" size="sm" onClick={handleClearFilters} className="text-muted-foreground hover:text-foreground">
                           Limpiar filtros
-                        </Button>
-                      )}
+                        </Button>}
                     </div>
-                    <ProductsList 
-                      productos={filteredProductos}
-                      showOwnerActions={true}
-                    />
+                    <ProductsList productos={filteredProductos} showOwnerActions={true} />
                   </TabsContent>
                 </Tabs>
               </div>
             </div>
 
-            {loading && (
-              <div className="flex justify-center py-8">
+            {loading && <div className="flex justify-center py-8">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
-              </div>
-            )}
+              </div>}
           </div>
         </main>
       </div>
-    </ProtectedRoute>
-  );
+    </ProtectedRoute>;
 };
-
 export default Productos;
