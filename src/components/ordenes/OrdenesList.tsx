@@ -149,7 +149,14 @@ export const OrdenesList: React.FC = () => {
                 </Button>}
             </div>}
           
-          {canRate && <CalificarOrden orden={orden} />}
+          {canRate && (
+            <CalificarOrden 
+              orden={{
+                ...orden,
+                calificado_id: isProvider ? orden.solicitante_id : orden.proveedor_id
+              }} 
+            />
+          )}
         </CardHeader>
 
         <CardContent className="space-y-4">
