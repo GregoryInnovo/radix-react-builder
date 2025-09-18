@@ -306,7 +306,7 @@ const Search = () => {
               />
             )}
 
-            {/* Interactive Map */}
+            {/* Interactive Map - Now placed AFTER search results */}
             {(userLocation || results.length > 0) && (
               <Card>
                 <CardHeader>
