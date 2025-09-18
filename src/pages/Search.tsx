@@ -13,6 +13,7 @@ import { LoteDetailsModal } from '@/components/lotes/LoteDetailsModal';
 import { LocationMap } from '@/components/search/LocationMap';
 import { SearchResultsMap } from '@/components/search/SearchResultsMap';
 import { ReservarLote } from '@/components/lotes/ReservarLote';
+import { TiposROASection } from '@/components/search/TiposROASection';
 import { useAuth } from '@/hooks/useAuth';
 
 const Search = () => {
@@ -141,6 +142,9 @@ const Search = () => {
                 Encuentra residuos orgánicos aprovechables por palabras clave o cerca de tu ubicación
               </p>
             </div>
+
+            {/* Types of ROA Section */}
+            <TiposROASection />
 
             {/* Search Filters */}
             <Card>

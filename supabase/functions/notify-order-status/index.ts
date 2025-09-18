@@ -145,7 +145,7 @@ serve(async (req) => {
           tipo: 'calificacion',
           entity_type: 'orden',
           entity_id: ordenId,
-          redirect_url: '/profile',
+          redirect_url: `/perfil/${ratedUserId}`,
           metadata: {
             orden_id: ordenId,
             rater_name: raterName,

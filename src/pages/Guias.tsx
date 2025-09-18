@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { Header } from '@/components/layout/Header';
 import { GuiasFilters } from '@/components/guias/GuiasFilters';
 import { GuiasGrid } from '@/components/guias/GuiasGrid';
+import { GuiasCategoriesSection } from '@/components/guias/GuiasCategoriesSection';
 import { Button } from '@/components/ui/button';
 import { useGuias, GuiaCategoria, GuiaType, GuiaNivel } from '@/hooks/useGuias';
 import { useAdmin } from '@/hooks/useAdmin';
@@ -72,6 +73,9 @@ export default function Guias() {
             </Button>
           )}
         </div>
+
+        {/* Categories Section */}
+        <GuiasCategoriesSection />
 
         {/* Filters */}
         <div className="mb-8">

@@ -143,55 +143,6 @@ Hay usuarios generadores de estos residuos, quienes los transforman y quienes co
       {/* Stats Section */}
       
 
-      {/* Types of ROA Section */}
-      <section className="py-16 bg-white">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h3 className="text-3xl font-bold text-gray-900 mb-4">
-              Tipos de ROA Disponibles
-            </h3>
-            <p className="text-lg text-gray-600">
-              Encuentra el tipo de residuo orgánico que necesitas para tu proceso
-            </p>
-          </div>
-          
-          <div className="grid md:grid-cols-3 lg:grid-cols-6 gap-4">
-            {[{
-            name: 'Cáscara de fruta',
-            count: 145,
-            color: 'bg-orange-100 text-orange-800'
-          }, {
-            name: 'Posos de café',
-            count: 89,
-            color: 'bg-amber-100 text-amber-800'
-          }, {
-            name: 'Restos vegetales',
-            count: 234,
-            color: 'bg-green-100 text-green-800'
-          }, {
-            name: 'Cáscara de huevo',
-            count: 67,
-            color: 'bg-yellow-100 text-yellow-800'
-          }, {
-            name: 'Restos cereales',
-            count: 123,
-            color: 'bg-amber-100 text-amber-800'
-          }, {
-            name: 'Otros',
-            count: 89,
-            color: 'bg-gray-100 text-gray-800'
-          }].map((type, index) => <Card key={index} className="text-center hover:shadow-md transition-shadow cursor-pointer">
-                <CardContent className="pt-6">
-                  <div className="text-2xl mb-2">🌿</div>
-                  <div className="font-semibold text-sm mb-2">{type.name}</div>
-                  <Badge className={type.count > 100 ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'}>
-                    {type.count} lotes
-                  </Badge>
-                </CardContent>
-              </Card>)}
-          </div>
-        </div>
-      </section>
 
       {/* Guides Section */}
       <GuiasPreviewSection />
