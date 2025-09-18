@@ -58,7 +58,7 @@ const Productos = () => {
             <div className="flex justify-between items-start">
               <div>
                 <h1 className="text-3xl font-bold text-gray-900 mb-2">Productos</h1>
-                <p className="text-gray-600 mx-[20px] my-[10px] px-0 py-0 text-left text-base">Descubre productos creados a partir de Residuos Orgánicos Aprovechables, entre otros productos pensados para la salud y el bienestar.</p>
+                <p className="text-gray-600 px-0 py-0 text-left text-base mx-0 my-0">Descubre productos creados a partir de Residuos Orgánicos Aprovechables, entre otros productos pensados para la salud y el bienestar.</p>
               </div>
 
               <Sheet open={showForm} onOpenChange={setShowForm}>
