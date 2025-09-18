@@ -69,11 +69,17 @@ export const OrdenesList: React.FC = () => {
     return `${lote.peso_estimado}kg - ${lote.direccion || 'Sin dirección'}`;
   };
 
-  // Fetch profiles for all requesters
+  // Fetch profiles for requesters and providers
   useEffect(() => {
     const fetchProfiles = async () => {
+      // Fetch requester profiles for orders we received
       const requesterIds = ordenesComoProveedor.map(orden => orden.solicitante_id);
-      const uniqueIds = [...new Set(requesterIds)];
+      
+      // Fetch provider profiles for orders we made
+      const providerIds = ordenesComoSolicitante.map(orden => orden.proveedor_id);
+      
+      const uniqueIds = [...new Set([...requesterIds, ...providerIds])];
+      
       for (const userId of uniqueIds) {
         if (!profiles[userId]) {
           const profile = await getProfileById(userId);
@@ -86,11 +92,16 @@ export const OrdenesList: React.FC = () => {
         }
       }
     };
-    if (ordenesComoProveedor.length > 0) {
+    
+    if (ordenesComoProveedor.length > 0 || ordenesComoSolicitante.length > 0) {
       fetchProfiles();
     }
-  }, [ordenesComoProveedor, getProfileById, profiles]);
+  }, [ordenesComoProveedor, ordenesComoSolicitante, getProfileById, profiles]);
   const getRequesterProfile = (userId: string) => {
+    return profiles[userId] || null;
+  };
+
+  const getProviderProfile = (userId: string) => {
     return profiles[userId] || null;
   };
   if (loading) {
@@ -108,6 +119,7 @@ export const OrdenesList: React.FC = () => {
     const canUpdateStatus = isProvider && (orden.estado === 'pendiente' || orden.estado === 'aceptada');
     const canRate = !isProvider && orden.estado === 'completada';
     const requesterProfile = isProvider ? getRequesterProfile(orden.solicitante_id) : null;
+    const providerProfile = !isProvider ? getProviderProfile(orden.proveedor_id) : null;
 
     // Validate phone number - only allow numbers, spaces, hyphens, parentheses, and + sign
     const isValidPhone = (phone: string) => /^[\d\s\-\(\)\+]+$/.test(phone);
@@ -176,6 +188,28 @@ export const OrdenesList: React.FC = () => {
                 {orden.direccion_contacto && <div className="flex items-start gap-2">
                     <span className="font-medium text-blue-800">Dirección:</span>
                     <span className="text-blue-700 flex-1">{orden.direccion_contacto}</span>
+                  </div>}
+              </div>
+            </div>}
+
+          {/* Show provider info for requesters (My Requests) */}
+          {!isProvider && <div className="bg-green-50 border border-green-200 p-4 rounded-lg space-y-2">
+              <p className="font-semibold text-green-900 text-sm">Información del proveedor</p>
+              
+              <div className="space-y-1 text-sm">
+                <div className="flex items-center gap-2">
+                  <span className="font-medium text-green-800">Nombre:</span>
+                  {providerProfile ? <UserProfileLink userId={orden.proveedor_id} userName={providerProfile.full_name} userEmail={providerProfile.email} size="sm" className="text-green-600 hover:text-green-800" /> : <span className="text-green-700">Cargando...</span>}
+                </div>
+                
+                {providerProfile?.telefono && <div className="flex items-start gap-2">
+                    <span className="font-medium text-green-800">Teléfono:</span>
+                    <span className="text-green-700">{providerProfile.telefono}</span>
+                  </div>}
+                
+                {providerProfile?.direccion && <div className="flex items-start gap-2">
+                    <span className="font-medium text-green-800">Dirección:</span>
+                    <span className="text-green-700 flex-1">{providerProfile.direccion}</span>
                   </div>}
               </div>
             </div>}
