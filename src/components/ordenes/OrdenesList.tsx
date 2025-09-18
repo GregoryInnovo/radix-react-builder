@@ -1,18 +1,18 @@
-
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useOrdenes } from '@/hooks/useOrdenes';
+import { useAuth } from '@/hooks/useAuth';
+import { useProductos } from '@/hooks/useProductos';
+import { useLotes } from '@/hooks/useLotes';
+import { useProfiles } from '@/hooks/useProfiles';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Textarea } from '@/components/ui/textarea';
-import { useOrdenes } from '@/hooks/useOrdenes';
 import { CalificarOrden } from '@/components/calificaciones/CalificarOrden';
 import { OrdenChat } from '@/components/ordenes/OrdenChat';
+import { Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { Clock, Package, MapPin, MessageSquare } from 'lucide-react';
-import { useState } from 'react';
-import { useAuth } from '@/hooks/useAuth';
 
 const getStatusColor = (estado: string) => {
   const colors = {
@@ -35,125 +35,141 @@ const getStatusText = (estado: string) => {
 };
 
 export const OrdenesList: React.FC = () => {
-  const { ordenesComoSolicitante, ordenesComoProveedor, updateOrden, loading } = useOrdenes();
+  const { ordenesComoSolicitante, ordenesComoProveedor, loading, updateOrden, refreshOrdenes } = useOrdenes();
   const { user } = useAuth();
-  const [responseMessages, setResponseMessages] = useState<Record<string, string>>({});
+  const { productos } = useProductos();
+  const { lotes } = useLotes();
+  const { getProfileById } = useProfiles();
 
-  const handleStatusUpdate = async (ordenId: string, newStatus: string, mensaje?: string) => {
-    await updateOrden(ordenId, { 
-      estado: newStatus as any,
-      mensaje_respuesta: mensaje || null
-    });
+  const handleStatusUpdate = async (ordenId: string, newStatus: string) => {
+    await updateOrden(ordenId, { estado: newStatus as any });
   };
 
-  const OrdenCard = ({ orden, isProvider = false }: { orden: any; isProvider?: boolean }) => {
-    const canSendMessages = orden.estado === 'pendiente' || orden.estado === 'aceptada';
-    
-    return (
-      <Card key={orden.id} className="mb-4">
-        <CardHeader>
-          <div className="flex justify-between items-start">
-            <div>
-              <CardTitle className="text-lg">
-                {orden.tipo_item === 'lote' ? 'Lote de ROA' : 'Producto'}
-              </CardTitle>
-              <div className="flex items-center gap-2 text-sm text-gray-600 mt-1">
-                <Clock className="h-4 w-4" />
-                {format(new Date(orden.created_at), 'PPp', { locale: es })}
-              </div>
-            </div>
-            <Badge className={getStatusColor(orden.estado)}>
-              {getStatusText(orden.estado)}
-            </Badge>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-2 gap-4 text-sm">
-            <div className="flex items-center gap-2">
-              <Package className="h-4 w-4 text-gray-500" />
-              <span>Cantidad: {orden.cantidad_solicitada}</span>
-            </div>
-            {orden.fecha_propuesta_retiro && (
-              <div className="flex items-center gap-2">
-                <MapPin className="h-4 w-4 text-gray-500" />
-                <span>Retiro: {format(new Date(orden.fecha_propuesta_retiro), 'PP', { locale: es })}</span>
-              </div>
-            )}
-          </div>
+  const getProductName = (productId: string) => {
+    const producto = productos.find(p => p.id === productId);
+    return producto?.nombre || 'Producto no encontrado';
+  };
 
-          {/* Chat component replaces individual message displays */}
-          <OrdenChat 
-            ordenId={orden.id}
-            orden={orden}
-            canSendMessages={canSendMessages}
-          />
+  const getLoteName = (loteId: string) => {
+    const lote = lotes.find(l => l.id === loteId);
+    if (!lote) return 'Lote no encontrado';
+    return `${lote.peso_estimado}kg - ${lote.direccion || 'Sin dirección'}`;
+  };
 
-          {isProvider && orden.estado === 'pendiente' && (
-            <div className="border-t pt-3 space-y-3">
-              <Textarea
-                placeholder="Mensaje de respuesta (opcional)..."
-                value={responseMessages[orden.id] || ''}
-                onChange={(e) => setResponseMessages(prev => ({
-                  ...prev,
-                  [orden.id]: e.target.value
-                }))}
-                className="text-sm"
-              />
-              <div className="flex gap-2">
-                <Button
-                  onClick={() => handleStatusUpdate(orden.id, 'aceptada', responseMessages[orden.id])}
-                  className="flex-1"
-                  size="sm"
-                >
-                  Aceptar
-                </Button>
-                <Button
-                  variant="destructive"
-                  onClick={() => handleStatusUpdate(orden.id, 'cancelada', responseMessages[orden.id])}
-                  className="flex-1"
-                  size="sm"
-                >
-                  Rechazar
-                </Button>
-              </div>
-            </div>
-          )}
-
-        {orden.estado === 'aceptada' && (
-          <div className="border-t pt-3">
-            <Button
-              onClick={() => handleStatusUpdate(orden.id, 'completada')}
-              className="w-full"
-              size="sm"
-            >
-              Marcar como Completada
-            </Button>
-          </div>
-        )}
-
-        {orden.estado === 'completada' && user?.id === orden.solicitante_id && (
-          <div className="border-t pt-3 space-y-3">
-            <div className="text-sm font-medium text-gray-700 mb-2">
-              Calificar al proveedor:
-            </div>
-            <div className="p-2 bg-gray-50 rounded-lg">
-              <CalificarOrden 
-                orden={{
-                  ...orden,
-                  calificado_id: orden.proveedor_id
-                }} 
-              />
-            </div>
-          </div>
-        )}
-        </CardContent>
-      </Card>
-    );
+  const getRequesterName = (userId: string) => {
+    // For now, return a placeholder - this will be improved with proper profile fetching
+    return 'Usuario';
   };
 
   if (loading) {
-    return <div className="flex justify-center p-8">Cargando órdenes...</div>;
+    return (
+      <div className="flex items-center justify-center py-8">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
   }
+
+  const OrdenCard = ({ orden, isProvider = false }: { orden: any; isProvider?: boolean }) => {
+    const canUpdateStatus = isProvider && orden.estado === 'pendiente';
+    const canRate = !isProvider && orden.estado === 'completada';
+
+    return (
+      <Card key={orden.id} className="overflow-hidden">
+        <div className="space-y-4">
+          <div className="flex items-center justify-between gap-4 p-4 border-b">
+            <div className="flex-1 space-y-3">
+              <div className="flex items-center gap-2 mb-2">
+                <Badge variant={getStatusColor(orden.estado) as any}>
+                  {getStatusText(orden.estado)}
+                </Badge>
+                <span className="text-sm text-muted-foreground">
+                  {orden.tipo_item === 'producto' ? 'Producto' : 'Lote ROA'}
+                </span>
+              </div>
+              
+              {/* Show item name and details */}
+              <div className="text-sm space-y-1">
+                <p className="font-medium">
+                  {orden.tipo_item === 'producto' 
+                    ? `Producto: ${getProductName(orden.item_id)}`
+                    : `Lote ROA: ${getLoteName(orden.item_id)}`
+                  }
+                </p>
+                <p>Cantidad solicitada: {orden.cantidad_solicitada}</p>
+                {orden.fecha_propuesta_retiro && (
+                  <p>Fecha propuesta: {format(new Date(orden.fecha_propuesta_retiro), 'dd/MM/yyyy')}</p>
+                )}
+                {orden.hora_propuesta_retiro && (
+                  <p>Hora propuesta: {orden.hora_propuesta_retiro}</p>
+                )}
+                {orden.modalidad_entrega && (
+                  <p>Modalidad: {orden.modalidad_entrega}</p>
+                )}
+              </div>
+
+              {/* Show requester contact info for providers */}
+              {isProvider && (
+                <div className="bg-blue-50 p-3 rounded-lg text-sm space-y-1">
+                  <p className="font-medium text-blue-900">Información de contacto del solicitante:</p>
+                  <p><strong>Nombre:</strong> {getRequesterName(orden.solicitante_id)}</p>
+                  {orden.telefono_contacto && (
+                    <p><strong>Teléfono:</strong> {orden.telefono_contacto}</p>
+                  )}
+                  {orden.direccion_contacto && (
+                    <p><strong>Dirección:</strong> {orden.direccion_contacto}</p>
+                  )}
+                </div>
+              )}
+            </div>
+            
+            <div className="flex flex-col gap-2 min-w-fit">
+              {canUpdateStatus && (
+                <div className="flex gap-1">
+                  {orden.estado === 'pendiente' && (
+                    <>
+                      <Button
+                        size="sm"
+                        onClick={() => handleStatusUpdate(orden.id, 'aceptada')}
+                      >
+                        Aceptar
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleStatusUpdate(orden.id, 'cancelada')}
+                      >
+                        Rechazar
+                      </Button>
+                    </>
+                  )}
+                  {orden.estado === 'aceptada' && (
+                    <Button
+                      size="sm"
+                      onClick={() => handleStatusUpdate(orden.id, 'completada')}
+                    >
+                      Completar
+                    </Button>
+                  )}
+                </div>
+              )}
+              
+              {canRate && (
+                <CalificarOrden 
+                  orden={orden}
+                />
+              )}
+            </div>
+          </div>
+
+          <OrdenChat 
+            ordenId={orden.id}
+            orden={orden}
+            canSendMessages={orden.estado === 'pendiente' || orden.estado === 'aceptada'}
+          />
+        </div>
+      </Card>
+    );
+  };
 
   return (
     <div className="space-y-6">

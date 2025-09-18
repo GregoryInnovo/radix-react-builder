@@ -9,6 +9,7 @@ import { useAdmin } from '@/hooks/useAdmin';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Search, Package, MapPin, Calendar, Weight } from 'lucide-react';
+import { useProfiles } from '@/hooks/useProfiles';
 import type { Database } from '@/integrations/supabase/types';
 
 type Lote = Database['public']['Tables']['lotes']['Row'] & {
@@ -26,7 +27,8 @@ interface LotesManagementProps {
 export const LotesManagement: React.FC<LotesManagementProps> = ({ lotes }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  const { updateEntityStatus } = useAdmin();
+  const { updateEntityStatus, deleteEntity } = useAdmin();
+  const { getProfileById } = useProfiles();
 
   const getStatusBadge = (status: string) => {
     const colors = {
@@ -60,6 +62,16 @@ export const LotesManagement: React.FC<LotesManagementProps> = ({ lotes }) => {
 
   const handleStatusChange = async (loteId: string, newStatus: string) => {
     await updateEntityStatus('lote', loteId, newStatus);
+  };
+
+  const handleDelete = async (loteId: string) => {
+    if (confirm('¿Estás seguro de que quieres eliminar este lote definitivamente? Esta acción no se puede deshacer.')) {
+      await deleteEntity('lote', loteId);
+    }
+  };
+
+  const getUserProfile = (userId: string) => {
+    return { id: userId, full_name: 'Usuario' };
   };
 
   const filteredLotes = lotes.filter(lote => {

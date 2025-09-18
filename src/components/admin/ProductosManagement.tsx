@@ -1,15 +1,16 @@
-
 import React, { useState } from 'react';
+import { Database } from '@/integrations/supabase/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { Search, Calendar, Package, MapPin, DollarSign, Home, CheckCircle, XCircle, Trash2, User } from 'lucide-react';
 import { useAdmin } from '@/hooks/useAdmin';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { Search, ShoppingBag, Calendar } from 'lucide-react';
-import type { Database } from '@/integrations/supabase/types';
+import { useProfiles } from '@/hooks/useProfiles';
+import { Link } from 'react-router-dom';
 
 type Producto = Database['public']['Tables']['productos']['Row'];
 
@@ -20,23 +21,35 @@ interface ProductosManagementProps {
 export const ProductosManagement: React.FC<ProductosManagementProps> = ({ productos }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  const { updateEntityStatus } = useAdmin();
+  const { updateEntityStatus, deleteEntity } = useAdmin();
+  const { getProfileById } = useProfiles();
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (estado: string) => {
     const colors = {
       pendiente: 'bg-yellow-100 text-yellow-800',
       aprobado: 'bg-green-100 text-green-800',
       rechazado: 'bg-red-100 text-red-800',
     };
     return (
-      <Badge className={colors[status as keyof typeof colors] || 'bg-gray-100 text-gray-800'}>
-        {status?.charAt(0).toUpperCase() + status?.slice(1) || 'Pendiente'}
+      <Badge className={colors[estado as keyof typeof colors] || 'bg-gray-100 text-gray-800'}>
+        {estado?.charAt(0).toUpperCase() + estado?.slice(1) || 'Pendiente'}
       </Badge>
     );
   };
 
-  const handleStatusChange = async (productoId: string, newStatus: string) => {
-    await updateEntityStatus('producto', productoId, newStatus);
+  const handleStatusChange = async (productId: string, newStatus: string) => {
+    await updateEntityStatus('producto', productId, newStatus);
+  };
+
+  const handleDelete = async (productId: string) => {
+    if (confirm('¿Estás seguro de que quieres eliminar este producto definitivamente? Esta acción no se puede deshacer.')) {
+      await deleteEntity('producto', productId);
+    }
+  };
+
+  const getUserProfile = (userId: string) => {
+    // For now return a placeholder - this will be improved with proper profile fetching
+    return { id: userId, full_name: 'Usuario' };
   };
 
   const filteredProductos = productos.filter(producto => {
@@ -79,97 +92,112 @@ export const ProductosManagement: React.FC<ProductosManagementProps> = ({ produc
       </div>
 
       <div className="grid gap-4">
-        {filteredProductos.map((producto) => (
-          <Card key={producto.id}>
-            <CardHeader>
-              <div className="flex justify-between items-start">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-blue-100 rounded-full">
-                    <ShoppingBag className="h-5 w-5 text-blue-600" />
-                  </div>
-                  <div>
-                    <CardTitle className="text-lg">{producto.nombre}</CardTitle>
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <Calendar className="h-4 w-4" />
-                      {format(new Date(producto.created_at), 'PP', { locale: es })}
+        {filteredProductos.map((producto) => {
+          const userProfile = getUserProfile(producto.user_id);
+          return (
+            <Card key={producto.id} className="p-4">
+              <CardHeader className="pb-3">
+                <div className="flex justify-between items-start">
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Package className="h-5 w-5" />
+                    {producto.nombre}
+                  </CardTitle>
+                  {userProfile && (
+                    <Link 
+                      to={`/user/${userProfile.id}`}
+                      className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800 transition-colors"
+                    >
+                      <User className="h-4 w-4" />
+                      {userProfile.full_name || 'Usuario'}
+                    </Link>
+                  )}
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <p className="text-sm text-gray-600 line-clamp-2">
+                  {producto.descripcion}
+                </p>
+                
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  {producto.precio_unidad && (
+                    <div className="flex items-center gap-1">
+                      <DollarSign className="h-4 w-4 text-green-600" />
+                      <span>${producto.precio_unidad.toLocaleString()}</span>
                     </div>
-                  </div>
-                </div>
-                {getStatusBadge(producto.status || 'pendiente')}
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                <div>
-                  <span className="font-medium">Descripción: </span>
-                  <p className="text-sm text-gray-600 mt-1">{producto.descripcion}</p>
-                </div>
-
-                {producto.origen_roa && (
-                  <div>
-                    <span className="font-medium">Origen ROA: </span>
-                    <span className="text-sm">{producto.origen_roa}</span>
-                  </div>
-                )}
-
-                <div className="flex items-center gap-4 text-sm">
-                  <span className={`px-2 py-1 rounded-full text-xs ${
-                    producto.disponible 
-                      ? 'bg-green-100 text-green-800' 
-                      : 'bg-gray-100 text-gray-800'
-                  }`}>
-                    {producto.disponible ? 'Disponible' : 'No disponible'}
-                  </span>
+                  )}
                   
-                  {producto.imagenes && producto.imagenes.length > 0 && (
-                    <span className="text-gray-500">
-                      {producto.imagenes.length} imagen(es)
-                    </span>
+                  {producto.incluye_domicilio && (
+                    <div className="flex items-center gap-1">
+                      <Home className="h-4 w-4 text-blue-600" />
+                      <span>Incluye domicilio</span>
+                      {producto.costo_domicilio && producto.costo_domicilio > 0 && (
+                        <span className="text-gray-500">
+                          (${producto.costo_domicilio.toLocaleString()})
+                        </span>
+                      )}
+                    </div>
+                  )}
+                  
+                  {producto.direccion_vendedor && (
+                    <div className="flex items-center gap-1 col-span-2">
+                      <MapPin className="h-4 w-4 text-red-600" />
+                      <span className="text-xs">{producto.direccion_vendedor}</span>
+                    </div>
                   )}
                 </div>
 
-                <div className="flex gap-2">
-                  {(!producto.status || producto.status === 'pendiente') && (
-                    <>
-                      <Button
-                        variant="default"
-                        size="sm"
-                        onClick={() => handleStatusChange(producto.id, 'aprobado')}
-                      >
-                        Aprobar
-                      </Button>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => handleStatusChange(producto.id, 'rechazado')}
-                      >
-                        Rechazar
-                      </Button>
-                    </>
-                  )}
-                  {producto.status === 'aprobado' && (
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => handleStatusChange(producto.id, 'rechazado')}
-                    >
-                      Rechazar
-                    </Button>
-                  )}
-                  {producto.status === 'rechazado' && (
-                    <Button
-                      variant="default"
-                      size="sm"
-                      onClick={() => handleStatusChange(producto.id, 'aprobado')}
-                    >
-                      Aprobar
-                    </Button>
-                  )}
+                <div className="flex items-center gap-4 text-sm text-gray-500">
+                  <div className="flex items-center gap-1">
+                    <Calendar className="h-4 w-4" />
+                    {format(new Date(producto.created_at), 'dd/MM/yyyy', { locale: es })}
+                  </div>
+                  <div>{getStatusBadge(producto.status || 'pendiente')}</div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <span>Disponible: {producto.disponible ? 'Sí' : 'No'}</span>
+                    <span>•</span>
+                    <span>Imágenes: {producto.imagenes?.length || 0}</span>
+                  </div>
+                  
+                  <div className="flex gap-2">
+                    {producto.status === 'pendiente' && (
+                      <>
+                        <Button
+                          size="sm"
+                          onClick={() => handleStatusChange(producto.id, 'aprobado')}
+                          className="flex items-center gap-1"
+                        >
+                          <CheckCircle className="h-4 w-4" />
+                          Aprobar
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => handleStatusChange(producto.id, 'rechazado')}
+                          className="flex items-center gap-1"
+                        >
+                          <XCircle className="h-4 w-4" />
+                          Rechazar
+                        </Button>
+                      </>
+                    )}
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleDelete(producto.id)}
+                      className="flex items-center gap-1 text-red-600 hover:text-red-800"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      Eliminar
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
     </div>
   );

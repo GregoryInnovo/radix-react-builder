@@ -297,6 +297,7 @@ export const useAdmin = () => {
     ordenes,
     auditorias,
     fetchAllData,
-    updateEntityStatus
+    updateEntityStatus,
+    deleteEntity: deleteEntity
   };
 };

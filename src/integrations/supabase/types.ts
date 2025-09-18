@@ -373,8 +373,10 @@ export type Database = {
         Row: {
           cantidad_solicitada: number
           created_at: string
+          direccion_contacto: string | null
           estado: Database["public"]["Enums"]["order_status"]
           fecha_propuesta_retiro: string | null
+          hora_propuesta_retiro: string | null
           id: string
           item_id: string
           mensaje_respuesta: string | null
@@ -382,14 +384,17 @@ export type Database = {
           modalidad_entrega: string | null
           proveedor_id: string
           solicitante_id: string
+          telefono_contacto: string | null
           tipo_item: Database["public"]["Enums"]["item_type"]
           updated_at: string
         }
         Insert: {
           cantidad_solicitada?: number
           created_at?: string
+          direccion_contacto?: string | null
           estado?: Database["public"]["Enums"]["order_status"]
           fecha_propuesta_retiro?: string | null
+          hora_propuesta_retiro?: string | null
           id?: string
           item_id: string
           mensaje_respuesta?: string | null
@@ -397,14 +402,17 @@ export type Database = {
           modalidad_entrega?: string | null
           proveedor_id: string
           solicitante_id: string
+          telefono_contacto?: string | null
           tipo_item: Database["public"]["Enums"]["item_type"]
           updated_at?: string
         }
         Update: {
           cantidad_solicitada?: number
           created_at?: string
+          direccion_contacto?: string | null
           estado?: Database["public"]["Enums"]["order_status"]
           fecha_propuesta_retiro?: string | null
+          hora_propuesta_retiro?: string | null
           id?: string
           item_id?: string
           mensaje_respuesta?: string | null
@@ -412,6 +420,7 @@ export type Database = {
           modalidad_entrega?: string | null
           proveedor_id?: string
           solicitante_id?: string
+          telefono_contacto?: string | null
           tipo_item?: Database["public"]["Enums"]["item_type"]
           updated_at?: string
         }

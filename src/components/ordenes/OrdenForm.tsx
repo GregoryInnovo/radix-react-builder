@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -8,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
 import { Switch } from '@/components/ui/switch';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { CalendarIcon } from 'lucide-react';
@@ -21,10 +20,35 @@ import type { Database } from '@/integrations/supabase/types';
 type Producto = Database['public']['Tables']['productos']['Row'];
 
 const formSchema = z.object({
-  cantidad_solicitada: z.number().min(1, 'La cantidad debe ser mayor a 0'),
-  fecha_propuesta_retiro: z.date().min(new Date(), 'La fecha debe ser futura'),
+  cantidad_solicitada: z.number().min(1, "La cantidad debe ser mayor a 0"),
+  fecha_propuesta_retiro: z.date().optional(),
+  hora_propuesta_retiro: z.string().optional(),
   mensaje_solicitud: z.string().optional(),
-  modalidad_entrega: z.enum(['domicilio', 'punto']),
+  modalidad_entrega: z.string().optional(),
+  telefono_contacto: z.string().min(1, "El teléfono de contacto es requerido"),
+  direccion_contacto: z.string().min(1, "La dirección de contacto es requerida"),
+}).refine((data) => {
+  if (data.fecha_propuesta_retiro && data.hora_propuesta_retiro) {
+    const selectedDate = data.fecha_propuesta_retiro;
+    const selectedTime = data.hora_propuesta_retiro;
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const selectedDateOnly = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate());
+    
+    // If it's today, validate that time is at least 1 hour from now
+    if (selectedDateOnly.getTime() === today.getTime()) {
+      const [hours, minutes] = selectedTime.split(':').map(Number);
+      const selectedDateTime = new Date(selectedDate);
+      selectedDateTime.setHours(hours, minutes);
+      
+      const oneHourFromNow = new Date(now.getTime() + 60 * 60 * 1000);
+      return selectedDateTime >= oneHourFromNow;
+    }
+  }
+  return true;
+}, {
+  message: "Para el día de hoy, la hora debe ser al menos 1 hora posterior a la actual",
+  path: ["hora_propuesta_retiro"],
 });
 
 interface OrdenFormProps {
@@ -44,77 +68,69 @@ export const OrdenForm: React.FC<OrdenFormProps> = ({
   onSuccess,
   onCancel
 }) => {
-  const [loading, setLoading] = useState(false);
-  const [calendarOpen, setCalendarOpen] = useState(false);
-  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
-  const [existingOrdersCount, setExistingOrdersCount] = useState(0);
-  const [pendingOrderData, setPendingOrderData] = useState<any>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [confirmationData, setConfirmationData] = useState<any>(null);
   const { createOrden } = useOrdenes();
-
-  // Only show delivery options if it's a product AND it includes delivery
-  // If product doesn't include delivery, user must go to seller's address
-  const showDeliveryOptions = tipo_item === 'producto' && producto?.incluye_domicilio === true;
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       cantidad_solicitada: 1,
-      mensaje_solicitud: '',
-      modalidad_entrega: 'punto',
+      mensaje_solicitud: "",
+      modalidad_entrega: "",
+      telefono_contacto: "",
+      direccion_contacto: "",
     },
   });
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    setLoading(true);
-    const orderData = {
-      tipo_item,
+    setIsSubmitting(true);
+    
+    const ordenData = {
+      tipo_item: tipo_item,
       item_id,
       proveedor_id,
       cantidad_solicitada: values.cantidad_solicitada,
-      fecha_propuesta_retiro: values.fecha_propuesta_retiro.toISOString().split('T')[0],
+      fecha_propuesta_retiro: values.fecha_propuesta_retiro?.toISOString().split('T')[0],
+      hora_propuesta_retiro: values.hora_propuesta_retiro,
+      modalidad_entrega: values.modalidad_entrega || null,
       mensaje_solicitud: values.mensaje_solicitud || null,
+      telefono_contacto: values.telefono_contacto,
+      direccion_contacto: values.direccion_contacto,
     };
 
-    try {
-      const result = await createOrden(orderData);
+    const result = await createOrden(ordenData);
 
-      if (result.requiresConfirmation) {
-        setPendingOrderData(orderData);
-        setExistingOrdersCount(result.existingOrdersCount || 0);
-        setShowConfirmDialog(true);
-        setLoading(false);
-        return;
-      }
-
-      if (!result.error) {
-        onSuccess?.();
-      }
-    } finally {
-      setLoading(false);
+    if (result.requiresConfirmation) {
+      setConfirmationData({
+        existingOrdersCount: result.existingOrdersCount!,
+        ordenData,
+      });
+      setShowConfirmation(true);
+    } else if (result.data) {
+      onSuccess?.();
     }
+    
+    setIsSubmitting(false);
   };
 
   const handleConfirmOrder = async () => {
-    if (!pendingOrderData) return;
+    if (!confirmationData) return;
     
-    setLoading(true);
-    try {
-      const result = await createOrden(pendingOrderData, true);
-      if (!result.error) {
-        setShowConfirmDialog(false);
-        onSuccess?.();
-      }
-    } finally {
-      setLoading(false);
+    setIsSubmitting(true);
+    const result = await createOrden(confirmationData.ordenData, true);
+    
+    if (result.data) {
+      setShowConfirmation(false);
+      onSuccess?.();
     }
+    
+    setIsSubmitting(false);
   };
 
-  const handleDateSelect = (date: Date | undefined) => {
-    if (date) {
-      form.setValue('fecha_propuesta_retiro', date);
-      setCalendarOpen(false);
-    }
-  };
+  // Only show delivery options for products with delivery
+  const showDeliveryOptions = tipo_item === 'producto' && producto?.incluye_domicilio;
 
   return (
     <Form {...form}>
@@ -124,7 +140,7 @@ export const OrdenForm: React.FC<OrdenFormProps> = ({
           name="cantidad_solicitada"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Cantidad Solicitada</FormLabel>
+              <FormLabel>Cantidad Solicitada *</FormLabel>
               <FormControl>
                 <Input
                   type="number"
@@ -177,11 +193,43 @@ export const OrdenForm: React.FC<OrdenFormProps> = ({
 
         <FormField
           control={form.control}
+          name="telefono_contacto"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Teléfono de Contacto *</FormLabel>
+              <FormControl>
+                <Input placeholder="Ej: +57 300 123 4567" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="direccion_contacto"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Dirección de Contacto *</FormLabel>
+              <FormControl>
+                <Textarea 
+                  placeholder="Dirección completa para la entrega/recogida" 
+                  className="resize-none"
+                  {...field} 
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
           name="fecha_propuesta_retiro"
           render={({ field }) => (
             <FormItem className="flex flex-col">
               <FormLabel>Fecha Propuesta de Retiro</FormLabel>
-              <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+              <Popover>
                 <PopoverTrigger asChild>
                   <FormControl>
                     <Button
@@ -190,8 +238,6 @@ export const OrdenForm: React.FC<OrdenFormProps> = ({
                         "w-full pl-3 text-left font-normal",
                         !field.value && "text-muted-foreground"
                       )}
-                      onClick={() => setCalendarOpen(true)}
-                      type="button"
                     >
                       {field.value ? (
                         format(field.value, "PPP", { locale: es })
@@ -206,13 +252,36 @@ export const OrdenForm: React.FC<OrdenFormProps> = ({
                   <Calendar
                     mode="single"
                     selected={field.value}
-                    onSelect={handleDateSelect}
-                    disabled={(date) => date < new Date()}
+                    onSelect={field.onChange}
+                    disabled={(date) =>
+                      date < new Date(new Date().setHours(0, 0, 0, 0))
+                    }
                     initialFocus
-                    className={cn("p-3 pointer-events-auto")}
+                    className="rounded-md border pointer-events-auto"
                   />
                 </PopoverContent>
               </Popover>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="hora_propuesta_retiro"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Hora Propuesta de Retiro</FormLabel>
+              <FormControl>
+                <Input
+                  type="time"
+                  {...field}
+                  className="w-full"
+                />
+              </FormControl>
+              <FormDescription>
+                Para el día de hoy, debe ser al menos 1 hora posterior a la hora actual
+              </FormDescription>
               <FormMessage />
             </FormItem>
           )}
@@ -237,8 +306,8 @@ export const OrdenForm: React.FC<OrdenFormProps> = ({
         />
 
         <div className="flex gap-2">
-          <Button type="submit" disabled={loading} className="flex-1">
-            {loading ? 'Enviando...' : 'Enviar Solicitud'}
+          <Button type="submit" disabled={isSubmitting} className="flex-1">
+            {isSubmitting ? 'Enviando...' : 'Enviar Solicitud'}
           </Button>
           {onCancel && (
             <Button type="button" variant="outline" onClick={onCancel}>
@@ -248,18 +317,18 @@ export const OrdenForm: React.FC<OrdenFormProps> = ({
         </div>
       </form>
 
-      <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+      <AlertDialog open={showConfirmation} onOpenChange={setShowConfirmation}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmar Nueva Solicitud</AlertDialogTitle>
             <AlertDialogDescription>
-              Ya has realizado {existingOrdersCount} solicitud{existingOrdersCount > 1 ? 'es' : ''} de intercambio para este {tipo_item === 'producto' ? 'producto' : 'lote'}. ¿Deseas continuar y crear una nueva solicitud?
+              Ya has realizado {confirmationData?.existingOrdersCount} solicitud{confirmationData?.existingOrdersCount > 1 ? 'es' : ''} de intercambio para este {tipo_item === 'producto' ? 'producto' : 'lote'}. ¿Deseas continuar y crear una nueva solicitud?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmOrder} disabled={loading}>
-              {loading ? 'Creando...' : 'Sí, continuar'}
+            <AlertDialogAction onClick={handleConfirmOrder} disabled={isSubmitting}>
+              {isSubmitting ? 'Creando...' : 'Sí, continuar'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
