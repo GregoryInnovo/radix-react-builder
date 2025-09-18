@@ -1,10 +1,18 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { useTiposResiduo } from '@/hooks/useTiposResiduo';
-import { Link } from 'react-router-dom';
+import { useTiposResiduoWithCounts } from '@/hooks/useTiposResiduoWithCounts';
+import { cn } from '@/lib/utils';
 
-export const TiposROASection = () => {
-  const { tiposResiduos, loading } = useTiposResiduo();
+interface TiposROASectionProps {
+  selectedType?: string;
+  onTypeSelect?: (typeId: string) => void;
+}
+
+export const TiposROASection: React.FC<TiposROASectionProps> = ({
+  selectedType,
+  onTypeSelect
+}) => {
+  const { tiposResiduos, loading } = useTiposResiduoWithCounts();
 
   if (loading) {
     return (
@@ -46,25 +54,75 @@ export const TiposROASection = () => {
       </div>
       
       <div className="grid md:grid-cols-3 lg:grid-cols-6 gap-4">
-        {tiposResiduos.map((tipo) => (
-          <Link
-            key={tipo.id}
-            to={`/search?tipo=${tipo.id}`}
-            className="group"
-          >
-            <Card className="text-center hover:shadow-md transition-all duration-200 hover:scale-105 cursor-pointer">
+        {/* All types option */}
+        <Card 
+          className={cn(
+            "text-center hover:shadow-md transition-all duration-200 hover:scale-105 cursor-pointer",
+            !selectedType ? "ring-2 ring-primary bg-primary/5" : ""
+          )}
+          onClick={() => onTypeSelect?.('all')}
+        >
+          <CardContent className="pt-6">
+            <div className="text-2xl mb-2">🌱</div>
+            <div className={cn(
+              "font-semibold text-sm mb-2 transition-colors",
+              !selectedType ? "text-primary" : "hover:text-blue-600"
+            )}>
+              Todos los tipos
+            </div>
+            <div className="space-y-1">
+              <Badge className={cn(
+                "text-xs",
+                !selectedType 
+                  ? "bg-primary text-primary-foreground" 
+                  : "bg-blue-100 text-blue-800"
+              )}>
+                Ver todos
+              </Badge>
+              <Badge variant="outline" className="text-xs block">
+                Sin filtros
+              </Badge>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Individual residue types */}
+        {tiposResiduos.map((tipo) => {
+          const isSelected = selectedType === tipo.id;
+          return (
+            <Card 
+              key={tipo.id}
+              className={cn(
+                "text-center hover:shadow-md transition-all duration-200 hover:scale-105 cursor-pointer",
+                isSelected ? "ring-2 ring-primary bg-primary/5" : ""
+              )}
+              onClick={() => onTypeSelect?.(tipo.id)}
+            >
               <CardContent className="pt-6">
                 <div className="text-2xl mb-2">🌿</div>
-                <div className="font-semibold text-sm mb-2 group-hover:text-blue-600 transition-colors">
+                <div className={cn(
+                  "font-semibold text-sm mb-2 transition-colors",
+                  isSelected ? "text-primary" : "hover:text-blue-600"
+                )}>
                   {tipo.nombre}
                 </div>
-                <Badge className="bg-green-100 text-green-800">
-                  Disponible
-                </Badge>
+                <div className="space-y-1">
+                  <Badge className={cn(
+                    "text-xs",
+                    isSelected 
+                      ? "bg-primary text-primary-foreground" 
+                      : "bg-green-100 text-green-800"
+                  )}>
+                    {tipo.lotes_count} lotes
+                  </Badge>
+                  <Badge variant="outline" className="text-xs block">
+                    Disponible
+                  </Badge>
+                </div>
               </CardContent>
             </Card>
-          </Link>
-        ))}
+          );
+        })}
       </div>
     </section>
   );

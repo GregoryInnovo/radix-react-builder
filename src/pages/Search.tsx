@@ -12,14 +12,14 @@ import { useTiposResiduo } from '@/hooks/useTiposResiduo';
 import { LoteDetailsModal } from '@/components/lotes/LoteDetailsModal';
 import { LocationMap } from '@/components/search/LocationMap';
 import { SearchResultsMap } from '@/components/search/SearchResultsMap';
-import { ReservarLote } from '@/components/lotes/ReservarLote';
+import { SearchResultsList } from '@/components/search/SearchResultsList';
 import { TiposROASection } from '@/components/search/TiposROASection';
 import { useAuth } from '@/hooks/useAuth';
 
 const Search = () => {
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [manualLocation, setManualLocation] = useState({ lat: '', lng: '' });
-  const [radius, setRadius] = useState('5');
+  const [radius, setRadius] = useState('50');
   const [selectedType, setSelectedType] = useState<string>('all');
   const [textSearch, setTextSearch] = useState('');
   const [isDetectingLocation, setIsDetectingLocation] = useState(false);
@@ -144,7 +144,19 @@ const Search = () => {
             </div>
 
             {/* Types of ROA Section */}
-            <TiposROASection />
+            <TiposROASection 
+              selectedType={selectedType === 'all' ? undefined : selectedType}
+              onTypeSelect={(typeId) => {
+                setSelectedType(typeId === 'all' ? 'all' : typeId);
+                // Auto-search if location is available
+                if (userLocation) {
+                  setTimeout(() => {
+                    setSearchMode('location');
+                    handleSearch();
+                  }, 100);
+                }
+              }}
+            />
 
             {/* Search Filters */}
             <Card>
@@ -248,41 +260,23 @@ const Search = () => {
                   )}
                 </div>
 
-                {/* Radius and Type Filters */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-sm font-medium">Radio de búsqueda (km)</label>
-                    <Select value={radius} onValueChange={setRadius}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="1">1 km</SelectItem>
-                        <SelectItem value="3">3 km</SelectItem>
-                        <SelectItem value="5">5 km</SelectItem>
-                        <SelectItem value="10">10 km</SelectItem>
-                        <SelectItem value="20">20 km</SelectItem>
-                        <SelectItem value="50">50 km</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div>
-                    <label className="text-sm font-medium">Tipo de ROA</label>
-                    <Select value={selectedType} onValueChange={setSelectedType}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">Todos los tipos</SelectItem>
-                        {tiposResiduos.map((tipo) => (
-                          <SelectItem key={tipo.id} value={tipo.id}>
-                            {tipo.nombre}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                {/* Radius Filter */}
+                <div>
+                  <label className="text-sm font-medium">Radio de búsqueda (km)</label>
+                  <Select value={radius} onValueChange={setRadius}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="1">1 km</SelectItem>
+                      <SelectItem value="3">3 km</SelectItem>
+                      <SelectItem value="5">5 km</SelectItem>
+                      <SelectItem value="10">10 km</SelectItem>
+                      <SelectItem value="20">20 km</SelectItem>
+                      <SelectItem value="50">50 km</SelectItem>
+                      <SelectItem value="100">100 km</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <Button
@@ -298,6 +292,19 @@ const Search = () => {
                 </Button>
               </CardContent>
             </Card>
+
+            {/* Search Results */}
+            {results.length > 0 && (
+              <SearchResultsList
+                results={results}
+                textSearch={textSearch}
+                userLocation={userLocation}
+                onLoteSelect={(lote, distance) => {
+                  setSelectedLote(lote);
+                  setSelectedDistance(distance);
+                }}
+              />
+            )}
 
             {/* Interactive Map */}
             {(userLocation || results.length > 0) && (
@@ -322,116 +329,6 @@ const Search = () => {
                   />
                 </CardContent>
               </Card>
-            )}
-
-            {/* Search Results */}
-            {results.length > 0 && (
-              <div className="space-y-4">
-                <h2 className="text-xl font-semibold">
-                  Resultados de búsqueda ({results.length} lotes encontrados)
-                  {textSearch && (
-                    <span className="text-sm font-normal text-gray-600 ml-2">
-                      para "{textSearch}"
-                    </span>
-                  )}
-                </h2>
-
-                <div className="grid gap-4">
-                  {results.map((result) => (
-                    <Card key={result.lote.id} className="hover:shadow-md transition-shadow">
-                      <CardContent className="p-4">
-                        <div className="flex items-start justify-between mb-3">
-                          <div>
-                            <h3 className="font-semibold text-lg text-green-800">
-                              Lote de ROA
-                              {result.lote.user_id === user?.id && (
-                                <Badge variant="outline" className="ml-2 text-xs">
-                                  Tu lote
-                                </Badge>
-                              )}
-                              {textSearch && result.relevanceScore > 1 && (
-                                <Badge variant="secondary" className="ml-2 text-xs">
-                                  Muy relevante
-                                </Badge>
-                              )}
-                            </h3>
-                            <div className="flex items-center gap-2 text-sm text-gray-600 mt-1">
-                              <Weight className="w-4 h-4" />
-                              {result.lote.peso_estimado} kg
-                            </div>
-                            {result.lote.tipos_residuo && (
-                              <div className="flex items-center gap-2 text-sm text-gray-600 mt-1">
-                                <span className="font-medium">Tipo:</span>
-                                <span>{result.lote.tipos_residuo.nombre}</span>
-                              </div>
-                            )}
-                          </div>
-                          
-                          <div className="text-right">
-                            {userLocation && (
-                              <Badge variant="outline" className="mb-2">
-                                <MapPin className="w-3 h-3 mr-1" />
-                                {formatDistance(result.distance)}
-                              </Badge>
-                            )}
-                            <div className="flex flex-col gap-1">
-                              <div className="flex items-center gap-1">
-                                <Badge className="bg-green-100 text-green-800">
-                                  {result.lote.estado}
-                                </Badge>
-                                {result.lote.estado === 'disponible' && (
-                                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                                )}
-                              </div>
-                              <Badge variant={result.lote.status === 'aprobado' ? 'default' : 'secondary'} className="text-xs">
-                                {result.lote.status || 'pendiente'}
-                              </Badge>
-                            </div>
-                          </div>
-                        </div>
-
-                        {result.lote.direccion && (
-                          <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
-                            <MapPin className="w-4 h-4 flex-shrink-0" />
-                            <span className="truncate">{result.lote.direccion}</span>
-                          </div>
-                        )}
-
-                        {result.lote.fecha_disponible && (
-                          <div className="flex items-center gap-2 text-sm text-gray-600 mb-3">
-                            <Calendar className="w-4 h-4 flex-shrink-0" />
-                            <span>Disponible desde: {new Date(result.lote.fecha_disponible).toLocaleDateString()}</span>
-                          </div>
-                        )}
-
-                        {result.lote.descripcion && (
-                          <p className="text-sm text-gray-700 mb-3">
-                            {result.lote.descripcion}
-                          </p>
-                        )}
-
-                        <div className="flex gap-2">
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            className="flex-1"
-                            onClick={() => {
-                              setSelectedLote(result.lote);
-                              setSelectedDistance(result.distance);
-                            }}
-                          >
-                            Ver Detalles
-                          </Button>
-                          <ReservarLote 
-                            lote={result.lote}
-                            className="flex-1 text-xs px-2"
-                          />
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              </div>
             )}
 
             {/* No Results */}
