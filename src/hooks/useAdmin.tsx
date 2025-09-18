@@ -287,6 +287,81 @@ export const useAdmin = () => {
     }
   };
 
+  const deleteEntity = async (entityType: string, entityId: string, notes?: string) => {
+    setLoadingData(true);
+    try {
+      // Get entity data for audit before deletion
+      let entityData: any = null;
+      
+      if (entityType === 'lote') {
+        const { data } = await supabase
+          .from('lotes')
+          .select('*')
+          .eq('id', entityId)
+          .single();
+        entityData = data;
+        
+        // Delete lote
+        const { error: deleteError } = await supabase
+          .from('lotes')
+          .delete()
+          .eq('id', entityId);
+        
+        if (deleteError) throw deleteError;
+      } else if (entityType === 'producto') {
+        const { data } = await supabase
+          .from('productos')
+          .select('*')
+          .eq('id', entityId)
+          .single();
+        entityData = data;
+        
+        // Delete producto
+        const { error: deleteError } = await supabase
+          .from('productos')
+          .delete()
+          .eq('id', entityId);
+        
+        if (deleteError) throw deleteError;
+      } else {
+        throw new Error(`Tipo de entidad no válido para eliminación: ${entityType}`);
+      }
+
+      // Log the action in audit table
+      const { error: auditError } = await supabase
+        .from('auditoria_admin')
+        .insert({
+          admin_id: user!.id,
+          entity_type: entityType,
+          entity_id: entityId,
+          action: 'delete',
+          previous_status: entityData?.status || 'pendiente',
+          new_status: 'eliminado',
+          notes: notes || `${entityType} eliminado definitivamente por el administrador`
+        });
+
+      if (auditError) throw auditError;
+
+      toast({
+        title: "Eliminado correctamente",
+        description: `El ${entityType} ha sido eliminado definitivamente.`,
+      });
+
+      // Refresh data
+      setDataLoaded(false);
+      await fetchAllData();
+    } catch (error: any) {
+      console.error('Error deleting entity:', error);
+      toast({
+        title: "Error al eliminar",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingData(false);
+    }
+  };
+
   return {
     isAdmin,
     loading,
@@ -298,6 +373,6 @@ export const useAdmin = () => {
     auditorias,
     fetchAllData,
     updateEntityStatus,
-    deleteEntity: deleteEntity
+    deleteEntity
   };
 };
