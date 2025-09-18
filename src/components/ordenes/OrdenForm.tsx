@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
 import { Switch } from '@/components/ui/switch';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
@@ -25,8 +26,19 @@ const formSchema = z.object({
   hora_propuesta_retiro: z.string().optional(),
   mensaje_solicitud: z.string().optional(),
   modalidad_entrega: z.string().optional(),
-  telefono_contacto: z.string().min(1, "El teléfono de contacto es requerido"),
-  direccion_contacto: z.string().min(1, "La dirección de contacto es requerida"),
+  telefono_contacto: z.string()
+    .min(1, "El teléfono de contacto es requerido")
+    .regex(/^[\d\s\-\(\)\+]+$/, "El teléfono solo debe contener números y símbolos válidos (+, -, (, ), espacios)"),
+  direccion_contacto: z.string().optional(),
+}).refine((data) => {
+  // Make direccion_contacto required only when modalidad_entrega is "domicilio"
+  if (data.modalidad_entrega === 'domicilio') {
+    return data.direccion_contacto && data.direccion_contacto.trim().length > 0;
+  }
+  return true;
+}, {
+  message: "La dirección de contacto es requerida cuando la modalidad de entrega es 'Domicilio'",
+  path: ["direccion_contacto"],
 }).refine((data) => {
   if (data.fecha_propuesta_retiro && data.hora_propuesta_retiro) {
     const selectedDate = data.fecha_propuesta_retiro;
@@ -131,10 +143,13 @@ export const OrdenForm: React.FC<OrdenFormProps> = ({
 
   // Only show delivery options for products with delivery
   const showDeliveryOptions = tipo_item === 'producto' && producto?.incluye_domicilio;
+  const currentModalidad = form.watch("modalidad_entrega");
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+    <div className="h-[80vh]">
+      <ScrollArea className="h-full pr-4">
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <FormField
           control={form.control}
           name="cantidad_solicitada"
@@ -198,8 +213,19 @@ export const OrdenForm: React.FC<OrdenFormProps> = ({
             <FormItem>
               <FormLabel>Teléfono de Contacto *</FormLabel>
               <FormControl>
-                <Input placeholder="Ej: +57 300 123 4567" {...field} />
+                <Input 
+                  placeholder="Ej: +57 300 123 4567" 
+                  {...field}
+                  onChange={(e) => {
+                    // Only allow numbers, spaces, hyphens, parentheses, and + sign
+                    const value = e.target.value.replace(/[^\d\s\-\(\)\+]/g, '');
+                    field.onChange(value);
+                  }}
+                />
               </FormControl>
+              <FormDescription>
+                Solo se permiten números y símbolos válidos (+, -, (, ), espacios)
+              </FormDescription>
               <FormMessage />
             </FormItem>
           )}
@@ -210,14 +236,26 @@ export const OrdenForm: React.FC<OrdenFormProps> = ({
           name="direccion_contacto"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Dirección de Contacto *</FormLabel>
+              <FormLabel>
+                Dirección de Contacto {currentModalidad === 'domicilio' ? '*' : '(Opcional)'}
+              </FormLabel>
               <FormControl>
                 <Textarea 
-                  placeholder="Dirección completa para la entrega/recogida" 
+                  placeholder={
+                    currentModalidad === 'domicilio' 
+                      ? "Dirección completa para la entrega a domicilio (requerida)" 
+                      : "Dirección de referencia (opcional)"
+                  }
                   className="resize-none"
                   {...field} 
                 />
               </FormControl>
+              <FormDescription>
+                {currentModalidad === 'domicilio' 
+                  ? "Requerida para entregas a domicilio"
+                  : "Solo se requiere si la modalidad de entrega es 'Domicilio'"
+                }
+              </FormDescription>
               <FormMessage />
             </FormItem>
           )}
@@ -305,17 +343,19 @@ export const OrdenForm: React.FC<OrdenFormProps> = ({
           )}
         />
 
-        <div className="flex gap-2">
-          <Button type="submit" disabled={isSubmitting} className="flex-1">
-            {isSubmitting ? 'Enviando...' : 'Enviar Solicitud'}
-          </Button>
-          {onCancel && (
-            <Button type="button" variant="outline" onClick={onCancel}>
-              Cancelar
-            </Button>
-          )}
-        </div>
-      </form>
+            <div className="flex gap-2 pt-4">
+              <Button type="submit" disabled={isSubmitting} className="flex-1">
+                {isSubmitting ? 'Enviando...' : 'Enviar Solicitud'}
+              </Button>
+              {onCancel && (
+                <Button type="button" variant="outline" onClick={onCancel}>
+                  Cancelar
+                </Button>
+              )}
+            </div>
+          </form>
+        </Form>
+      </ScrollArea>
 
       <AlertDialog open={showConfirmation} onOpenChange={setShowConfirmation}>
         <AlertDialogContent>
@@ -333,6 +373,6 @@ export const OrdenForm: React.FC<OrdenFormProps> = ({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </Form>
+    </div>
   );
 };

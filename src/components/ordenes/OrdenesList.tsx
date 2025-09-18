@@ -1,18 +1,20 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useOrdenes } from '@/hooks/useOrdenes';
 import { useAuth } from '@/hooks/useAuth';
 import { useProductos } from '@/hooks/useProductos';
 import { useLotes } from '@/hooks/useLotes';
 import { useProfiles } from '@/hooks/useProfiles';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CalificarOrden } from '@/components/calificaciones/CalificarOrden';
 import { OrdenChat } from '@/components/ordenes/OrdenChat';
+import { UserProfileLink } from '@/components/user/UserProfileLink';
 import { Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { cn } from '@/lib/utils';
 
 const getStatusColor = (estado: string) => {
   const colors = {
@@ -40,6 +42,7 @@ export const OrdenesList: React.FC = () => {
   const { productos } = useProductos();
   const { lotes } = useLotes();
   const { getProfileById } = useProfiles();
+  const [profiles, setProfiles] = useState<Record<string, any>>({});
 
   const handleStatusUpdate = async (ordenId: string, newStatus: string) => {
     await updateOrden(ordenId, { estado: newStatus as any });
@@ -56,9 +59,32 @@ export const OrdenesList: React.FC = () => {
     return `${lote.peso_estimado}kg - ${lote.direccion || 'Sin dirección'}`;
   };
 
-  const getRequesterName = (userId: string) => {
-    // For now, return a placeholder - this will be improved with proper profile fetching
-    return 'Usuario';
+  // Fetch profiles for all requesters
+  useEffect(() => {
+    const fetchProfiles = async () => {
+      const requesterIds = ordenesComoProveedor.map(orden => orden.solicitante_id);
+      const uniqueIds = [...new Set(requesterIds)];
+      
+      for (const userId of uniqueIds) {
+        if (!profiles[userId]) {
+          const profile = await getProfileById(userId);
+          if (profile) {
+            setProfiles(prev => ({
+              ...prev,
+              [userId]: profile
+            }));
+          }
+        }
+      }
+    };
+    
+    if (ordenesComoProveedor.length > 0) {
+      fetchProfiles();
+    }
+  }, [ordenesComoProveedor, getProfileById, profiles]);
+
+  const getRequesterProfile = (userId: string) => {
+    return profiles[userId] || null;
   };
 
   if (loading) {
@@ -72,101 +98,135 @@ export const OrdenesList: React.FC = () => {
   const OrdenCard = ({ orden, isProvider = false }: { orden: any; isProvider?: boolean }) => {
     const canUpdateStatus = isProvider && orden.estado === 'pendiente';
     const canRate = !isProvider && orden.estado === 'completada';
+    const requesterProfile = isProvider ? getRequesterProfile(orden.solicitante_id) : null;
+
+    // Validate phone number - only allow numbers, spaces, hyphens, parentheses, and + sign
+    const isValidPhone = (phone: string) => /^[\d\s\-\(\)\+]+$/.test(phone);
 
     return (
       <Card key={orden.id} className="overflow-hidden">
-        <div className="space-y-4">
-          <div className="flex items-center justify-between gap-4 p-4 border-b">
-            <div className="flex-1 space-y-3">
-              <div className="flex items-center gap-2 mb-2">
-                <Badge variant={getStatusColor(orden.estado) as any}>
-                  {getStatusText(orden.estado)}
-                </Badge>
-                <span className="text-sm text-muted-foreground">
-                  {orden.tipo_item === 'producto' ? 'Producto' : 'Lote ROA'}
-                </span>
-              </div>
-              
-              {/* Show item name and details */}
-              <div className="text-sm space-y-1">
-                <p className="font-medium">
-                  {orden.tipo_item === 'producto' 
-                    ? `Producto: ${getProductName(orden.item_id)}`
-                    : `Lote ROA: ${getLoteName(orden.item_id)}`
-                  }
-                </p>
-                <p>Cantidad solicitada: {orden.cantidad_solicitada}</p>
-                {orden.fecha_propuesta_retiro && (
-                  <p>Fecha propuesta: {format(new Date(orden.fecha_propuesta_retiro), 'dd/MM/yyyy')}</p>
-                )}
-                {orden.hora_propuesta_retiro && (
-                  <p>Hora propuesta: {orden.hora_propuesta_retiro}</p>
-                )}
-                {orden.modalidad_entrega && (
-                  <p>Modalidad: {orden.modalidad_entrega}</p>
-                )}
-              </div>
-
-              {/* Show requester contact info for providers */}
-              {isProvider && (
-                <div className="bg-blue-50 p-3 rounded-lg text-sm space-y-1">
-                  <p className="font-medium text-blue-900">Información de contacto del solicitante:</p>
-                  <p><strong>Nombre:</strong> {getRequesterName(orden.solicitante_id)}</p>
-                  {orden.telefono_contacto && (
-                    <p><strong>Teléfono:</strong> {orden.telefono_contacto}</p>
-                  )}
-                  {orden.direccion_contacto && (
-                    <p><strong>Dirección:</strong> {orden.direccion_contacto}</p>
-                  )}
-                </div>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <div className="flex items-center gap-2">
+            <Badge variant={getStatusColor(orden.estado) as any}>
+              {getStatusText(orden.estado)}
+            </Badge>
+            <span className="text-sm text-muted-foreground">
+              {orden.tipo_item === 'producto' ? 'Producto' : 'Lote ROA'}
+            </span>
+          </div>
+          
+          {/* Action buttons moved to header - right side */}
+          {canUpdateStatus && (
+            <div className="flex gap-2">
+              {orden.estado === 'pendiente' && (
+                <>
+                  <Button
+                    size="sm"
+                    onClick={() => handleStatusUpdate(orden.id, 'aceptada')}
+                  >
+                    Aceptar
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleStatusUpdate(orden.id, 'cancelada')}
+                  >
+                    Rechazar
+                  </Button>
+                </>
+              )}
+              {orden.estado === 'aceptada' && (
+                <Button
+                  size="sm"
+                  onClick={() => handleStatusUpdate(orden.id, 'completada')}
+                >
+                  Completar
+                </Button>
               )}
             </div>
+          )}
+          
+          {canRate && (
+            <CalificarOrden 
+              orden={orden}
+            />
+          )}
+        </CardHeader>
+
+        <CardContent className="space-y-4">
+          {/* Item name with larger, more prominent font */}
+          <div className="space-y-2">
+            <p className="text-lg font-semibold text-foreground">
+              {orden.tipo_item === 'producto' 
+                ? `${getProductName(orden.item_id)}`
+                : `Lote ROA: ${getLoteName(orden.item_id)}`
+              }
+            </p>
             
-            <div className="flex flex-col gap-2 min-w-fit">
-              {canUpdateStatus && (
-                <div className="flex gap-1">
-                  {orden.estado === 'pendiente' && (
-                    <>
-                      <Button
-                        size="sm"
-                        onClick={() => handleStatusUpdate(orden.id, 'aceptada')}
-                      >
-                        Aceptar
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleStatusUpdate(orden.id, 'cancelada')}
-                      >
-                        Rechazar
-                      </Button>
-                    </>
-                  )}
-                  {orden.estado === 'aceptada' && (
-                    <Button
-                      size="sm"
-                      onClick={() => handleStatusUpdate(orden.id, 'completada')}
-                    >
-                      Completar
-                    </Button>
-                  )}
-                </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm text-muted-foreground">
+              <p><span className="font-medium">Cantidad:</span> {orden.cantidad_solicitada}</p>
+              {orden.fecha_propuesta_retiro && (
+                <p><span className="font-medium">Fecha:</span> {format(new Date(orden.fecha_propuesta_retiro), 'dd/MM/yyyy')}</p>
               )}
-              
-              {canRate && (
-                <CalificarOrden 
-                  orden={orden}
-                />
+              {orden.hora_propuesta_retiro && (
+                <p><span className="font-medium">Hora:</span> {orden.hora_propuesta_retiro}</p>
+              )}
+              {orden.modalidad_entrega && (
+                <p><span className="font-medium">Modalidad:</span> {orden.modalidad_entrega}</p>
               )}
             </div>
           </div>
+
+          {/* Show requester contact info for providers - improved layout */}
+          {isProvider && (
+            <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg space-y-2">
+              <p className="font-semibold text-blue-900 text-sm">Información de contacto del solicitante</p>
+              
+              <div className="space-y-1 text-sm">
+                <div className="flex items-center gap-2">
+                  <span className="font-medium text-blue-800">Nombre:</span>
+                  {requesterProfile ? (
+                    <UserProfileLink 
+                      userId={orden.solicitante_id}
+                      userName={requesterProfile.full_name}
+                      userEmail={requesterProfile.email}
+                      size="sm"
+                      className="text-blue-600 hover:text-blue-800"
+                    />
+                  ) : (
+                    <span className="text-blue-700">Cargando...</span>
+                  )}
+                </div>
+                
+                {orden.telefono_contacto && (
+                  <div className="flex items-start gap-2">
+                    <span className="font-medium text-blue-800">Teléfono:</span>
+                    <span className={cn(
+                      "text-blue-700",
+                      !isValidPhone(orden.telefono_contacto) && "text-red-600 font-medium"
+                    )}>
+                      {orden.telefono_contacto}
+                      {!isValidPhone(orden.telefono_contacto) && " (⚠️ Formato no válido)"}
+                    </span>
+                  </div>
+                )}
+                
+                {orden.direccion_contacto && (
+                  <div className="flex items-start gap-2">
+                    <span className="font-medium text-blue-800">Dirección:</span>
+                    <span className="text-blue-700 flex-1">{orden.direccion_contacto}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           <OrdenChat 
             ordenId={orden.id}
             orden={orden}
             canSendMessages={orden.estado === 'pendiente' || orden.estado === 'aceptada'}
           />
-        </div>
+        </CardContent>
       </Card>
     );
   };
