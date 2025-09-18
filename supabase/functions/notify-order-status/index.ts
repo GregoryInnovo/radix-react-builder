@@ -92,7 +92,9 @@ serve(async (req) => {
         const statusMessages = {
           aceptada: `${ordenWithProfiles.proveedor.full_name} aceptó tu solicitud de intercambio`,
           rechazada: `${ordenWithProfiles.proveedor.full_name} rechazó tu solicitud de intercambio`,
-          cancelada: 'La orden ha sido cancelada'
+          cancelada: newStatus === 'cancelada' && oldStatus === 'pendiente' 
+            ? `${ordenWithProfiles.proveedor.full_name} rechazó tu solicitud de intercambio`
+            : 'La orden ha sido cancelada'
         }
 
         notifications.push({

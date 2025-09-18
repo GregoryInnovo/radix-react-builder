@@ -17,12 +17,12 @@ import { es } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 const getStatusColor = (estado: string) => {
   const colors = {
-    pendiente: 'bg-yellow-100 text-yellow-800',
-    aceptada: 'bg-green-100 text-green-800',
-    completada: 'bg-blue-100 text-blue-800',
-    cancelada: 'bg-red-100 text-red-800'
+    pendiente: 'bg-yellow-100 text-yellow-800 border border-yellow-200',
+    aceptada: 'bg-emerald-100 text-emerald-800 border border-emerald-200', 
+    completada: 'bg-blue-100 text-blue-800 border border-blue-200',
+    cancelada: 'bg-red-100 text-red-800 border border-red-200'
   };
-  return colors[estado as keyof typeof colors] || 'bg-gray-100 text-gray-800';
+  return colors[estado as keyof typeof colors] || 'bg-gray-100 text-gray-800 border border-gray-200';
 };
 const getStatusText = (estado: string) => {
   const texts = {
@@ -114,7 +114,7 @@ export const OrdenesList: React.FC = () => {
     return <Card key={orden.id} className="overflow-hidden">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <div className="flex items-center gap-2">
-            <Badge variant={getStatusColor(orden.estado) as any}>
+            <Badge className={getStatusColor(orden.estado)}>
               {getStatusText(orden.estado)}
             </Badge>
             <span className="text-sm text-muted-foreground">

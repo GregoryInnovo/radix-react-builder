@@ -221,6 +221,12 @@ export const OrdenForm: React.FC<OrdenFormProps> = ({
                     const value = e.target.value.replace(/[^\d\s\-\(\)\+]/g, '');
                     field.onChange(value);
                   }}
+                  onKeyPress={(e) => {
+                    // Prevent typing letters
+                    if (!/[\d\s\-\(\)\+]/.test(e.key) && !['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab'].includes(e.key)) {
+                      e.preventDefault();
+                    }
+                  }}
                 />
               </FormControl>
               <FormDescription>

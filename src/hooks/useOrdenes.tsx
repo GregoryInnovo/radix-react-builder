@@ -88,13 +88,18 @@ export const useOrdenes = () => {
       if (error) throw error;
 
       // Send notification to provider
-      await supabase.functions.invoke('notify-order-status', {
-        body: {
-          ordenId: data.id,
-          newStatus: 'pendiente',
-          notificationType: 'new_request'
-        }
-      });
+      try {
+        await supabase.functions.invoke('notify-order-status', {
+          body: {
+            ordenId: data.id,
+            newStatus: 'pendiente',
+            notificationType: 'new_request'
+          }
+        });
+      } catch (notificationError) {
+        console.error('Error sending notification:', notificationError);
+        // Don't fail the order creation if notification fails
+      }
 
       // If this is a lot reservation, update the lot status to 'reservado'
       if (ordenData.tipo_item === 'lote') {
@@ -149,14 +154,19 @@ export const useOrdenes = () => {
           notificationType = 'completed';
         }
         
-        await supabase.functions.invoke('notify-order-status', {
-          body: {
-            ordenId: id,
-            newStatus: updates.estado,
-            oldStatus: currentOrden.estado,
-            notificationType
-          }
-        });
+        try {
+          await supabase.functions.invoke('notify-order-status', {
+            body: {
+              ordenId: id,
+              newStatus: updates.estado,
+              oldStatus: currentOrden.estado,
+              notificationType
+            }
+          });
+        } catch (notificationError) {
+          console.error('Error sending status notification:', notificationError);
+          // Don't fail the update if notification fails
+        }
       }
 
       const statusMessages = {
