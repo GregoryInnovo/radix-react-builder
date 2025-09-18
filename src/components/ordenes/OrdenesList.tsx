@@ -105,7 +105,7 @@ export const OrdenesList: React.FC = () => {
     orden: any;
     isProvider?: boolean;
   }) => {
-    const canUpdateStatus = isProvider && orden.estado === 'pendiente';
+    const canUpdateStatus = isProvider && (orden.estado === 'pendiente' || orden.estado === 'aceptada');
     const canRate = !isProvider && orden.estado === 'completada';
     const requesterProfile = isProvider ? getRequesterProfile(orden.solicitante_id) : null;
 
