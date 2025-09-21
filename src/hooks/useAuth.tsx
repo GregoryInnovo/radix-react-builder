@@ -62,6 +62,22 @@ export const useAuth = () => {
   const signUp = async (email: string, password: string, fullName: string, userType: string) => {
     setLoading(true);
     try {
+      // Check if user is suspended before allowing signup
+      const { data: existingProfile } = await supabase
+        .from('profiles')
+        .select('is_active')
+        .eq('email', email)
+        .single();
+
+      if (existingProfile && existingProfile.is_active === false) {
+        toast({
+          title: "Usuario suspendido",
+          description: "Este usuario ha sido suspendido y no puede registrarse.",
+          variant: "destructive",
+        });
+        return { data: null, error: { message: "User suspended" } };
+      }
+
       const redirectUrl = `${window.location.origin}/`;
       console.log('Iniciando registro para:', email, 'con redirect:', redirectUrl);
       
@@ -157,6 +173,25 @@ export const useAuth = () => {
           variant: "destructive",
         });
         return { data: null, error: { message: "Email not verified" } };
+      }
+
+      // Check if user is suspended
+      if (data.user) {
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('is_active')
+          .eq('id', data.user.id)
+          .single();
+
+        if (!profileError && profile && profile.is_active === false) {
+          await supabase.auth.signOut();
+          toast({
+            title: "Cuenta suspendida",
+            description: "Este usuario ha sido suspendido. Contacta al administrador.",
+            variant: "destructive",
+          });
+          return { data: null, error: { message: "User suspended" } };
+        }
       }
 
       toast({

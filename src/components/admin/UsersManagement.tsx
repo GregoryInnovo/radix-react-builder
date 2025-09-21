@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useAdmin } from '@/hooks/useAdmin';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { Search, User, Mail, Calendar } from 'lucide-react';
+import { Search, User, Mail, Calendar, Trash2, UserX } from 'lucide-react';
 import type { Database } from '@/integrations/supabase/types';
 
 type Profile = Database['public']['Tables']['profiles']['Row'];
@@ -20,7 +20,7 @@ interface UsersManagementProps {
 export const UsersManagement: React.FC<UsersManagementProps> = ({ users }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  const { updateEntityStatus } = useAdmin();
+  const { updateEntityStatus, deleteUserCompletely } = useAdmin();
 
   const getStatusBadge = (user: Profile) => {
     if (user.is_admin) {
@@ -37,6 +37,15 @@ export const UsersManagement: React.FC<UsersManagementProps> = ({ users }) => {
 
   const handleStatusChange = async (userId: string, newStatus: string) => {
     await updateEntityStatus('usuario', userId, newStatus);
+  };
+
+  const handleDeleteCompletely = async (userId: string) => {
+    const user = users.find(u => u.id === userId);
+    const userName = user?.full_name || user?.email || 'este usuario';
+    
+    if (confirm(`¿Estás seguro de que quieres eliminar COMPLETAMENTE a ${userName}? Esta acción eliminará definitivamente:\n\n• Su perfil y cuenta\n• Todos sus lotes\n• Todos sus productos\n• Todas sus órdenes\n• Todas sus calificaciones\n• Todas sus notificaciones\n\nEsta acción NO se puede deshacer.`)) {
+      await deleteUserCompletely(userId);
+    }
   };
 
   const filteredUsers = users.filter(user => {
@@ -127,13 +136,15 @@ export const UsersManagement: React.FC<UsersManagementProps> = ({ users }) => {
               </div>
 
               {!user.is_admin && (
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-wrap">
                   {user.is_active !== false && (
                     <Button
                       variant="destructive"
                       size="sm"
                       onClick={() => handleStatusChange(user.id, 'suspendido')}
+                      className="flex items-center gap-1"
                     >
+                      <UserX className="h-4 w-4" />
                       Suspender
                     </Button>
                   )}
@@ -155,6 +166,15 @@ export const UsersManagement: React.FC<UsersManagementProps> = ({ users }) => {
                       Verificar
                     </Button>
                   )}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleDeleteCompletely(user.id)}
+                    className="flex items-center gap-1 text-red-600 hover:text-red-800 border-red-200 hover:border-red-300"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    Eliminar Definitivamente
+                  </Button>
                 </div>
               )}
             </CardContent>

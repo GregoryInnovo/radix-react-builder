@@ -248,12 +248,25 @@ export const useAdmin = () => {
         const current = profiles.find(p => p.id === entityId);
         previousStatus = current?.is_active ? 'activo' : 'suspendido';
         
-        const { error } = await supabase
-          .from('profiles')
-          .update({ is_active: newStatus === 'activo' })
-          .eq('id', entityId);
-        
-        if (error) throw error;
+        // Use the edge function for effective suspension
+        try {
+          await supabase.functions.invoke('suspend-user', {
+            body: {
+              userId: entityId,
+              action: newStatus === 'activo' ? 'restore' : 'suspend',
+              adminNotes: notes
+            }
+          });
+        } catch (suspendError) {
+          console.error('Error in suspend function:', suspendError);
+          // Fallback to direct update
+          const { error } = await supabase
+            .from('profiles')
+            .update({ is_active: newStatus === 'activo' })
+            .eq('id', entityId);
+          
+          if (error) throw error;
+        }
       }
 
       // Log the action
@@ -301,6 +314,23 @@ export const useAdmin = () => {
           .single();
         entityData = data;
         
+        // Send notification before deletion
+        if (entityData) {
+          try {
+            await supabase.functions.invoke('notify-delete-entity', {
+              body: {
+                entityType: 'lote',
+                entityId,
+                ownerId: entityData.user_id,
+                entityTitle: `Lote de ${entityData.peso_estimado}kg`,
+                adminNotes: notes
+              }
+            });
+          } catch (notifError) {
+            console.error('Error sending delete notification:', notifError);
+          }
+        }
+        
         // Delete lote
         const { error: deleteError } = await supabase
           .from('lotes')
@@ -315,6 +345,23 @@ export const useAdmin = () => {
           .eq('id', entityId)
           .single();
         entityData = data;
+        
+        // Send notification before deletion
+        if (entityData) {
+          try {
+            await supabase.functions.invoke('notify-delete-entity', {
+              body: {
+                entityType: 'producto',
+                entityId,
+                ownerId: entityData.user_id,
+                entityTitle: entityData.nombre,
+                adminNotes: notes
+              }
+            });
+          } catch (notifError) {
+            console.error('Error sending delete notification:', notifError);
+          }
+        }
         
         // Delete producto
         const { error: deleteError } = await supabase
@@ -362,6 +409,52 @@ export const useAdmin = () => {
     }
   };
 
+  const deleteUserCompletely = async (userId: string, notes?: string) => {
+    setLoadingData(true);
+    try {
+      // Call the edge function to delete user completely
+      const { error } = await supabase.functions.invoke('delete-user-completely', {
+        body: {
+          userId,
+          adminNotes: notes
+        }
+      });
+
+      if (error) throw error;
+
+      // Log the action in audit table
+      await supabase
+        .from('auditoria_admin')
+        .insert({
+          admin_id: user!.id,
+          entity_type: 'usuario',
+          entity_id: userId,
+          action: 'delete_completely',
+          previous_status: 'existente',
+          new_status: 'eliminado_completamente',
+          notes: notes || 'Usuario eliminado completamente por el administrador'
+        });
+
+      toast({
+        title: "Usuario eliminado completamente",
+        description: "El usuario y todos sus datos han sido eliminados definitivamente.",
+      });
+
+      // Refresh data
+      setDataLoaded(false);
+      await fetchAllData();
+    } catch (error: any) {
+      console.error('Error deleting user completely:', error);
+      toast({
+        title: "Error al eliminar usuario",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingData(false);
+    }
+  };
+
   return {
     isAdmin,
     loading,
@@ -373,6 +466,7 @@ export const useAdmin = () => {
     auditorias,
     fetchAllData,
     updateEntityStatus,
-    deleteEntity
+    deleteEntity,
+    deleteUserCompletely
   };
 };
