@@ -122,7 +122,7 @@ export const OrdenChat: React.FC<OrdenChatProps> = ({ ordenId, orden, canSendMes
                 <div
                   className={`max-w-xs lg:max-w-md px-3 py-2 rounded-lg ${
                     isMyMessage(mensaje.usuario_id)
-                      ? 'bg-primary text-primary-foreground'
+                      ? 'bg-gradient-to-r from-blue-500 to-cyan-600 text-white'
                       : 'bg-muted text-muted-foreground'
                   }`}
                 >
@@ -166,7 +166,7 @@ export const OrdenChat: React.FC<OrdenChatProps> = ({ ordenId, orden, canSendMes
                 onClick={handleSendMessage}
                 disabled={!nuevoMensaje.trim() || sending}
                 size="sm"
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 text-white"
               >
                 <Send className="h-4 w-4" />
                 {sending ? 'Enviando...' : 'Enviar'}
