@@ -21,7 +21,6 @@ export const MobileNavigation = () => {
   }
 
   const navigationItems = [
-    { path: "/search", label: "Buscar", icon: Search },
     { path: "/lotes", label: "Lotes", icon: Package },
     { path: "/productos", label: "Productos", icon: ShoppingBag },
     { path: "/ordenes", label: "Órdenes", icon: ClipboardList },

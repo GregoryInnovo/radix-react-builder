@@ -133,11 +133,15 @@ const Lotes = () => {
                 </p>
               </div>
 
-              <Tabs defaultValue="mis-lotes" className="w-full">
+              <Tabs defaultValue="lotes-publicos" className="w-full">
                 <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="mis-lotes">Mis Lotes</TabsTrigger>
                   <TabsTrigger value="lotes-publicos">Lotes Públicos</TabsTrigger>
+                  <TabsTrigger value="mis-lotes">Mis Lotes</TabsTrigger>
                 </TabsList>
+                
+                <TabsContent value="lotes-publicos" className="space-y-6">
+                  <LotesPublicos />
+                </TabsContent>
                 
                 <TabsContent value="mis-lotes" className="space-y-6">
                   <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -166,10 +170,6 @@ const Lotes = () => {
                     onView={handleView}
                     onDelete={handleDelete}
                   />
-                </TabsContent>
-                
-                <TabsContent value="lotes-publicos" className="space-y-6">
-                  <LotesPublicos />
                 </TabsContent>
               </Tabs>
             </div>
