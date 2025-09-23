@@ -22,13 +22,17 @@ const Index = () => {
             </div>
             <nav className="flex items-center space-x-4">
               <Button variant="ghost" asChild>
-                <Link to="/search">Buscar ROA</Link>
+                
               </Button>
               <Button variant="ghost" asChild>
                 <Link to="/productos">Productos</Link>
               </Button>
               <Button variant="ghost" asChild>
-                <Link to="/lotes">Mis Lotes</Link>
+                <Link to="/lotes">Lotes ROA
+
+
+
+              </Link>
               </Button>
               {isAuthenticated ? <div className="flex items-center space-x-2">
                   <User className="h-4 w-4 text-gray-600" />
