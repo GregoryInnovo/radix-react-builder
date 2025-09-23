@@ -203,6 +203,24 @@ export const useOrdenes = () => {
   const ordenesComoSolicitante = ordenes.filter(orden => orden.solicitante_id === user?.id);
   const ordenesComoProveedor = ordenes.filter(orden => orden.proveedor_id === user?.id);
 
+  const getRequestCount = async (item_id: string) => {
+    if (!user) return 0;
+    
+    try {
+      const { data, error } = await supabase
+        .from('ordenes')
+        .select('id')
+        .eq('solicitante_id', user.id)
+        .eq('item_id', item_id);
+
+      if (error) throw error;
+      return data?.length || 0;
+    } catch (error: any) {
+      console.error('Error getting request count:', error);
+      return 0;
+    }
+  };
+
   return {
     ordenes,
     ordenesComoSolicitante,
@@ -211,6 +229,7 @@ export const useOrdenes = () => {
     createOrden,
     updateOrden,
     checkExistingOrders,
+    getRequestCount,
     refreshOrdenes: fetchOrdenes
   };
 };

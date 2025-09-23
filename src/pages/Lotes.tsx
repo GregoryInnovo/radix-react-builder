@@ -1,6 +1,7 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plus, ArrowLeft } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
@@ -8,6 +9,7 @@ import { LoteForm } from '@/components/lotes/LoteForm';
 import { LotesList } from '@/components/lotes/LotesList';
 import { LoteStatusManager } from '@/components/lotes/LoteStatusManager';
 import { LoteStatusHistory } from '@/components/lotes/LoteStatusHistory';
+import { LotesPublicos } from '@/components/lotes/LotesPublicos';
 import { useLotes } from '@/hooks/useLotes';
 import type { Database } from '@/integrations/supabase/types';
 
@@ -122,32 +124,54 @@ const Lotes = () => {
             </div>
           ) : (
             <div className="space-y-6">
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <div>
-                  <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                    Mis Lotes de ROA
-                  </h1>
-                  <p className="text-gray-600">
-                    Gestiona tus residuos orgánicos aprovechables
-                  </p>
-                </div>
-                
-                <Button
-                  onClick={handleCreate}
-                  className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Crear Lote
-                </Button>
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                  Lotes de ROA
+                </h1>
+                <p className="text-gray-600">
+                  Gestiona tus lotes o explora todos los lotes públicos disponibles
+                </p>
               </div>
 
-              <LotesList
-                lotes={lotes}
-                loading={loading}
-                onEdit={handleEdit}
-                onView={handleView}
-                onDelete={handleDelete}
-              />
+              <Tabs defaultValue="mis-lotes" className="w-full">
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="mis-lotes">Mis Lotes</TabsTrigger>
+                  <TabsTrigger value="lotes-publicos">Lotes Públicos</TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="mis-lotes" className="space-y-6">
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div>
+                      <h2 className="text-xl font-semibold text-gray-900 mb-1">
+                        Mis Lotes de ROA
+                      </h2>
+                      <p className="text-gray-600">
+                        Gestiona tus residuos orgánicos aprovechables
+                      </p>
+                    </div>
+                    
+                    <Button
+                      onClick={handleCreate}
+                      className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white"
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Crear Lote
+                    </Button>
+                  </div>
+
+                  <LotesList
+                    lotes={lotes}
+                    loading={loading}
+                    onEdit={handleEdit}
+                    onView={handleView}
+                    onDelete={handleDelete}
+                  />
+                </TabsContent>
+                
+                <TabsContent value="lotes-publicos" className="space-y-6">
+                  <LotesPublicos />
+                </TabsContent>
+              </Tabs>
             </div>
           )}
         </main>

@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useAuth } from '@/hooks/useAuth';
 import { useOrdenes } from '@/hooks/useOrdenes';
+import { RequestLimitWarning } from './RequestLimitWarning';
 import { ShoppingCart, MessageSquare } from 'lucide-react';
 import type { Database } from '@/integrations/supabase/types';
 
@@ -21,8 +22,17 @@ export const ReservarLote: React.FC<ReservarLoteProps> = ({
 }) => {
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [requestCount, setRequestCount] = useState(0);
   const { user } = useAuth();
-  const { createOrden } = useOrdenes();
+  const { createOrden, getRequestCount } = useOrdenes();
+
+  useEffect(() => {
+    const fetchRequestCount = async () => {
+      const count = await getRequestCount(lote.id);
+      setRequestCount(count);
+    };
+    fetchRequestCount();
+  }, [lote.id, getRequestCount]);
 
   // Don't show button if user is the owner
   if (user?.id === lote.user_id) {
@@ -59,14 +69,15 @@ export const ReservarLote: React.FC<ReservarLoteProps> = ({
 
   return (
     <>
-      <Button
-        onClick={() => setShowConfirmDialog(true)}
+      <RequestLimitWarning
+        requestCount={requestCount}
+        itemType="lote"
+        onConfirm={() => setShowConfirmDialog(true)}
         disabled={disabled || loading}
-        className={className || "w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700"}
       >
         <ShoppingCart className="w-4 h-4 mr-2" />
         Reservar Lote
-      </Button>
+      </RequestLimitWarning>
 
       <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
         <AlertDialogContent>

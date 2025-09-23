@@ -74,7 +74,14 @@ export const CalificacionForm: React.FC<CalificacionFormProps> = ({
           value={comentario}
           onChange={(e) => setComentario(e.target.value)}
           rows={3}
+          maxLength={100}
         />
+        <div className="flex justify-between items-center text-xs text-muted-foreground">
+          <span>Máximo 100 caracteres</span>
+          <span className={comentario.length > 90 ? 'text-red-500' : ''}>
+            {comentario.length}/100
+          </span>
+        </div>
       </div>
 
       <div className="flex gap-2 pt-2">

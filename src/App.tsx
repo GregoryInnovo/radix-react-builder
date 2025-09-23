@@ -8,7 +8,6 @@ import { MobileNavigation } from "@/components/layout/MobileNavigation";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";  
 import Lotes from "./pages/Lotes";
-import Search from "./pages/Search";
 import Productos from "./pages/Productos";
 import Ordenes from "./pages/Ordenes";
 import Admin from "./pages/Admin";
@@ -32,7 +31,6 @@ function App() {
               <Route path="/" element={<Index />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/lotes" element={<Lotes />} />
-              <Route path="/search" element={<Search />} />
               <Route path="/productos" element={<Productos />} />
               <Route path="/ordenes" element={<Ordenes />} />
               <Route path="/admin" element={<Admin />} />

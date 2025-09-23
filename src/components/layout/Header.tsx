@@ -27,17 +27,13 @@ export const Header = () => {
     setIsOpen(false);
   };
   const navigationItems = [{
-    path: "/search",
-    label: "Buscar ROA",
-    icon: Search
+    path: "/lotes",
+    label: "Lotes",
+    icon: Package
   }, {
     path: "/guias",
     label: "Guías",
     icon: BookOpen
-  }, {
-    path: "/lotes",
-    label: "Mis Lotes",
-    icon: Package
   }, {
     path: "/productos",
     label: "Productos",
@@ -128,17 +124,13 @@ export const Header = () => {
           </Link>
           
           <nav className="hidden xl:flex items-center space-x-6">
-            <Link to="/search" className="flex items-center gap-2 text-gray-600 hover:text-green-600">
-              <Search className="h-4 w-4" />
-              Buscar ROA
+            <Link to="/lotes" className="flex items-center gap-2 text-gray-600 hover:text-green-600">
+              <Package className="h-4 w-4" />
+              Lotes
             </Link>
             <Link to="/guias" className="flex items-center gap-2 text-gray-600 hover:text-green-600">
               <BookOpen className="h-4 w-4" />
               Guías
-            </Link>
-            <Link to="/lotes" className="flex items-center gap-2 text-gray-600 hover:text-green-600">
-              <Package className="h-4 w-4" />
-              Mis Lotes
             </Link>
             <Link to="/productos" className="flex items-center gap-2 text-gray-600 hover:text-green-600">
               <ShoppingBag className="h-4 w-4" />
