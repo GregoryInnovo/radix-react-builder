@@ -18,6 +18,7 @@ import { useNavigate } from 'react-router-dom';
 export const NotificacionesDropdown: React.FC = () => {
   const { notificaciones, unreadCount, markAsRead, markAllAsRead } = useNotificaciones();
   const navigate = useNavigate();
+  const [showAll, setShowAll] = React.useState(false);
 
   const getNotificationIcon = (tipo: string, entityType?: string) => {
     switch (tipo) {
@@ -44,7 +45,7 @@ export const NotificacionesDropdown: React.FC = () => {
     }
   };
 
-  const recentNotifications = notificaciones.slice(0, 5);
+  const displayedNotifications = showAll ? notificaciones : notificaciones.slice(0, 5);
 
   return (
     <DropdownMenu>
@@ -58,7 +59,7 @@ export const NotificacionesDropdown: React.FC = () => {
           )}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-80 max-h-96 overflow-y-auto bg-white z-50" align="end">
+      <DropdownMenuContent className={`w-80 ${showAll ? 'max-h-[500px]' : 'max-h-96'} overflow-y-auto bg-white z-50`} align="end">
         <DropdownMenuLabel className="flex items-center justify-between px-4 py-2">
           <span className="font-semibold">Notificaciones</span>
           {unreadCount > 0 && (
@@ -81,7 +82,7 @@ export const NotificacionesDropdown: React.FC = () => {
           </DropdownMenuItem>
         ) : (
           <>
-            {recentNotifications.map((notificacion) => (
+            {displayedNotifications.map((notificacion) => (
               <DropdownMenuItem 
                 key={notificacion.id}
                 className={`flex items-start space-x-3 p-3 cursor-pointer hover:bg-gray-50 border-none ${!notificacion.leida ? 'bg-blue-50 border-l-4 border-blue-400' : ''}`}
@@ -122,8 +123,11 @@ export const NotificacionesDropdown: React.FC = () => {
             {notificaciones.length > 5 && (
               <>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem className="text-center text-sm text-gray-500 cursor-pointer hover:bg-gray-50" onClick={() => navigate('/notificaciones')}>
-                  Ver todas las notificaciones
+                <DropdownMenuItem 
+                  className="text-center text-sm text-gray-500 cursor-pointer hover:bg-gray-50" 
+                  onClick={() => setShowAll(!showAll)}
+                >
+                  {showAll ? 'Ver menos notificaciones' : 'Ver todas las notificaciones'}
                 </DropdownMenuItem>
               </>
             )}

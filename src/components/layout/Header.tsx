@@ -4,8 +4,10 @@ import { useAuth } from "@/hooks/useAuth";
 import { useAdmin } from "@/hooks/useAdmin";
 import { LogOut, User, Package, Search, ShoppingBag, ClipboardList, Settings, Menu, X, BookOpen } from "lucide-react";
 import { NotificacionesDropdown } from "@/components/notificaciones/NotificacionesDropdown";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { useProfiles } from "@/hooks/useProfiles";
+import { UserProfileLink } from "@/components/user/UserProfileLink";
 export const Header = () => {
   const {
     user,
@@ -17,6 +19,23 @@ export const Header = () => {
   } = useAdmin();
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
+  const { getProfileById } = useProfiles();
+  const [userProfile, setUserProfile] = useState<any>(null);
+
+  // Get user profile for displaying first name
+  useEffect(() => {
+    if (isAuthenticated && user?.id) {
+      getProfileById(user.id).then(profile => {
+        setUserProfile(profile);
+      });
+    }
+  }, [isAuthenticated, user?.id, getProfileById]);
+
+  // Helper function to get first word of full name
+  const getFirstName = (fullName: string): string => {
+    if (!fullName) return 'Usuario';
+    return fullName.trim().split(' ')[0];
+  };
   const handleSignOut = async () => {
     await signOut();
     setIsOpen(false);
@@ -80,7 +99,7 @@ export const Header = () => {
                            <User className="h-5 w-5 lg:h-6 lg:w-6 text-green-600" />
                            <div className="flex-1 min-w-0">
                              <p className="text-sm lg:text-base font-medium text-gray-900 truncate">
-                               {user?.email}
+                               {userProfile ? getFirstName(userProfile.full_name) : getFirstName(user?.email?.split('@')[0] || '')}
                              </p>
                              <p className="text-xs text-green-600">Ver mi perfil</p>
                            </div>
@@ -149,10 +168,13 @@ export const Header = () => {
           <div className="flex items-center space-x-4">
             {isAuthenticated ? <>
                  <NotificacionesDropdown />
-                 <Link to={`/perfil/${user?.id}`} className="flex items-center space-x-2 hover:bg-gray-100 px-3 py-2 rounded-md transition-colors">
-                   <User className="h-4 w-4 text-gray-600" />
-                   <span className="text-sm text-gray-600">{user?.email}</span>
-                 </Link>
+                 <UserProfileLink 
+                   userId={user?.id || ''} 
+                   userName={userProfile ? getFirstName(userProfile.full_name) : getFirstName(user?.email?.split('@')[0] || '')}
+                   className="flex items-center space-x-1 hover:bg-gray-100 px-3 py-2 rounded-md transition-colors"
+                   showIcon={true}
+                   size="sm"
+                 />
                 <Button variant="outline" size="sm" onClick={handleSignOut}>
                   <LogOut className="h-4 w-4 mr-2" />
                   Salir

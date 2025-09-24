@@ -13,6 +13,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/hooks/useAuth';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { TiposROASection } from '@/components/search/TiposROASection';
 
 export const LotesPublicos: React.FC = () => {
   const { lotes, loading } = usePublicLotes();
@@ -21,10 +22,22 @@ export const LotesPublicos: React.FC = () => {
   const [selectedLote, setSelectedLote] = useState<any>(null);
   const [filteredLotes, setFilteredLotes] = useState<any[]>([]);
   const [profiles, setProfiles] = useState<Record<string, any>>({});
+  const [selectedType, setSelectedType] = useState<string>('');
+  const [searchResults, setSearchResults] = useState<any[]>([]);
 
   React.useEffect(() => {
-    setFilteredLotes(lotes);
-  }, [lotes]);
+    applyFilters();
+  }, [lotes, selectedType, searchResults]);
+
+  const applyFilters = () => {
+    let filtered = searchResults.length > 0 ? searchResults : lotes;
+    
+    if (selectedType) {
+      filtered = filtered.filter(lote => lote.tipo_residuo_id === selectedType);
+    }
+    
+    setFilteredLotes(filtered);
+  };
 
   // Fetch profiles for lote owners
   React.useEffect(() => {
@@ -50,7 +63,11 @@ export const LotesPublicos: React.FC = () => {
   }, [lotes, getProfileById, profiles]);
 
   const handleSearchResults = (results: any[]) => {
-    setFilteredLotes(results);
+    setSearchResults(results);
+  };
+
+  const handleTypeSelect = (typeId: string) => {
+    setSelectedType(typeId === selectedType ? '' : typeId);
   };
 
   const formatDistance = (distance: number) => {
@@ -88,6 +105,14 @@ export const LotesPublicos: React.FC = () => {
 
         {/* Lotes Grid */}
         <div className="lg:col-span-3">
+          {/* ROA Types Filter */}
+          <div className="mb-6">
+            <TiposROASection 
+              selectedType={selectedType}
+              onTypeSelect={handleTypeSelect}
+            />
+          </div>
+
           {filteredLotes.length === 0 ? (
             <Card className="border-dashed">
               <CardContent className="flex flex-col items-center justify-center py-12">
