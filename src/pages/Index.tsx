@@ -5,12 +5,31 @@ import { Badge } from '@/components/ui/badge';
 import { Leaf, Recycle, Users, MapPin, Star, TrendingUp, User } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { useProfiles } from '@/hooks/useProfiles';
+import { UserProfileLink } from '@/components/user/UserProfileLink';
 import { GuiasPreviewSection } from '@/components/guias/GuiasPreviewSection';
 const Index = () => {
   const {
     isAuthenticated,
     user
   } = useAuth();
+  const { getProfileById } = useProfiles();
+  const [userProfile, setUserProfile] = React.useState<any>(null);
+
+  // Get user profile for displaying first name
+  React.useEffect(() => {
+    if (isAuthenticated && user?.id) {
+      getProfileById(user.id).then(profile => {
+        setUserProfile(profile);
+      });
+    }
+  }, [isAuthenticated, user?.id, getProfileById]);
+
+  // Helper function to get first word of full name
+  const getFirstName = (fullName: string): string => {
+    if (!fullName) return 'Usuario';
+    return fullName.trim().split(' ')[0];
+  };
   return <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-50">
       {/* Header */}
       <header className="bg-white shadow-sm">
@@ -22,24 +41,30 @@ const Index = () => {
             </div>
             <nav className="flex items-center space-x-4">
               <Button variant="ghost" asChild>
-                
+                <Link to="/guias">Guías</Link>
+              </Button>
+              <Button variant="ghost" asChild>
+                <Link to="/ordenes">Órdenes</Link>
               </Button>
               <Button variant="ghost" asChild>
                 <Link to="/productos">Productos</Link>
               </Button>
               <Button variant="ghost" asChild>
-                <Link to="/lotes">Lotes ROA
-
-
-
-              </Link>
+                <Link to="/lotes">Lotes</Link>
               </Button>
-              {isAuthenticated ? <div className="flex items-center space-x-2">
-                  <User className="h-4 w-4 text-gray-600" />
-                  <span className="text-sm text-gray-600">{user?.email}</span>
-                </div> : <Button asChild>
+              {isAuthenticated ? (
+                <UserProfileLink 
+                  userId={user?.id || ''} 
+                  userName={userProfile ? getFirstName(userProfile.full_name) : getFirstName(user?.email?.split('@')[0] || '')}
+                  className="flex items-center space-x-1"
+                  showIcon={true}
+                  size="sm"
+                />
+              ) : (
+                <Button asChild>
                   <Link to="/auth">Iniciar Sesión</Link>
-                </Button>}
+                </Button>
+              )}
             </nav>
           </div>
         </div>
@@ -56,14 +81,14 @@ const Index = () => {
                   <Link to="/auth">Comenzar Ahora</Link>
                 </Button>
                 <Button size="lg" variant="outline" asChild>
-                  <Link to="/search">Explorar ROA</Link>
+                  <Link to="/lotes">Explorar ROA</Link>
                 </Button>
               </> : <>
                 <Button size="lg" className="bg-green-600 hover:bg-green-700" asChild>
                   <Link to="/lotes">Mis Lotes</Link>
                 </Button>
                 <Button size="lg" variant="outline" asChild>
-                  <Link to="/search">Buscar ROA</Link>
+                  <Link to="/lotes">Buscar ROA</Link>
                 </Button>
               </>}
           </div>
@@ -193,7 +218,7 @@ Hay usuarios generadores de estos residuos, quienes los transforman y quienes co
             <div>
               <h4 className="font-semibold mb-4">Plataforma</h4>
               <ul className="space-y-2 text-gray-400">
-                <li><Link to="/search" className="hover:text-white">Buscar ROA</Link></li>
+                <li><Link to="/lotes" className="hover:text-white">Buscar ROA</Link></li>
                 <li><Link to="/productos" className="hover:text-white">Productos</Link></li>
                 <li><Link to="/lotes" className="hover:text-white">Lotes</Link></li>
                 <li><Link to="/ordenes" className="hover:text-white">Órdenes</Link></li>
