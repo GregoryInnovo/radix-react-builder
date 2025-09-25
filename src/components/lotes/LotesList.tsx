@@ -140,11 +140,14 @@ export const LotesList = ({ lotes, loading, onEdit, onView, onDelete }: LotesLis
             <div className="flex justify-between items-start">
               <div className="flex-1">
                 <CardTitle className="text-lg text-green-800">
-                  {getResiduoLabel(lote)}
+                  {lote.titulo || getResiduoLabel(lote)}
                 </CardTitle>
                 <div className="flex items-center text-sm text-gray-600 mt-1">
                   <Calendar className="w-4 h-4 mr-1" />
-                  {format(new Date(lote.created_at || ''), 'PP', { locale: es })}
+                  {lote.fecha_vencimiento ? 
+                    `Vence: ${format(new Date(lote.fecha_vencimiento), 'PP', { locale: es })}` :
+                    format(new Date(lote.created_at || ''), 'PP', { locale: es })
+                  }
                 </div>
               </div>
               <Badge className={getStatusColor(lote.estado)}>

@@ -199,11 +199,13 @@ export type Database = {
           direccion: string | null
           estado: Database["public"]["Enums"]["batch_status"]
           fecha_disponible: string | null
+          fecha_vencimiento: string | null
           id: string
           imagenes: string[]
           peso_estimado: number
           status: string | null
           tipo_residuo_id: string | null
+          titulo: string
           ubicacion_lat: number
           ubicacion_lng: number
           updated_at: string | null
@@ -215,11 +217,13 @@ export type Database = {
           direccion?: string | null
           estado?: Database["public"]["Enums"]["batch_status"]
           fecha_disponible?: string | null
+          fecha_vencimiento?: string | null
           id?: string
           imagenes?: string[]
           peso_estimado: number
           status?: string | null
           tipo_residuo_id?: string | null
+          titulo?: string
           ubicacion_lat: number
           ubicacion_lng: number
           updated_at?: string | null
@@ -231,11 +235,13 @@ export type Database = {
           direccion?: string | null
           estado?: Database["public"]["Enums"]["batch_status"]
           fecha_disponible?: string | null
+          fecha_vencimiento?: string | null
           id?: string
           imagenes?: string[]
           peso_estimado?: number
           status?: string | null
           tipo_residuo_id?: string | null
+          titulo?: string
           ubicacion_lat?: number
           ubicacion_lng?: number
           updated_at?: string | null

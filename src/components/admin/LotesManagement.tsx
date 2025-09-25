@@ -138,7 +138,7 @@ export const LotesManagement: React.FC<LotesManagementProps> = ({ lotes }) => {
                     <div>
                       <CardTitle className="text-lg flex items-center gap-2">
                         <Package className="h-5 w-5" />
-                        {getResiduoType(lote)}
+                        {lote.titulo || getResiduoType(lote)}
                       </CardTitle>
                       <div className="flex items-center gap-2 text-sm text-gray-600">
                         <Calendar className="h-4 w-4" />
@@ -175,10 +175,10 @@ export const LotesManagement: React.FC<LotesManagementProps> = ({ lotes }) => {
                     <span>Estado: {lote.estado}</span>
                   </div>
                   
-                  {lote.fecha_disponible && (
+                  {lote.fecha_vencimiento && (
                     <div className="flex items-center gap-1">
                       <Calendar className="h-4 w-4 text-gray-500" />
-                      <span>Disponible: {format(new Date(lote.fecha_disponible), 'PP', { locale: es })}</span>
+                      <span>Vence: {format(new Date(lote.fecha_vencimiento), 'PP', { locale: es })}</span>
                     </div>
                   )}
                   

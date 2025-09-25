@@ -86,43 +86,50 @@ export const TiposROASection: React.FC<TiposROASectionProps> = ({
           </CardContent>
         </Card>
 
-        {/* Individual residue types */}
-        {tiposResiduos.map((tipo) => {
-          const isSelected = selectedType === tipo.id;
-          return (
-            <Card 
-              key={tipo.id}
-              className={cn(
-                "text-center hover:shadow-md transition-all duration-200 hover:scale-105 cursor-pointer",
-                isSelected ? "ring-2 ring-primary bg-primary/5" : ""
-              )}
-              onClick={() => onTypeSelect?.(tipo.id)}
-            >
-              <CardContent className="pt-6">
-                <div className="text-2xl mb-2">🌿</div>
-                <div className={cn(
-                  "font-semibold text-sm mb-2 transition-colors",
-                  isSelected ? "text-primary" : "hover:text-blue-600"
-                )}>
-                  {tipo.nombre}
-                </div>
-                <div className="space-y-1">
-                  <Badge className={cn(
-                    "text-xs",
-                    isSelected 
-                      ? "bg-primary text-primary-foreground" 
-                      : "bg-green-100 text-green-800"
+        {/* Individual residue types - sorted with "Otros" at the end */}
+        {tiposResiduos
+          .sort((a, b) => {
+            // Move "Otros" to the end
+            if (a.nombre.toLowerCase().includes('otros')) return 1;
+            if (b.nombre.toLowerCase().includes('otros')) return -1;
+            return a.nombre.localeCompare(b.nombre);
+          })
+          .map((tipo) => {
+            const isSelected = selectedType === tipo.id;
+            return (
+              <Card 
+                key={tipo.id}
+                className={cn(
+                  "text-center hover:shadow-md transition-all duration-200 hover:scale-105 cursor-pointer",
+                  isSelected ? "ring-2 ring-primary bg-primary/5" : ""
+                )}
+                onClick={() => onTypeSelect?.(tipo.id)}
+              >
+                <CardContent className="pt-6">
+                  <div className="text-2xl mb-2">🌿</div>
+                  <div className={cn(
+                    "font-semibold text-sm mb-2 transition-colors",
+                    isSelected ? "text-primary" : "hover:text-blue-600"
                   )}>
-                    {tipo.lotes_count} lotes
-                  </Badge>
-                  <Badge variant="outline" className="text-xs block">
-                    Disponible
-                  </Badge>
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
+                    {tipo.nombre}
+                  </div>
+                  <div className="space-y-1">
+                    <Badge className={cn(
+                      "text-xs",
+                      isSelected 
+                        ? "bg-primary text-primary-foreground" 
+                        : "bg-green-100 text-green-800"
+                    )}>
+                      {tipo.lotes_count} lotes
+                    </Badge>
+                    <Badge variant="outline" className="text-xs block">
+                      Disponible
+                    </Badge>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
       </div>
     </section>
   );

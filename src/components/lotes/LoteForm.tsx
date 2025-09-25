@@ -27,28 +27,35 @@ export const LoteForm = ({ lote, onSubmit, loading, onCancel }: LoteFormProps) =
   const [showConfirm, setShowConfirm] = useState(false);
   const [pendingSubmitData, setPendingSubmitData] = useState<any>(null);
   const [formData, setFormData] = useState({
-    tipo_residuo_id: '', // Cambiar para usar el nuevo campo
+    titulo: lote?.titulo || '',
+    tipo_residuo_id: lote?.tipo_residuo_id || '',
     peso_estimado: lote?.peso_estimado?.toString() || '',
     ubicacion_lat: lote?.ubicacion_lat?.toString() || '',
     ubicacion_lng: lote?.ubicacion_lng?.toString() || '',
     direccion: lote?.direccion || '',
     descripcion: lote?.descripcion || '',
-    fecha_disponible: lote?.fecha_disponible || new Date().toISOString().split('T')[0],
+    fecha_vencimiento: lote?.fecha_vencimiento || '',
     imagenes: lote?.imagenes || [],
   });
 
   const [gettingLocation, setGettingLocation] = useState(false);
 
-  // Establecer el tipo de residuo al cargar el lote
+  // Establecer los datos del lote al cargar
   useEffect(() => {
-    if (lote && tiposResiduos.length > 0) {
-      // Buscar el tipo de residuo por ID si existe
-      const tipoResiduo = lote?.tipo_residuo_id;
-      if (tipoResiduo) {
-        setFormData(prev => ({ ...prev, tipo_residuo_id: tipoResiduo }));
-      }
+    if (lote) {
+      setFormData({
+        titulo: lote.titulo || '',
+        tipo_residuo_id: lote.tipo_residuo_id || '',
+        peso_estimado: lote.peso_estimado?.toString() || '',
+        ubicacion_lat: lote.ubicacion_lat?.toString() || '',
+        ubicacion_lng: lote.ubicacion_lng?.toString() || '',
+        direccion: lote.direccion || '',
+        descripcion: lote.descripcion || '',
+        fecha_vencimiento: lote.fecha_vencimiento || '',
+        imagenes: lote.imagenes || [],
+      });
     }
-  }, [lote, tiposResiduos]);
+  }, [lote]);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -97,7 +104,7 @@ export const LoteForm = ({ lote, onSubmit, loading, onCancel }: LoteFormProps) =
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.tipo_residuo_id || !formData.peso_estimado || !formData.ubicacion_lat || !formData.ubicacion_lng) {
+    if (!formData.titulo || !formData.tipo_residuo_id || !formData.peso_estimado || !formData.ubicacion_lat || !formData.ubicacion_lng || !formData.fecha_vencimiento) {
       toast({
         title: "Campos requeridos",
         description: "Por favor completa todos los campos obligatorios",
@@ -106,14 +113,25 @@ export const LoteForm = ({ lote, onSubmit, loading, onCancel }: LoteFormProps) =
       return;
     }
 
+    // Validar título (máximo 25 caracteres)
+    if (formData.titulo.length > 25) {
+      toast({
+        title: "Error",
+        description: "El título no puede exceder 25 caracteres",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const submitData = {
+      titulo: formData.titulo.trim(),
       tipo_residuo_id: formData.tipo_residuo_id,
       peso_estimado: parseFloat(formData.peso_estimado),
       ubicacion_lat: parseFloat(formData.ubicacion_lat),
       ubicacion_lng: parseFloat(formData.ubicacion_lng),
       direccion: formData.direccion || null,
       descripcion: formData.descripcion || null,
-      fecha_disponible: formData.fecha_disponible,
+      fecha_vencimiento: formData.fecha_vencimiento,
       imagenes: formData.imagenes,
     };
 
@@ -146,6 +164,22 @@ export const LoteForm = ({ lote, onSubmit, loading, onCancel }: LoteFormProps) =
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="space-y-2">
+            <Label htmlFor="titulo">Título del ROA *</Label>
+            <Input
+              id="titulo"
+              type="text"
+              value={formData.titulo}
+              onChange={(e) => handleInputChange('titulo', e.target.value)}
+              placeholder="ej. Cáscaras de Frutas Frescas"
+              maxLength={25}
+              className="w-full"
+            />
+            <div className="text-sm text-muted-foreground">
+              {formData.titulo.length}/25 caracteres
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="tipo_residuo_id">Tipo de Residuo *</Label>
@@ -154,11 +188,18 @@ export const LoteForm = ({ lote, onSubmit, loading, onCancel }: LoteFormProps) =
                   <SelectValue placeholder={loadingTipos ? "Cargando..." : "Selecciona el tipo de ROA"} />
                 </SelectTrigger>
                 <SelectContent>
-                  {tiposResiduos.map((tipo) => (
-                    <SelectItem key={tipo.id} value={tipo.id}>
-                      {tipo.descripcion || tipo.nombre}
-                    </SelectItem>
-                  ))}
+                  {tiposResiduos
+                    .sort((a, b) => {
+                      // Move "Otros" to the end
+                      if (a.nombre.toLowerCase().includes('otros')) return 1;
+                      if (b.nombre.toLowerCase().includes('otros')) return -1;
+                      return a.nombre.localeCompare(b.nombre);
+                    })
+                    .map((tipo) => (
+                      <SelectItem key={tipo.id} value={tipo.id}>
+                        {tipo.descripcion || tipo.nombre}
+                      </SelectItem>
+                    ))}
                 </SelectContent>
               </Select>
             </div>
@@ -218,13 +259,17 @@ export const LoteForm = ({ lote, onSubmit, loading, onCancel }: LoteFormProps) =
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="fecha_disponible">Fecha Disponible</Label>
+            <Label htmlFor="fecha_vencimiento">Fecha de Vencimiento *</Label>
             <Input
-              id="fecha_disponible"
+              id="fecha_vencimiento"
               type="date"
-              value={formData.fecha_disponible}
-              onChange={(e) => handleInputChange('fecha_disponible', e.target.value)}
+              value={formData.fecha_vencimiento}
+              onChange={(e) => handleInputChange('fecha_vencimiento', e.target.value)}
+              min={new Date(Date.now() + 86400000).toISOString().split('T')[0]}
             />
+            <div className="text-sm text-muted-foreground">
+              Fecha estimada de vencimiento del lote
+            </div>
           </div>
 
           <ImageUpload

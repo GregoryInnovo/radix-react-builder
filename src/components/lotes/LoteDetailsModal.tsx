@@ -86,7 +86,7 @@ export const LoteDetailsModal: React.FC<LoteDetailsModalProps> = ({
         <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-xl font-bold text-green-800">
-              Detalles del Lote de ROA
+              {lote.titulo || 'Detalles del Lote de ROA'}
             </DialogTitle>
           </DialogHeader>
 
@@ -131,12 +131,12 @@ export const LoteDetailsModal: React.FC<LoteDetailsModalProps> = ({
               </div>
 
               <div className="space-y-3">
-                {lote.fecha_disponible && (
+                {lote.fecha_vencimiento && (
                   <div className="flex items-center gap-2">
                     <Clock className="w-4 h-4 text-gray-500" />
-                    <span className="text-sm text-gray-600">Disponible desde:</span>
+                    <span className="text-sm text-gray-600">Vence el:</span>
                     <span className="font-semibold">
-                      {new Date(lote.fecha_disponible).toLocaleDateString()}
+                      {new Date(lote.fecha_vencimiento).toLocaleDateString()}
                     </span>
                   </div>
                 )}

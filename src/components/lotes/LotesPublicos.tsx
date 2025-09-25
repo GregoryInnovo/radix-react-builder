@@ -67,7 +67,11 @@ export const LotesPublicos: React.FC = () => {
   };
 
   const handleTypeSelect = (typeId: string) => {
-    setSelectedType(typeId === selectedType ? '' : typeId);
+    if (typeId === 'all') {
+      setSelectedType('');
+    } else {
+      setSelectedType(typeId === selectedType ? '' : typeId);
+    }
   };
 
   const formatDistance = (distance: number) => {
@@ -137,7 +141,7 @@ export const LotesPublicos: React.FC = () => {
                       <div className="flex justify-between items-start">
                         <div className="space-y-1">
                           <CardTitle className="text-lg">
-                            {lote.peso_estimado}kg de ROA
+                            {lote.titulo || `${lote.peso_estimado}kg de ROA`}
                           </CardTitle>
                           <CardDescription className="flex items-center gap-2">
                             <MapPin className="w-4 h-4" />
@@ -171,10 +175,10 @@ export const LotesPublicos: React.FC = () => {
                           <Weight className="w-4 h-4" />
                           {lote.peso_estimado}kg
                         </div>
-                        {lote.fecha_disponible && (
+                        {lote.fecha_vencimiento && (
                           <div className="flex items-center gap-1">
                             <Calendar className="w-4 h-4" />
-                            {format(new Date(lote.fecha_disponible), 'dd/MM/yyyy', { locale: es })}
+                            Vence: {format(new Date(lote.fecha_vencimiento), 'dd/MM/yyyy', { locale: es })}
                           </div>
                         )}
                       </div>
