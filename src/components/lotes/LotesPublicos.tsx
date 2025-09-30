@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { MapPin, Weight, Calendar, Eye, Package } from 'lucide-react';
+import { MapPin, Weight, Calendar, Eye, Package, AlertTriangle } from 'lucide-react';
 import { usePublicLotes } from '@/hooks/usePublicLotes';
 import { useProfiles } from '@/hooks/useProfiles';
 import { LoteDetailsModal } from '@/components/lotes/LoteDetailsModal';
@@ -79,6 +79,15 @@ export const LotesPublicos: React.FC = () => {
       return `${Math.round(distance * 1000)}m`;
     }
     return `${distance.toFixed(1)}km`;
+  };
+
+  const isExpired = (fecha_vencimiento: string | null) => {
+    if (!fecha_vencimiento) return false;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const expDate = new Date(fecha_vencimiento);
+    expDate.setHours(0, 0, 0, 0);
+    return expDate < today;
   };
 
   if (loading) {
@@ -170,15 +179,23 @@ export const LotesPublicos: React.FC = () => {
                       )}
 
                       {/* Lote Details */}
-                      <div className="grid grid-cols-2 gap-3 text-sm text-muted-foreground">
-                        <div className="flex items-center gap-1">
+                      <div className="space-y-2 text-sm">
+                        <div className="flex items-center gap-1 text-muted-foreground">
                           <Weight className="w-4 h-4" />
                           {lote.peso_estimado}kg
                         </div>
                         {lote.fecha_vencimiento && (
-                          <div className="flex items-center gap-1">
-                            <Calendar className="w-4 h-4" />
-                            Vence: {format(new Date(lote.fecha_vencimiento), 'dd/MM/yyyy', { locale: es })}
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <div className="flex items-center gap-1 text-muted-foreground">
+                              <Calendar className="w-4 h-4" />
+                              Vence: {format(new Date(lote.fecha_vencimiento), 'dd/MM/yyyy', { locale: es })}
+                            </div>
+                            {isExpired(lote.fecha_vencimiento) && (
+                              <Badge variant="destructive" className="text-xs">
+                                <AlertTriangle className="w-3 h-3 mr-1" />
+                                Vencido
+                              </Badge>
+                            )}
                           </div>
                         )}
                       </div>

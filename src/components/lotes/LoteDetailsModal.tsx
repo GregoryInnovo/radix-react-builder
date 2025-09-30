@@ -2,7 +2,7 @@ import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { MapPin, Weight, Calendar, Clock, User, FileText, Image, History } from 'lucide-react';
+import { MapPin, Weight, Calendar, Clock, User, FileText, Image, History, AlertTriangle } from 'lucide-react';
 import { LoteImageGallery } from './LoteImageGallery';
 import { LoteStatusHistory } from './LoteStatusHistory';
 import { ReservarLote } from './ReservarLote';
@@ -78,6 +78,15 @@ export const LoteDetailsModal: React.FC<LoteDetailsModalProps> = ({
     }
   };
 
+  const isExpired = (fecha_vencimiento: string | null) => {
+    if (!fecha_vencimiento) return false;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const expDate = new Date(fecha_vencimiento);
+    expDate.setHours(0, 0, 0, 0);
+    return expDate < today;
+  };
+
   const images = lote.imagenes || [];
 
   return (
@@ -132,12 +141,18 @@ export const LoteDetailsModal: React.FC<LoteDetailsModalProps> = ({
 
               <div className="space-y-3">
                 {lote.fecha_vencimiento && (
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <Clock className="w-4 h-4 text-gray-500" />
                     <span className="text-sm text-gray-600">Vence el:</span>
                     <span className="font-semibold">
                       {new Date(lote.fecha_vencimiento).toLocaleDateString()}
                     </span>
+                    {isExpired(lote.fecha_vencimiento) && (
+                      <Badge variant="destructive" className="ml-2">
+                        <AlertTriangle className="w-3 h-3 mr-1" />
+                        Vencido
+                      </Badge>
+                    )}
                   </div>
                 )}
 

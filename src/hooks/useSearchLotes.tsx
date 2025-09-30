@@ -42,45 +42,35 @@ export const useSearchLotes = () => {
   };
 
   // Function to calculate text relevance score
-  const calculateRelevanceScore = (lote: any, searchTerms: string[]) => {
+  const calculateRelevanceScore = (lote: any, searchTerms: string[], profiles?: Record<string, any>) => {
     let score = 0;
+    
+    // Check titulo (highest priority)
+    if (lote.titulo) {
+      const tituloNormalizado = normalizeText(lote.titulo);
+      searchTerms.forEach(term => {
+        if (tituloNormalizado.includes(term)) {
+          score += 5; // Highest weight for title matches
+        }
+      });
+    }
+
+    // Check provider name (high priority)
+    if (profiles && lote.user_id && profiles[lote.user_id]?.full_name) {
+      const providerName = normalizeText(profiles[lote.user_id].full_name);
+      searchTerms.forEach(term => {
+        if (providerName.includes(term)) {
+          score += 4; // High weight for provider name matches
+        }
+      });
+    }
     
     // Check tipo_residuo name
     if (lote.tipos_residuo?.nombre) {
       const tipoNormalizado = normalizeText(lote.tipos_residuo.nombre);
       searchTerms.forEach(term => {
         if (tipoNormalizado.includes(term)) {
-          score += 3; // Higher weight for type matches
-        }
-      });
-    }
-
-    // Check tipo_residuo description
-    if (lote.tipos_residuo?.descripcion) {
-      const tipoDescNormalizada = normalizeText(lote.tipos_residuo.descripcion);
-      searchTerms.forEach(term => {
-        if (tipoDescNormalizada.includes(term)) {
-          score += 2;
-        }
-      });
-    }
-
-    // Check lote description
-    if (lote.descripcion) {
-      const descNormalizada = normalizeText(lote.descripcion);
-      searchTerms.forEach(term => {
-        if (descNormalizada.includes(term)) {
-          score += 2;
-        }
-      });
-    }
-
-    // Check address for location-based terms
-    if (lote.direccion) {
-      const direccionNormalizada = normalizeText(lote.direccion);
-      searchTerms.forEach(term => {
-        if (direccionNormalizada.includes(term)) {
-          score += 1;
+          score += 3; // Medium-high weight for type matches
         }
       });
     }
@@ -88,7 +78,7 @@ export const useSearchLotes = () => {
     return score;
   };
 
-  const searchLotes = async (filters: SearchFilters) => {
+  const searchLotes = async (filters: SearchFilters, profiles?: Record<string, any>) => {
     setLoading(true);
     try {
       console.log('Starting search with filters:', filters);
@@ -163,7 +153,7 @@ export const useSearchLotes = () => {
         console.log('Search terms:', searchTerms);
         
         searchFilteredData = filteredData.filter(lote => {
-          const score = calculateRelevanceScore(lote, searchTerms);
+          const score = calculateRelevanceScore(lote, searchTerms, profiles);
           console.log(`Lote ${lote.id}: relevance score = ${score}`);
           return score > 0;
         });
@@ -182,7 +172,7 @@ export const useSearchLotes = () => {
           );
 
           const relevanceScore = filters.textSearch && filters.textSearch.trim() 
-            ? calculateRelevanceScore(lote, normalizeText(filters.textSearch).split(/\s+/).filter(term => term.length > 0))
+            ? calculateRelevanceScore(lote, normalizeText(filters.textSearch).split(/\s+/).filter(term => term.length > 0), profiles)
             : 1; // Default relevance for non-text searches
 
           console.log(`Distance for lote ${lote.id}: ${distance}km (max: ${filters.radiusKm}km), relevance: ${relevanceScore}`);

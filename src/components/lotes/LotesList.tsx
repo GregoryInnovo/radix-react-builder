@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { MapPin, Calendar, Weight, Eye, Edit, Trash2, Image as ImageIcon } from 'lucide-react';
+import { MapPin, Calendar, Weight, Eye, Edit, Trash2, Image as ImageIcon, AlertTriangle } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { LoteImageGallery } from './LoteImageGallery';
@@ -56,6 +56,15 @@ const getResiduoLabel = (lote: Lote) => {
     otros: 'Otros',
   };
   return 'Tipo no disponible';
+};
+
+const isExpired = (fecha_vencimiento: string | null) => {
+  if (!fecha_vencimiento) return false;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const expDate = new Date(fecha_vencimiento);
+  expDate.setHours(0, 0, 0, 0);
+  return expDate < today;
 };
 
 export const LotesList = ({ lotes, loading, onEdit, onView, onDelete }: LotesListProps) => {
@@ -142,12 +151,20 @@ export const LotesList = ({ lotes, loading, onEdit, onView, onDelete }: LotesLis
                 <CardTitle className="text-lg text-green-800">
                   {lote.titulo || getResiduoLabel(lote)}
                 </CardTitle>
-                <div className="flex items-center text-sm text-gray-600 mt-1">
-                  <Calendar className="w-4 h-4 mr-1" />
-                  {lote.fecha_vencimiento ? 
-                    `Vence: ${format(new Date(lote.fecha_vencimiento), 'PP', { locale: es })}` :
-                    format(new Date(lote.created_at || ''), 'PP', { locale: es })
-                  }
+                <div className="flex items-center gap-2 text-sm text-gray-600 mt-1 flex-wrap">
+                  <div className="flex items-center">
+                    <Calendar className="w-4 h-4 mr-1" />
+                    {lote.fecha_vencimiento ? 
+                      `Vence: ${format(new Date(lote.fecha_vencimiento), 'PP', { locale: es })}` :
+                      format(new Date(lote.created_at || ''), 'PP', { locale: es })
+                    }
+                  </div>
+                  {lote.fecha_vencimiento && isExpired(lote.fecha_vencimiento) && (
+                    <Badge variant="destructive" className="text-xs">
+                      <AlertTriangle className="w-3 h-3 mr-1" />
+                      Vencido
+                    </Badge>
+                  )}
                 </div>
               </div>
               <Badge className={getStatusColor(lote.estado)}>

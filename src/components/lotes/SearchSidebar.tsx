@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Search, MapPin, Navigation } from 'lucide-react';
-import { useTiposResiduo } from '@/hooks/useTiposResiduo';
+import { useProfiles } from '@/hooks/useProfiles';
 
 interface SearchSidebarProps {
   allLotes: any[];
@@ -16,14 +16,37 @@ export const SearchSidebar: React.FC<SearchSidebarProps> = ({
   onSearchResults
 }) => {
   const [textSearch, setTextSearch] = useState('');
-  const [selectedType, setSelectedType] = useState<string>('all');
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [manualLocation, setManualLocation] = useState({ lat: '', lng: '' });
   const [radius, setRadius] = useState('50');
   const [isDetectingLocation, setIsDetectingLocation] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
+  const [profiles, setProfiles] = useState<Record<string, any>>({});
 
-  const { tiposResiduos } = useTiposResiduo();
+  const { getProfileById } = useProfiles();
+
+  // Fetch profiles for search
+  useEffect(() => {
+    const fetchProfiles = async () => {
+      const uniqueUserIds = [...new Set(allLotes.map(lote => lote.user_id))];
+      
+      for (const userId of uniqueUserIds) {
+        if (!profiles[userId]) {
+          const profile = await getProfileById(userId);
+          if (profile) {
+            setProfiles(prev => ({
+              ...prev,
+              [userId]: profile
+            }));
+          }
+        }
+      }
+    };
+    
+    if (allLotes.length > 0) {
+      fetchProfiles();
+    }
+  }, [allLotes, getProfileById]);
 
   const detectLocation = () => {
     if (!navigator.geolocation) {
@@ -77,21 +100,19 @@ export const SearchSidebar: React.FC<SearchSidebarProps> = ({
   const handleSearch = () => {
     let filteredLotes = [...allLotes];
 
-    // Filter by text
+    // Filter by text (titulo, provider name, tipo_residuo)
     if (textSearch.trim()) {
       const searchTerm = textSearch.toLowerCase();
-      filteredLotes = filteredLotes.filter(lote => 
-        lote.descripcion?.toLowerCase().includes(searchTerm) ||
-        lote.direccion?.toLowerCase().includes(searchTerm) ||
-        lote.tipos_residuo?.nombre?.toLowerCase().includes(searchTerm)
-      );
-    }
-
-    // Filter by type
-    if (selectedType !== 'all') {
-      filteredLotes = filteredLotes.filter(lote => 
-        lote.tipo_residuo_id === selectedType
-      );
+      filteredLotes = filteredLotes.filter(lote => {
+        const profile = profiles[lote.user_id];
+        const providerName = profile?.full_name?.toLowerCase() || '';
+        
+        return (
+          lote.titulo?.toLowerCase().includes(searchTerm) ||
+          providerName.includes(searchTerm) ||
+          lote.tipos_residuo?.nombre?.toLowerCase().includes(searchTerm)
+        );
+      });
     }
 
     // Filter by location
@@ -114,7 +135,6 @@ export const SearchSidebar: React.FC<SearchSidebarProps> = ({
 
   const handleReset = () => {
     setTextSearch('');
-    setSelectedType('all');
     setUserLocation(null);
     setManualLocation({ lat: '', lng: '' });
     setRadius('50');
@@ -133,32 +153,17 @@ export const SearchSidebar: React.FC<SearchSidebarProps> = ({
       <CardContent className="space-y-4">
         {/* Text Search */}
         <div className="space-y-2">
-          <label className="text-sm font-medium">Buscar por texto</label>
+          <label className="text-sm font-medium">Buscar por palabra clave</label>
+          <p className="text-xs text-muted-foreground">
+            Busca por título, nombre del proveedor o tipo de residuo
+          </p>
           <Input
             type="text"
-            placeholder="Palabras clave..."
+            placeholder="Ej: Cristian, Cáscaras..."
             value={textSearch}
             onChange={(e) => setTextSearch(e.target.value)}
             onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
           />
-        </div>
-
-        {/* Type Filter */}
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Tipo de residuo</label>
-          <Select value={selectedType} onValueChange={setSelectedType}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos los tipos</SelectItem>
-              {tiposResiduos.map((tipo) => (
-                <SelectItem key={tipo.id} value={tipo.id}>
-                  {tipo.nombre}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
         </div>
 
         {/* Location Filter */}
