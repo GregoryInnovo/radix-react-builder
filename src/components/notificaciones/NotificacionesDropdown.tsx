@@ -125,7 +125,10 @@ export const NotificacionesDropdown: React.FC = () => {
                 <DropdownMenuSeparator />
                 <DropdownMenuItem 
                   className="text-center text-sm text-gray-500 cursor-pointer hover:bg-gray-50" 
-                  onClick={() => setShowAll(!showAll)}
+                  onSelect={(e) => {
+                    e.preventDefault();
+                    setShowAll(!showAll);
+                  }}
                 >
                   {showAll ? 'Ver menos notificaciones' : 'Ver todas las notificaciones'}
                 </DropdownMenuItem>

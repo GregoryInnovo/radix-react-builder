@@ -227,6 +227,13 @@ export const OrdenesList: React.FC = () => {
                   {requesterProfile ? <UserProfileLink userId={orden.solicitante_id} userName={requesterProfile.full_name} userEmail={requesterProfile.email} size="sm" className="text-blue-600 hover:text-blue-800" /> : <span className="text-blue-700">Cargando...</span>}
                 </div>
                 
+                <div className="flex items-center gap-2">
+                  <span className="font-medium text-blue-800">Solicitado el:</span>
+                  <span className="text-blue-700">
+                    {format(new Date(orden.created_at), "dd/MM/yyyy 'a las' HH:mm", { locale: es })}
+                  </span>
+                </div>
+                
                 {orden.telefono_contacto && <div className="flex items-start gap-2">
                     <span className="font-medium text-blue-800">Teléfono:</span>
                     <span className={cn("text-blue-700", !isValidPhone(orden.telefono_contacto) && "text-red-600 font-medium")}>
@@ -250,6 +257,13 @@ export const OrdenesList: React.FC = () => {
                 <div className="flex items-center gap-2">
                   <span className="font-medium text-green-800">Nombre:</span>
                   {providerProfile ? <UserProfileLink userId={orden.proveedor_id} userName={providerProfile.full_name} userEmail={providerProfile.email} size="sm" className="text-green-600 hover:text-green-800" /> : <span className="text-green-700">Cargando...</span>}
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <span className="font-medium text-green-800">Solicitado el:</span>
+                  <span className="text-green-700">
+                    {format(new Date(orden.created_at), "dd/MM/yyyy 'a las' HH:mm", { locale: es })}
+                  </span>
                 </div>
                 
                 {providerProfile?.telefono && <div className="flex items-start gap-2">
