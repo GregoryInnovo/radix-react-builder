@@ -328,6 +328,7 @@ export const OrdenesList: React.FC = () => {
               isOpen={showLoteDetails}
               onClose={() => setShowLoteDetails(false)}
               lote={loteInfo}
+              showReservarButton={false}
             />
           )}
         </CardContent>

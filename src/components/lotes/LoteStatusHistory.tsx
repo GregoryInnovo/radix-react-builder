@@ -45,41 +45,49 @@ export const LoteStatusHistory = ({ loteId }: LoteStatusHistoryProps) => {
 
   const fetchStatusHistory = async () => {
     try {
-      // Get lote info for creation date and current state
-      const { data: lote, error: loteError } = await supabase
-        .from('lotes')
-        .select('created_at, updated_at, estado')
-        .eq('id', loteId)
-        .single();
+      // Query the lotes_historial table for real status changes
+      const { data: historialData, error: historialError } = await supabase
+        .from('lotes_historial')
+        .select('id, lote_id, estado_anterior, estado_nuevo, created_at, notas')
+        .eq('lote_id', loteId)
+        .order('created_at', { ascending: true });
 
-      if (loteError) throw loteError;
+      if (historialError) throw historialError;
 
-      // Create basic history based on available data
-      const history: StatusChange[] = [];
+      // If no history exists, get lote creation info
+      if (!historialData || historialData.length === 0) {
+        const { data: lote, error: loteError } = await supabase
+          .from('lotes')
+          .select('created_at, estado')
+          .eq('id', loteId)
+          .single();
 
-      // Always add creation entry
-      history.push({
-        id: 'creation',
-        lote_id: loteId,
-        estado_anterior: null,
-        estado_nuevo: 'disponible' as BatchStatus,
-        fecha_cambio: lote.created_at || '',
-        created_at: lote.created_at || ''
-      });
+        if (loteError) throw loteError;
 
-      // If the lote was updated and has a different state, add that change
-      if (lote.estado !== 'disponible' && lote.updated_at && lote.updated_at !== lote.created_at) {
-        history.push({
-          id: 'update',
+        // Create initial history entry
+        const initialHistory: StatusChange[] = [{
+          id: 'creation',
           lote_id: loteId,
-          estado_anterior: 'disponible' as BatchStatus,
+          estado_anterior: null,
           estado_nuevo: lote.estado,
-          fecha_cambio: lote.updated_at,
-          created_at: lote.updated_at
-        });
-      }
+          fecha_cambio: lote.created_at || '',
+          created_at: lote.created_at || ''
+        }];
 
-      setHistory(history);
+        setHistory(initialHistory);
+      } else {
+        // Map historial data to StatusChange format
+        const mappedHistory: StatusChange[] = historialData.map(item => ({
+          id: item.id,
+          lote_id: item.lote_id,
+          estado_anterior: item.estado_anterior,
+          estado_nuevo: item.estado_nuevo,
+          fecha_cambio: item.created_at,
+          created_at: item.created_at
+        }));
+
+        setHistory(mappedHistory);
+      }
     } catch (error) {
       console.error('Error fetching status history:', error);
     } finally {
@@ -93,7 +101,8 @@ export const LoteStatusHistory = ({ loteId }: LoteStatusHistoryProps) => {
       month: 'short',
       day: 'numeric',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
+      second: '2-digit'
     });
   };
 

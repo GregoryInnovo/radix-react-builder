@@ -16,31 +16,52 @@ interface CalificarOrdenProps {
 
 export const CalificarOrden: React.FC<CalificarOrdenProps> = ({ orden }) => {
   const [open, setOpen] = useState(false);
-  const [canRate, setCanRate] = useState(false);
+  const [ratingStatus, setRatingStatus] = useState<{ canRate: boolean; hasRated: boolean }>({ canRate: false, hasRated: false });
   const { canRateOrder } = useCalificaciones();
   const { user } = useAuth();
 
-  useEffect(() => {
-    const checkCanRate = async () => {
-      if (!user || !orden.calificado_id) return;
-      
-      const result = await canRateOrder(orden.id, orden.calificado_id);
-      setCanRate(result);
-    };
+  const checkRatingStatus = async () => {
+    if (!user || !orden.calificado_id) return;
+    
+    const result = await canRateOrder(orden.id, orden.calificado_id);
+    setRatingStatus(result);
+  };
 
+  useEffect(() => {
     if (user && orden.estado === 'completada') {
-      checkCanRate();
+      checkRatingStatus();
     }
   }, [orden.id, orden.estado, orden.calificado_id, user, canRateOrder]);
 
-  if (!canRate || orden.estado !== 'completada' || !orden.calificado_id) {
+  const handleSuccess = () => {
+    setOpen(false);
+    // Update rating status to reflect that user has now rated
+    setRatingStatus({ canRate: false, hasRated: true });
+  };
+
+  if (orden.estado !== 'completada' || !orden.calificado_id) {
+    return null;
+  }
+
+  // Show "Ya has calificado" badge if user has already rated
+  if (ratingStatus.hasRated) {
+    return (
+      <div className="flex items-center gap-2 px-3 py-1.5 bg-green-50 border border-green-200 rounded-md">
+        <Star className="w-4 h-4 text-green-600 fill-green-600" />
+        <span className="text-sm font-medium text-green-700">Ya has calificado</span>
+      </div>
+    );
+  }
+
+  // Show rating button if user can rate
+  if (!ratingStatus.canRate) {
     return null;
   }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="w-full">
+        <Button variant="outline" size="sm" className="w-auto px-4">
           <Star className="w-4 h-4 mr-2" />
           Calificar
         </Button>
@@ -53,7 +74,7 @@ export const CalificarOrden: React.FC<CalificarOrdenProps> = ({ orden }) => {
           ordenId={orden.id}
           calificadoId={orden.calificado_id}
           productoId={orden.tipo_item === 'producto' ? orden.item_id : undefined}
-          onSuccess={() => setOpen(false)}
+          onSuccess={handleSuccess}
           onCancel={() => setOpen(false)}
         />
       </DialogContent>

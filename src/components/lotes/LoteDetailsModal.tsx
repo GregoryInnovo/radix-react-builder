@@ -22,13 +22,15 @@ interface LoteDetailsModalProps {
   onClose: () => void;
   lote: Lote;
   distance?: number;
+  showReservarButton?: boolean;
 }
 
 export const LoteDetailsModal: React.FC<LoteDetailsModalProps> = ({
   isOpen,
   onClose,
   lote,
-  distance
+  distance,
+  showReservarButton = true
 }) => {
   const [showImageGallery, setShowImageGallery] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
@@ -247,12 +249,12 @@ export const LoteDetailsModal: React.FC<LoteDetailsModalProps> = ({
                 <Button
                   variant="outline"
                   onClick={() => setShowHistory(!showHistory)}
-                  className="flex-1"
+                  className={showReservarButton ? "flex-1" : "w-full"}
                 >
                   <History className="w-4 h-4 mr-2" />
                   {showHistory ? 'Ocultar' : 'Ver'} Historial
                 </Button>
-                <ReservarLote lote={lote} className="flex-1" />
+                {showReservarButton && <ReservarLote lote={lote} className="flex-1" />}
               </div>
               
               {showHistory && (

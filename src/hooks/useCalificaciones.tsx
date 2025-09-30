@@ -55,8 +55,8 @@ export const useCalificaciones = () => {
     }
   };
 
-  const canRateOrder = async (ordenId: string, calificadoId?: string): Promise<boolean> => {
-    if (!user || !calificadoId) return false;
+  const canRateOrder = async (ordenId: string, calificadoId?: string): Promise<{ canRate: boolean; hasRated: boolean }> => {
+    if (!user || !calificadoId) return { canRate: false, hasRated: false };
 
     try {
       // Check if user already rated this specific person for this order  
@@ -68,8 +68,8 @@ export const useCalificaciones = () => {
         .eq('calificado_id', calificadoId)
         .single();
 
-      // If rating exists, user cannot rate again
-      if (existingRating) return false;
+      // If rating exists, user has already rated
+      if (existingRating) return { canRate: false, hasRated: true };
 
       // Check if order is completed and user participated
       const { data: orden } = await supabase
@@ -78,13 +78,14 @@ export const useCalificaciones = () => {
         .eq('id', ordenId)
         .single();
 
-      if (!orden || orden.estado !== 'completada') return false;
+      if (!orden || orden.estado !== 'completada') return { canRate: false, hasRated: false };
 
       // Only the requester (solicitante) can rate the provider
-      return orden.solicitante_id === user.id;
+      const canRate = orden.solicitante_id === user.id;
+      return { canRate, hasRated: false };
     } catch (error) {
       console.error('Error checking if can rate:', error);
-      return false;
+      return { canRate: false, hasRated: false };
     }
   };
 
