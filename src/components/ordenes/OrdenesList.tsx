@@ -3,6 +3,7 @@ import { useOrdenes } from '@/hooks/useOrdenes';
 import { useAuth } from '@/hooks/useAuth';
 import { useProductos } from '@/hooks/useProductos';
 import { useLotes } from '@/hooks/useLotes';
+import { useOrdenLotes } from '@/hooks/useOrdenLotes';
 import { useProfiles } from '@/hooks/useProfiles';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -12,6 +13,7 @@ import { CalificarOrden } from '@/components/calificaciones/CalificarOrden';
 import { OrdenChat } from '@/components/ordenes/OrdenChat';
 import { OrdenTimeline } from '@/components/ordenes/OrdenTimeline';
 import { OrdenesStats } from '@/components/ordenes/OrdenesStats';
+import { LoteDetailsModal } from '@/components/lotes/LoteDetailsModal';
 import { UserProfileLink } from '@/components/user/UserProfileLink';
 import { Loader2, CheckCircle2 } from 'lucide-react';
 import { format } from 'date-fns';
@@ -52,6 +54,16 @@ export const OrdenesList: React.FC = () => {
   const {
     lotes
   } = useLotes();
+  
+  // Get all lote IDs from orders to fetch them
+  const loteIdsFromOrdenes = useMemo(() => {
+    return [...ordenesComoSolicitante, ...ordenesComoProveedor]
+      .filter(orden => orden.tipo_item === 'lote')
+      .map(orden => orden.item_id);
+  }, [ordenesComoSolicitante, ordenesComoProveedor]);
+  
+  const { getLoteById } = useOrdenLotes(loteIdsFromOrdenes);
+  
   const {
     getProfileById
   } = useProfiles();
@@ -68,9 +80,12 @@ export const OrdenesList: React.FC = () => {
     return producto?.nombre || 'Producto no encontrado';
   };
   const getLoteName = (loteId: string) => {
-    const lote = lotes.find(l => l.id === loteId);
-    if (!lote) return 'Lote no encontrado';
-    return `${lote.peso_estimado}kg - ${lote.direccion || 'Sin dirección'}`;
+    const lote = getLoteById(loteId);
+    return lote?.titulo || 'Lote no encontrado';
+  };
+
+  const getLoteInfo = (loteId: string) => {
+    return getLoteById(loteId);
   };
 
   // Fetch profiles for requesters and providers
@@ -149,11 +164,13 @@ export const OrdenesList: React.FC = () => {
     orden: any;
     isProvider?: boolean;
   }) => {
+    const [showLoteDetails, setShowLoteDetails] = useState(false);
     const canUpdateStatus = isProvider && (orden.estado === 'pendiente' || orden.estado === 'aceptada');
     const canRate = !isProvider && orden.estado === 'completada';
     const requesterProfile = isProvider ? getRequesterProfile(orden.solicitante_id) : null;
     const providerProfile = !isProvider ? getProviderProfile(orden.proveedor_id) : null;
     const isCompleted = orden.estado === 'completada';
+    const loteInfo = orden.tipo_item === 'lote' ? getLoteInfo(orden.item_id) : null;
 
     // Validate phone number - only allow numbers, spaces, hyphens, parentheses, and + sign
     const isValidPhone = (phone: string) => /^[\d\s\-\(\)\+]+$/.test(phone);
@@ -205,16 +222,41 @@ export const OrdenesList: React.FC = () => {
 
           {/* Item name with larger, more prominent font */}
           <div className="space-y-2">
-            <p className="text-lg font-semibold text-foreground">
-              {orden.tipo_item === 'producto' ? `${getProductName(orden.item_id)}` : `Lote ROA: ${getLoteName(orden.item_id)}`}
-            </p>
+            {orden.tipo_item === 'producto' ? (
+              <p className="text-lg font-semibold text-foreground">
+                {getProductName(orden.item_id)}
+              </p>
+            ) : (
+              <div className="space-y-1">
+                <p className="text-lg font-semibold text-foreground">
+                  {getLoteName(orden.item_id)}
+                </p>
+                {loteInfo?.direccion && (
+                  <p className="text-sm text-muted-foreground">
+                    📍 {loteInfo.direccion}
+                  </p>
+                )}
+              </div>
+            )}
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm text-muted-foreground">
-              <p><span className="font-medium">Cantidad:</span> {orden.cantidad_solicitada}</p>
+              <p><span className="font-medium">Cantidad:</span> {orden.cantidad_solicitada} {orden.tipo_item === 'lote' ? 'kilogramos' : 'unidades'}</p>
               {orden.fecha_propuesta_retiro && <p><span className="font-medium">Fecha:</span> {format(new Date(orden.fecha_propuesta_retiro), 'dd/MM/yyyy')}</p>}
               {orden.hora_propuesta_retiro && <p><span className="font-medium">Hora:</span> {orden.hora_propuesta_retiro}</p>}
               {orden.modalidad_entrega && <p><span className="font-medium">Modalidad:</span> {orden.modalidad_entrega}</p>}
             </div>
+
+            {/* Button to see lot details */}
+            {orden.tipo_item === 'lote' && loteInfo && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowLoteDetails(true)}
+                className="mt-2"
+              >
+                Ver Detalles del Lote
+              </Button>
+            )}
           </div>
 
           {/* Show requester contact info for providers - improved layout */}
@@ -279,6 +321,15 @@ export const OrdenesList: React.FC = () => {
             </div>}
 
           <OrdenChat ordenId={orden.id} orden={orden} canSendMessages={orden.estado === 'pendiente' || orden.estado === 'aceptada'} />
+          
+          {/* Lot Details Modal */}
+          {loteInfo && (
+            <LoteDetailsModal
+              isOpen={showLoteDetails}
+              onClose={() => setShowLoteDetails(false)}
+              lote={loteInfo}
+            />
+          )}
         </CardContent>
       </Card>;
   };
