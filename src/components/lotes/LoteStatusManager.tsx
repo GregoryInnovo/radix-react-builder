@@ -18,6 +18,7 @@ interface LoteStatusManagerProps {
 
 const STATUS_LABELS: Record<BatchStatus, string> = {
   'disponible': 'Disponible',
+  'no_disponible': 'No Disponible',
   'reservado': 'Reservado',
   'recogido': 'Recogido',
   'cancelado': 'Cancelado',
@@ -25,6 +26,7 @@ const STATUS_LABELS: Record<BatchStatus, string> = {
 
 const STATUS_COLORS: Record<BatchStatus, string> = {
   'disponible': 'bg-green-100 text-green-800',
+  'no_disponible': 'bg-gray-100 text-gray-800',
   'reservado': 'bg-yellow-100 text-yellow-800',
   'recogido': 'bg-blue-100 text-blue-800',
   'cancelado': 'bg-red-100 text-red-800',
@@ -32,6 +34,7 @@ const STATUS_COLORS: Record<BatchStatus, string> = {
 
 const STATUS_ICONS: Record<BatchStatus, React.ComponentType<any>> = {
   'disponible': CheckCircle,
+  'no_disponible': XCircle,
   'reservado': Clock,
   'recogido': CheckCircle,
   'cancelado': XCircle,
@@ -39,8 +42,9 @@ const STATUS_ICONS: Record<BatchStatus, React.ComponentType<any>> = {
 
 // Define valid status transitions
 const VALID_TRANSITIONS: Record<BatchStatus, BatchStatus[]> = {
-  'disponible': ['reservado', 'cancelado'],
-  'reservado': ['recogido', 'cancelado', 'disponible'],
+  'disponible': ['no_disponible', 'reservado'],
+  'no_disponible': ['disponible'],
+  'reservado': ['recogido', 'cancelado'],
   'recogido': [], // Final state
   'cancelado': ['disponible'], // Can be reactivated
 };
@@ -132,8 +136,9 @@ export const LoteStatusManager = ({ lote, onStatusChange, loading }: LoteStatusM
         <div className="text-xs text-gray-500 space-y-1">
           <p><strong>Transiciones permitidas:</strong></p>
           <ul className="list-disc list-inside space-y-1">
-            <li>Disponible → Reservado, Cancelado</li>
-            <li>Reservado → Recogido, Cancelado, Disponible</li>
+            <li>Disponible ↔ No Disponible</li>
+            <li>Disponible → Reservado</li>
+            <li>Reservado → Recogido, Cancelado</li>
             <li>Cancelado → Disponible</li>
             <li>Recogido → (Estado final)</li>
           </ul>

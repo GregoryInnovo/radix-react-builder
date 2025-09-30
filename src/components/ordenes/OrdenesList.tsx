@@ -81,7 +81,9 @@ export const OrdenesList: React.FC = () => {
   };
   const getLoteName = (loteId: string) => {
     const lote = getLoteById(loteId);
-    return lote?.titulo || 'Lote no encontrado';
+    if (!lote) return 'Lote no encontrado';
+    if (lote.deleted_at) return `${lote.titulo} (Eliminado)`;
+    return lote.titulo;
   };
 
   const getLoteInfo = (loteId: string) => {

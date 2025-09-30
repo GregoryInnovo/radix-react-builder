@@ -31,6 +31,7 @@ export const useLotes = () => {
           )
         `)
         .eq('user_id', user.id)
+        .is('deleted_at', null)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -147,7 +148,7 @@ export const useLotes = () => {
     try {
       const { error } = await supabase
         .from('lotes')
-        .delete()
+        .update({ deleted_at: new Date().toISOString() })
         .eq('id', id);
 
       if (error) throw error;

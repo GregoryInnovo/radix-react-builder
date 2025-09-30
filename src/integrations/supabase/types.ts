@@ -195,6 +195,7 @@ export type Database = {
       lotes: {
         Row: {
           created_at: string | null
+          deleted_at: string | null
           descripcion: string | null
           direccion: string | null
           estado: Database["public"]["Enums"]["batch_status"]
@@ -213,6 +214,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
+          deleted_at?: string | null
           descripcion?: string | null
           direccion?: string | null
           estado?: Database["public"]["Enums"]["batch_status"]
@@ -231,6 +233,7 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
+          deleted_at?: string | null
           descripcion?: string | null
           direccion?: string | null
           estado?: Database["public"]["Enums"]["batch_status"]

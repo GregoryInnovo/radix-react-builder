@@ -3,11 +3,13 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { MapPin, Calendar, Weight, Eye, Edit, Trash2, Image as ImageIcon, AlertTriangle } from 'lucide-react';
+import { MapPin, Calendar, Weight, Eye, Edit, Trash2, Image as ImageIcon, AlertTriangle, Settings } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { LoteImageGallery } from './LoteImageGallery';
+import { LoteStatusManager } from './LoteStatusManager';
 import { ConfirmModal } from '@/components/ui/confirm-modal';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import type { Database } from '@/integrations/supabase/types';
 
 type Lote = Database['public']['Tables']['lotes']['Row'] & {
@@ -24,12 +26,15 @@ interface LotesListProps {
   onEdit: (lote: Lote) => void;
   onView: (lote: Lote) => void;
   onDelete: (id: string) => void;
+  onStatusChange: (id: string, newStatus: any) => Promise<void>;
 }
 
 const getStatusColor = (status: string) => {
   switch (status) {
     case 'disponible':
       return 'bg-green-100 text-green-800';
+    case 'no_disponible':
+      return 'bg-gray-100 text-gray-800';
     case 'reservado':
       return 'bg-yellow-100 text-yellow-800';
     case 'recogido':
@@ -67,12 +72,15 @@ const isExpired = (fecha_vencimiento: string | null) => {
   return expDate < today;
 };
 
-export const LotesList = ({ lotes, loading, onEdit, onView, onDelete }: LotesListProps) => {
+export const LotesList = ({ lotes, loading, onEdit, onView, onDelete, onStatusChange }: LotesListProps) => {
   const [selectedLote, setSelectedLote] = useState<Lote | null>(null);
   const [isGalleryOpen, setIsGalleryOpen] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [loteToDelete, setLoteToDelete] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [showStatusManager, setShowStatusManager] = useState(false);
+  const [loteForStatus, setLoteForStatus] = useState<Lote | null>(null);
+  const [isChangingStatus, setIsChangingStatus] = useState(false);
 
   const handleViewImages = (lote: Lote) => {
     setSelectedLote(lote);
@@ -105,6 +113,21 @@ export const LotesList = ({ lotes, loading, onEdit, onView, onDelete }: LotesLis
   const handleCancelDelete = () => {
     setShowDeleteConfirm(false);
     setLoteToDelete(null);
+  };
+
+  const handleStatusClick = (lote: Lote) => {
+    setLoteForStatus(lote);
+    setShowStatusManager(true);
+  };
+
+  const handleStatusChangeSubmit = async (newStatus: any) => {
+    if (loteForStatus) {
+      setIsChangingStatus(true);
+      await onStatusChange(loteForStatus.id, newStatus);
+      setIsChangingStatus(false);
+      setShowStatusManager(false);
+      setLoteForStatus(null);
+    }
   };
   if (loading) {
     return (
@@ -233,11 +256,18 @@ export const LotesList = ({ lotes, loading, onEdit, onView, onDelete }: LotesLis
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => onEdit(lote)}
+                onClick={() => handleStatusClick(lote)}
                 className="flex-1"
               >
-                <Edit className="w-4 h-4 mr-1" />
-                Editar
+                <Settings className="w-4 h-4 mr-1" />
+                Estado
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onEdit(lote)}
+              >
+                <Edit className="w-4 h-4" />
               </Button>
               <Button
                 variant="outline"
@@ -272,6 +302,22 @@ export const LotesList = ({ lotes, loading, onEdit, onView, onDelete }: LotesLis
         variant="destructive"
         isLoading={isDeleting}
       />
+
+      {/* Modal de gestión de estado */}
+      <Dialog open={showStatusManager} onOpenChange={setShowStatusManager}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Gestionar Estado del Lote</DialogTitle>
+          </DialogHeader>
+          {loteForStatus && (
+            <LoteStatusManager
+              lote={loteForStatus}
+              onStatusChange={handleStatusChangeSubmit}
+              loading={isChangingStatus}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
