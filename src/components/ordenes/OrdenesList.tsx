@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useOrdenes } from '@/hooks/useOrdenes';
 import { useAuth } from '@/hooks/useAuth';
 import { useProductos } from '@/hooks/useProductos';
@@ -10,8 +10,10 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CalificarOrden } from '@/components/calificaciones/CalificarOrden';
 import { OrdenChat } from '@/components/ordenes/OrdenChat';
+import { OrdenTimeline } from '@/components/ordenes/OrdenTimeline';
+import { OrdenesFilters } from '@/components/ordenes/OrdenesFilters';
 import { UserProfileLink } from '@/components/user/UserProfileLink';
-import { Loader2 } from 'lucide-react';
+import { Loader2, CheckCircle2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
@@ -54,6 +56,8 @@ export const OrdenesList: React.FC = () => {
     getProfileById
   } = useProfiles();
   const [profiles, setProfiles] = useState<Record<string, any>>({});
+  const [solicitanteFilter, setSolicitanteFilter] = useState('todas');
+  const [proveedorFilter, setProveedorFilter] = useState('todas');
   const handleStatusUpdate = async (ordenId: string, newStatus: string) => {
     await updateOrden(ordenId, {
       estado: newStatus as any
@@ -104,6 +108,35 @@ export const OrdenesList: React.FC = () => {
   const getProviderProfile = (userId: string) => {
     return profiles[userId] || null;
   };
+
+  // Filter orders based on status
+  const filteredSolicitante = useMemo(() => {
+    if (solicitanteFilter === 'todas') return ordenesComoSolicitante;
+    return ordenesComoSolicitante.filter(orden => orden.estado === solicitanteFilter);
+  }, [ordenesComoSolicitante, solicitanteFilter]);
+
+  const filteredProveedor = useMemo(() => {
+    if (proveedorFilter === 'todas') return ordenesComoProveedor;
+    return ordenesComoProveedor.filter(orden => orden.estado === proveedorFilter);
+  }, [ordenesComoProveedor, proveedorFilter]);
+
+  // Calculate counts for filters
+  const solicitanteCounts = useMemo(() => ({
+    todas: ordenesComoSolicitante.length,
+    pendiente: ordenesComoSolicitante.filter(o => o.estado === 'pendiente').length,
+    aceptada: ordenesComoSolicitante.filter(o => o.estado === 'aceptada').length,
+    completada: ordenesComoSolicitante.filter(o => o.estado === 'completada').length,
+    cancelada: ordenesComoSolicitante.filter(o => o.estado === 'cancelada').length,
+  }), [ordenesComoSolicitante]);
+
+  const proveedorCounts = useMemo(() => ({
+    todas: ordenesComoProveedor.length,
+    pendiente: ordenesComoProveedor.filter(o => o.estado === 'pendiente').length,
+    aceptada: ordenesComoProveedor.filter(o => o.estado === 'aceptada').length,
+    completada: ordenesComoProveedor.filter(o => o.estado === 'completada').length,
+    cancelada: ordenesComoProveedor.filter(o => o.estado === 'cancelada').length,
+  }), [ordenesComoProveedor]);
+
   if (loading) {
     return <div className="flex items-center justify-center py-8">
         <Loader2 className="h-8 w-8 animate-spin" />
@@ -120,13 +153,18 @@ export const OrdenesList: React.FC = () => {
     const canRate = !isProvider && orden.estado === 'completada';
     const requesterProfile = isProvider ? getRequesterProfile(orden.solicitante_id) : null;
     const providerProfile = !isProvider ? getProviderProfile(orden.proveedor_id) : null;
+    const isCompleted = orden.estado === 'completada';
 
     // Validate phone number - only allow numbers, spaces, hyphens, parentheses, and + sign
     const isValidPhone = (phone: string) => /^[\d\s\-\(\)\+]+$/.test(phone);
-    return <Card key={orden.id} className="overflow-hidden">
+    return <Card key={orden.id} className={cn(
+        "overflow-hidden",
+        isCompleted && "border-blue-200 bg-blue-50/30"
+      )}>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <div className="flex items-center gap-2">
             <Badge className={getStatusColor(orden.estado)}>
+              {isCompleted && <CheckCircle2 className="h-3 w-3 mr-1" />}
               {getStatusText(orden.estado)}
             </Badge>
             <span className="text-sm text-muted-foreground">
@@ -160,6 +198,11 @@ export const OrdenesList: React.FC = () => {
         </CardHeader>
 
         <CardContent className="space-y-4">
+          {/* Timeline for completed or cancelled orders */}
+          {(orden.estado === 'completada' || orden.estado === 'cancelada') && (
+            <OrdenTimeline orden={orden} />
+          )}
+
           {/* Item name with larger, more prominent font */}
           <div className="space-y-2">
             <p className="text-lg font-semibold text-foreground">
@@ -237,19 +280,37 @@ export const OrdenesList: React.FC = () => {
         </TabsList>
         
         <TabsContent value="solicitudes" className="space-y-4">
-          {ordenesComoSolicitante.length === 0 ? <Card>
-              <CardContent className="p-6 text-center text-gray-500">
-                No has realizado ninguna solicitud aún.
+          <OrdenesFilters
+            selectedStatus={solicitanteFilter}
+            onStatusChange={setSolicitanteFilter}
+            counts={solicitanteCounts}
+          />
+          
+          {filteredSolicitante.length === 0 ? <Card>
+              <CardContent className="p-6 text-center text-muted-foreground">
+                {solicitanteFilter === 'todas' 
+                  ? 'No has realizado ninguna solicitud aún.'
+                  : `No hay órdenes ${getStatusText(solicitanteFilter).toLowerCase()}.`
+                }
               </CardContent>
-            </Card> : ordenesComoSolicitante.map(orden => <OrdenCard key={orden.id} orden={orden} />)}
+            </Card> : filteredSolicitante.map(orden => <OrdenCard key={orden.id} orden={orden} />)}
         </TabsContent>
         
         <TabsContent value="recibidas" className="space-y-4">
-          {ordenesComoProveedor.length === 0 ? <Card>
-              <CardContent className="p-6 text-center text-gray-500">
-                No has recibido ninguna solicitud aún.
+          <OrdenesFilters
+            selectedStatus={proveedorFilter}
+            onStatusChange={setProveedorFilter}
+            counts={proveedorCounts}
+          />
+          
+          {filteredProveedor.length === 0 ? <Card>
+              <CardContent className="p-6 text-center text-muted-foreground">
+                {proveedorFilter === 'todas'
+                  ? 'No has recibido ninguna solicitud aún.'
+                  : `No hay órdenes ${getStatusText(proveedorFilter).toLowerCase()}.`
+                }
               </CardContent>
-            </Card> : ordenesComoProveedor.map(orden => <OrdenCard key={orden.id} orden={orden} isProvider />)}
+            </Card> : filteredProveedor.map(orden => <OrdenCard key={orden.id} orden={orden} isProvider />)}
         </TabsContent>
       </Tabs>
     </div>;
