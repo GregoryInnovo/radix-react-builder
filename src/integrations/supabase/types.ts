@@ -608,7 +608,12 @@ export type Database = {
       }
     }
     Enums: {
-      batch_status: "disponible" | "reservado" | "recogido" | "cancelado"
+      batch_status:
+        | "disponible"
+        | "reservado"
+        | "recogido"
+        | "cancelado"
+        | "no_disponible"
       item_type: "lote" | "producto"
       order_status: "pendiente" | "aceptada" | "completada" | "cancelada"
       roa_type:
@@ -745,7 +750,13 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      batch_status: ["disponible", "reservado", "recogido", "cancelado"],
+      batch_status: [
+        "disponible",
+        "reservado",
+        "recogido",
+        "cancelado",
+        "no_disponible",
+      ],
       item_type: ["lote", "producto"],
       order_status: ["pendiente", "aceptada", "completada", "cancelada"],
       roa_type: [

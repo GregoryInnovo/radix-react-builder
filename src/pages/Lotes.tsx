@@ -55,14 +55,9 @@ const Lotes = () => {
     }
   };
 
-  const handleStatusChange = async (newStatus: BatchStatus) => {
-    if (!viewingLote) return;
-    
+  const handleStatusChange = async (loteId: string, newStatus: BatchStatus) => {
     try {
-      const result = await updateLoteStatus(viewingLote.id, newStatus);
-      if (result) {
-        setViewingLote(result);
-      }
+      await updateLoteStatus(loteId, newStatus);
     } catch (error) {
       // Error ya manejado en el hook
     }
@@ -116,7 +111,11 @@ const Lotes = () => {
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <LoteStatusManager
                   lote={viewingLote}
-                  onStatusChange={handleStatusChange}
+                  onStatusChange={async (newStatus) => {
+                    await handleStatusChange(viewingLote.id, newStatus);
+                    const result = await updateLoteStatus(viewingLote.id, newStatus);
+                    if (result) setViewingLote(result);
+                  }}
                   loading={loading}
                 />
                 <LoteStatusHistory loteId={viewingLote.id} />
@@ -169,6 +168,7 @@ const Lotes = () => {
                     onEdit={handleEdit}
                     onView={handleView}
                     onDelete={handleDelete}
+                    onStatusChange={handleStatusChange}
                   />
                 </TabsContent>
               </Tabs>
