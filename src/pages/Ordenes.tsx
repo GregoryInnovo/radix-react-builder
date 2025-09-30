@@ -2,7 +2,6 @@
 import React, { useMemo } from 'react';
 import { Header } from '@/components/layout/Header';
 import { OrdenesList } from '@/components/ordenes/OrdenesList';
-import { OrdenesStats } from '@/components/ordenes/OrdenesStats';
 import { useAuth } from '@/hooks/useAuth';
 import { useOrdenes } from '@/hooks/useOrdenes';
 import { Card, CardContent } from '@/components/ui/card';
@@ -12,19 +11,7 @@ import { Loader2 } from 'lucide-react';
 
 const Ordenes = () => {
   const { isAuthenticated } = useAuth();
-  const { ordenesComoSolicitante, ordenesComoProveedor, loading } = useOrdenes();
-
-  // Calculate stats from all orders (both as requester and provider)
-  const stats = useMemo(() => {
-    const allOrders = [...ordenesComoSolicitante, ...ordenesComoProveedor];
-    return {
-      total: allOrders.length,
-      pendientes: allOrders.filter(o => o.estado === 'pendiente').length,
-      aceptadas: allOrders.filter(o => o.estado === 'aceptada').length,
-      completadas: allOrders.filter(o => o.estado === 'completada').length,
-      canceladas: allOrders.filter(o => o.estado === 'cancelada').length,
-    };
-  }, [ordenesComoSolicitante, ordenesComoProveedor]);
+  const { loading } = useOrdenes();
 
   if (!isAuthenticated) {
     return (
@@ -66,10 +53,7 @@ const Ordenes = () => {
               <Loader2 className="h-8 w-8 animate-spin" />
             </div>
           ) : (
-            <>
-              <OrdenesStats {...stats} />
-              <OrdenesList />
-            </>
+            <OrdenesList />
           )}
         </div>
       </div>

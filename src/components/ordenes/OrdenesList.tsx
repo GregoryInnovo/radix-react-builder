@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CalificarOrden } from '@/components/calificaciones/CalificarOrden';
 import { OrdenChat } from '@/components/ordenes/OrdenChat';
 import { OrdenTimeline } from '@/components/ordenes/OrdenTimeline';
-import { OrdenesFilters } from '@/components/ordenes/OrdenesFilters';
+import { OrdenesStats } from '@/components/ordenes/OrdenesStats';
 import { UserProfileLink } from '@/components/user/UserProfileLink';
 import { Loader2, CheckCircle2 } from 'lucide-react';
 import { format } from 'date-fns';
@@ -294,10 +294,14 @@ export const OrdenesList: React.FC = () => {
         </TabsList>
         
         <TabsContent value="solicitudes" className="space-y-4">
-          <OrdenesFilters
+          <OrdenesStats
+            total={solicitanteCounts.todas}
+            pendientes={solicitanteCounts.pendiente}
+            aceptadas={solicitanteCounts.aceptada}
+            completadas={solicitanteCounts.completada}
+            canceladas={solicitanteCounts.cancelada}
             selectedStatus={solicitanteFilter}
             onStatusChange={setSolicitanteFilter}
-            counts={solicitanteCounts}
           />
           
           {filteredSolicitante.length === 0 ? <Card>
@@ -311,10 +315,14 @@ export const OrdenesList: React.FC = () => {
         </TabsContent>
         
         <TabsContent value="recibidas" className="space-y-4">
-          <OrdenesFilters
+          <OrdenesStats
+            total={proveedorCounts.todas}
+            pendientes={proveedorCounts.pendiente}
+            aceptadas={proveedorCounts.aceptada}
+            completadas={proveedorCounts.completada}
+            canceladas={proveedorCounts.cancelada}
             selectedStatus={proveedorFilter}
             onStatusChange={setProveedorFilter}
-            counts={proveedorCounts}
           />
           
           {filteredProveedor.length === 0 ? <Card>
