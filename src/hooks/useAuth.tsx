@@ -78,7 +78,7 @@ export const useAuth = () => {
         return { data: null, error: { message: "User suspended" } };
       }
 
-      const redirectUrl = `${window.location.origin}/`;
+      const redirectUrl = `${window.location.origin}/auth`;
       console.log('Iniciando registro para:', email, 'con redirect:', redirectUrl);
       
       // Normalizar userType para que coincida con la restricción de BD
@@ -245,7 +245,7 @@ export const useAuth = () => {
         type: 'signup',
         email,
         options: {
-          emailRedirectTo: `${window.location.origin}/`
+          emailRedirectTo: `${window.location.origin}/auth`
         }
       });
 
