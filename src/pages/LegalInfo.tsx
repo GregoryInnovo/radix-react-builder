@@ -1,4 +1,4 @@
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Header } from '@/components/layout/Header';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -12,6 +12,7 @@ import { ArrowLeft } from 'lucide-react';
 
 export default function LegalInfo() {
   const location = useLocation();
+  const navigate = useNavigate();
   const isTerminos = location.pathname === '/terminos';
 
   const title = isTerminos ? 'Términos y Condiciones' : 'Tratamiento de Datos Personales';
@@ -24,7 +25,7 @@ export default function LegalInfo() {
       <main className="container max-w-4xl mx-auto px-4 py-8">
         <Button
           variant="ghost"
-          onClick={() => window.history.back()}
+          onClick={() => navigate('/auth?mode=register')}
           className="mb-6"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />

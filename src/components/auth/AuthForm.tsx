@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ConfirmModal } from '@/components/ui/confirm-modal';
-import { Leaf, Mail, Lock, User, Factory, Recycle, Users } from 'lucide-react';
+import { Leaf, Mail, Lock, User, Factory, Recycle, Users, AlertCircle } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { cn } from '@/lib/utils';
 
@@ -23,6 +23,13 @@ export const AuthForm = ({ mode, onToggleMode }: AuthFormProps) => {
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [showResend, setShowResend] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
+  const [errors, setErrors] = useState({
+    fullName: '',
+    email: '',
+    password: '',
+    userType: '',
+    terms: ''
+  });
   
   const { signIn, signUp, resendConfirmation, loading } = useAuth();
 
@@ -32,19 +39,62 @@ export const AuthForm = ({ mode, onToggleMode }: AuthFormProps) => {
     { id: 'citizen', label: 'Consumidor', icon: Users, description: 'Compro productos transformados' }
   ];
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const validateForm = () => {
+    const newErrors = {
+      fullName: '',
+      email: '',
+      password: '',
+      userType: '',
+      terms: ''
+    };
+    
+    let isValid = true;
     
     if (mode === 'register') {
       if (!fullName.trim()) {
-        return;
+        newErrors.fullName = 'El nombre completo es obligatorio';
+        isValid = false;
       }
+      
       if (!selectedUserType) {
-        return;
+        newErrors.userType = 'Debes seleccionar un tipo de usuario';
+        isValid = false;
       }
+      
       if (!acceptedTerms) {
-        return;
+        newErrors.terms = 'Debes aceptar los términos para continuar';
+        isValid = false;
       }
+    }
+    
+    if (!email.trim()) {
+      newErrors.email = 'El correo electrónico es obligatorio';
+      isValid = false;
+    } else if (!/\S+@\S+\.\S+/.test(email)) {
+      newErrors.email = 'El correo electrónico no es válido';
+      isValid = false;
+    }
+    
+    if (!password.trim()) {
+      newErrors.password = 'La contraseña es obligatoria';
+      isValid = false;
+    } else if (password.length < 6) {
+      newErrors.password = 'La contraseña debe tener al menos 6 caracteres';
+      isValid = false;
+    }
+    
+    setErrors(newErrors);
+    return isValid;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!validateForm()) {
+      return;
+    }
+    
+    if (mode === 'register') {
       setShowConfirmation(true);
     } else {
       await signIn(email, password);
@@ -136,22 +186,33 @@ export const AuthForm = ({ mode, onToggleMode }: AuthFormProps) => {
             </div>
           ) : (
             <>
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <form onSubmit={handleSubmit} noValidate className="space-y-4">
                 {mode === 'register' && (
                   <div className="space-y-2">
                     <Label htmlFor="fullName" className="text-sm font-medium text-gray-700">
                       Nombre completo
                     </Label>
+                    {errors.fullName && (
+                      <div className="text-sm text-red-600 bg-red-50 p-2 rounded border border-red-200 flex items-center gap-2">
+                        <AlertCircle className="h-4 w-4" />
+                        {errors.fullName}
+                      </div>
+                    )}
                     <div className="relative">
                       <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                       <Input
                         id="fullName"
                         type="text"
                         value={fullName}
-                        onChange={(e) => setFullName(e.target.value)}
+                        onChange={(e) => {
+                          setFullName(e.target.value);
+                          setErrors(prev => ({ ...prev, fullName: '' }));
+                        }}
                         placeholder="Tu nombre completo"
-                        className="pl-10 border-gray-200 focus:border-green-500 focus:ring-green-500"
-                        required
+                        className={cn(
+                          "pl-10 border-gray-200 focus:border-green-500 focus:ring-green-500",
+                          errors.fullName && "border-red-500"
+                        )}
                       />
                     </div>
                   </div>
@@ -161,16 +222,27 @@ export const AuthForm = ({ mode, onToggleMode }: AuthFormProps) => {
                   <Label htmlFor="email" className="text-sm font-medium text-gray-700">
                     Correo electrónico
                   </Label>
+                  {errors.email && (
+                    <div className="text-sm text-red-600 bg-red-50 p-2 rounded border border-red-200 flex items-center gap-2">
+                      <AlertCircle className="h-4 w-4" />
+                      {errors.email}
+                    </div>
+                  )}
                   <div className="relative">
                     <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                     <Input
                       id="email"
                       type="email"
                       value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+                      onChange={(e) => {
+                        setEmail(e.target.value);
+                        setErrors(prev => ({ ...prev, email: '' }));
+                      }}
                       placeholder="tu@email.com"
-                      className="pl-10 border-gray-200 focus:border-green-500 focus:ring-green-500"
-                      required
+                      className={cn(
+                        "pl-10 border-gray-200 focus:border-green-500 focus:ring-green-500",
+                        errors.email && "border-red-500"
+                      )}
                     />
                   </div>
                 </div>
@@ -179,20 +251,30 @@ export const AuthForm = ({ mode, onToggleMode }: AuthFormProps) => {
                     <Label htmlFor="password" className="text-sm font-medium text-gray-700">
                       Contraseña
                     </Label>
+                    {errors.password && (
+                      <div className="text-sm text-red-600 bg-red-50 p-2 rounded border border-red-200 flex items-center gap-2">
+                        <AlertCircle className="h-4 w-4" />
+                        {errors.password}
+                      </div>
+                    )}
                     <div className="relative">
                       <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                       <Input
                         id="password"
                         type="password"
                         value={password}
-                        onChange={(e) => setPassword(e.target.value)}
+                        onChange={(e) => {
+                          setPassword(e.target.value);
+                          setErrors(prev => ({ ...prev, password: '' }));
+                        }}
                         placeholder="Tu contraseña"
-                        className="pl-10 border-gray-200 focus:border-green-500 focus:ring-green-500"
-                        required
-                        minLength={6}
+                        className={cn(
+                          "pl-10 border-gray-200 focus:border-green-500 focus:ring-green-500",
+                          errors.password && "border-red-500"
+                        )}
                       />
                     </div>
-                    {mode === 'register' && (
+                    {mode === 'register' && !errors.password && (
                       <p className="text-xs text-gray-500">
                         Mínimo 6 caracteres
                       </p>
@@ -204,6 +286,12 @@ export const AuthForm = ({ mode, onToggleMode }: AuthFormProps) => {
                       <Label className="text-sm font-medium text-gray-700">
                         Tipo de usuario
                       </Label>
+                      {errors.userType && (
+                        <div className="text-sm text-red-600 bg-red-50 p-2 rounded border border-red-200 flex items-center gap-2">
+                          <AlertCircle className="h-4 w-4" />
+                          {errors.userType}
+                        </div>
+                      )}
                       <div className="grid grid-cols-1 gap-2">
                         {userTypes.map((type) => {
                           const Icon = type.icon;
@@ -211,7 +299,10 @@ export const AuthForm = ({ mode, onToggleMode }: AuthFormProps) => {
                             <button
                               key={type.id}
                               type="button"
-                              onClick={() => setSelectedUserType(type.id)}
+                              onClick={() => {
+                                setSelectedUserType(type.id);
+                                setErrors(prev => ({ ...prev, userType: '' }));
+                              }}
                               className={cn(
                                 "p-3 border rounded-lg text-left transition-all duration-200 hover:border-green-300",
                                 selectedUserType === type.id
@@ -243,47 +334,56 @@ export const AuthForm = ({ mode, onToggleMode }: AuthFormProps) => {
                           );
                         })}
                       </div>
-                      {mode === 'register' && !selectedUserType && (
-                        <p className="text-xs text-red-500">
-                          Selecciona un tipo de usuario
-                        </p>
-                      )}
                     </div>
                   )}
 
                   {mode === 'register' && (
-                    <div className="flex items-start space-x-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
-                      <Checkbox
-                        id="terms"
-                        checked={acceptedTerms}
-                        onCheckedChange={(checked) => setAcceptedTerms(checked === true)}
-                        className="mt-0.5"
-                      />
-                      <div className="space-y-1 leading-none">
-                        <label
-                          htmlFor="terms"
-                          className="text-sm font-medium text-gray-700 cursor-pointer"
-                        >
-                          Acepto los{' '}
-                          <a 
-                            href="/terminos" 
-                            target="_blank" 
-                            className="text-green-600 hover:text-green-700 underline"
+                    <div className="space-y-2">
+                      {errors.terms && (
+                        <div className="text-sm text-red-600 bg-red-50 p-2 rounded border border-red-200 flex items-center gap-2">
+                          <AlertCircle className="h-4 w-4" />
+                          {errors.terms}
+                        </div>
+                      )}
+                      <div className={cn(
+                        "flex items-start space-x-2 p-3 bg-gray-50 rounded-lg border",
+                        errors.terms ? "border-red-500" : "border-gray-200"
+                      )}>
+                        <Checkbox
+                          id="terms"
+                          checked={acceptedTerms}
+                          onCheckedChange={(checked) => {
+                            setAcceptedTerms(checked === true);
+                            setErrors(prev => ({ ...prev, terms: '' }));
+                          }}
+                          className="mt-0.5"
+                        />
+                        <div className="space-y-1 leading-none">
+                          <label
+                            htmlFor="terms"
+                            className="text-sm font-medium text-gray-700 cursor-pointer"
                           >
-                            Términos y Condiciones
-                          </a>
-                          {' '}y el{' '}
-                          <a 
-                            href="/tratamiento-datos" 
-                            target="_blank" 
-                            className="text-green-600 hover:text-green-700 underline"
-                          >
-                            Tratamiento de Datos Personales
-                          </a>
-                        </label>
-                        <p className="text-xs text-gray-500">
-                          Es obligatorio aceptar para poder registrarte
-                        </p>
+                            Acepto los{' '}
+                            <a 
+                              href="/terminos" 
+                              target="_blank" 
+                              className="text-green-600 hover:text-green-700 underline"
+                            >
+                              Términos y Condiciones
+                            </a>
+                            {' '}y el{' '}
+                            <a 
+                              href="/tratamiento-datos" 
+                              target="_blank" 
+                              className="text-green-600 hover:text-green-700 underline"
+                            >
+                              Tratamiento de Datos Personales
+                            </a>
+                          </label>
+                          <p className="text-xs text-gray-500">
+                            Es obligatorio aceptar para poder registrarte
+                          </p>
+                        </div>
                       </div>
                     </div>
                   )}

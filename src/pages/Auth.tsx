@@ -1,11 +1,15 @@
 
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { AuthForm } from '@/components/auth/AuthForm';
 import { useAuth } from '@/hooks/useAuth';
 
 const Auth = () => {
-  const [mode, setMode] = useState<'login' | 'register'>('login');
+  const [searchParams] = useSearchParams();
+  const modeParam = searchParams.get('mode');
+  const [mode, setMode] = useState<'login' | 'register'>(
+    modeParam === 'register' ? 'register' : 'login'
+  );
   const { isAuthenticated, isEmailVerified, loading } = useAuth();
   const navigate = useNavigate();
 
