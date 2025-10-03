@@ -17,6 +17,7 @@ import UserLotes from "./pages/UserLotes";
 import Guias from "./pages/Guias";
 import GuiaDetalle from "./pages/GuiaDetalle";
 import GuiaForm from "./pages/GuiaForm";
+import LegalInfo from "./pages/LegalInfo";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -42,6 +43,8 @@ function App() {
               <Route path="/perfil/:userId" element={<UserProfile />} />
               <Route path="/perfil/:userId/productos" element={<UserProducts />} />
               <Route path="/perfil/:userId/lotes" element={<UserLotes />} />
+              <Route path="/terminos" element={<LegalInfo />} />
+              <Route path="/tratamiento-datos" element={<LegalInfo />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
