@@ -114,16 +114,16 @@ export const GuiasFilters = ({
           <div className="space-y-2">
             <label className="text-sm font-medium">Categoría</label>
             <Select
-              value={categoria || ""}
+              value={categoria || "all"}
               onValueChange={(value) => 
-                onCategoriaChange(value === "" ? undefined : value as GuiaCategoria)
+                onCategoriaChange(value === "all" ? undefined : value as GuiaCategoria)
               }
             >
               <SelectTrigger>
                 <SelectValue placeholder="Todas las categorías" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todas las categorías</SelectItem>
+                <SelectItem value="all">Todas las categorías</SelectItem>
                 {categoriaOptions.map((option) => (
                   <SelectItem key={option.value} value={option.value}>
                     {option.label}
@@ -136,16 +136,16 @@ export const GuiasFilters = ({
           <div className="space-y-2">
             <label className="text-sm font-medium">Tipo</label>
             <Select
-              value={tipo || ""}
+              value={tipo || "all"}
               onValueChange={(value) => 
-                onTipoChange(value === "" ? undefined : value as GuiaType)
+                onTipoChange(value === "all" ? undefined : value as GuiaType)
               }
             >
               <SelectTrigger>
                 <SelectValue placeholder="Todos los tipos" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todos los tipos</SelectItem>
+                <SelectItem value="all">Todos los tipos</SelectItem>
                 {tipoOptions.map((option) => (
                   <SelectItem key={option.value} value={option.value}>
                     {option.label}
@@ -158,16 +158,16 @@ export const GuiasFilters = ({
           <div className="space-y-2">
             <label className="text-sm font-medium">Nivel</label>
             <Select
-              value={nivel || ""}
+              value={nivel || "all"}
               onValueChange={(value) => 
-                onNivelChange(value === "" ? undefined : value as GuiaNivel)
+                onNivelChange(value === "all" ? undefined : value as GuiaNivel)
               }
             >
               <SelectTrigger>
                 <SelectValue placeholder="Todos los niveles" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todos los niveles</SelectItem>
+                <SelectItem value="all">Todos los niveles</SelectItem>
                 {nivelOptions.map((option) => (
                   <SelectItem key={option.value} value={option.value}>
                     {option.label}

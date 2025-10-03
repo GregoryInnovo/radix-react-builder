@@ -213,14 +213,14 @@ export const ProductForm: React.FC<ProductFormProps> = ({ onSuccess, onCancel })
           <div className="space-y-2">
             <Label htmlFor="origen_roa">Origen del R.O.A (Opcional)</Label>
             <Select 
-              value={formData.origen_roa} 
-              onValueChange={(value) => handleInputChange('origen_roa', value)}
+              value={formData.origen_roa || "__none__"} 
+              onValueChange={(value) => handleInputChange('origen_roa', value === "__none__" ? "" : value)}
             >
               <SelectTrigger>
                 <SelectValue placeholder={loadingTipos ? "Cargando..." : "Selecciona el tipo de R.O.A (opcional)"} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Ninguno</SelectItem>
+                <SelectItem value="__none__">Ninguno</SelectItem>
                 {(tiposResiduos || [])
                   .sort((a, b) => {
                     if (a.nombre.toLowerCase().includes('otros')) return 1;
