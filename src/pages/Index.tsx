@@ -238,8 +238,8 @@ Hay usuarios generadores de estos residuos, quienes los transforman y quienes co
             <div>
               <h4 className="font-semibold mb-4">Legal</h4>
               <ul className="space-y-2 text-gray-400">
-                <li><a href="#" className="hover:text-white">Términos de Uso</a></li>
-                <li><a href="#" className="hover:text-white">Política de Privacidad</a></li>
+                <li><Link to="/terminos" className="hover:text-white">Términos de Uso</Link></li>
+                <li><Link to="/tratamiento-datos" className="hover:text-white">Tratamiento de Datos Personales</Link></li>
                 <li><a href="#" className="hover:text-white">Cookies</a></li>
               </ul>
             </div>
