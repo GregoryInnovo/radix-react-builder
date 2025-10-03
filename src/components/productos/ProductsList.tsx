@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -8,7 +8,6 @@ import { ProductImageGallery } from './ProductImageGallery';
 import { ProductDetailsModal } from './ProductDetailsModal';
 import { ProveedorInfo } from './ProveedorInfo';
 import { useProductos } from '@/hooks/useProductos';
-import { useProfiles } from '@/hooks/useProfiles';
 import { useAuth } from '@/hooks/useAuth';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -17,18 +16,17 @@ type Producto = Database['public']['Tables']['productos']['Row'];
 interface ProductsListProps {
   productos: Producto[];
   showOwnerActions: boolean;
+  profiles?: Record<string, any>;
 }
 export const ProductsList: React.FC<ProductsListProps> = ({
   productos,
-  showOwnerActions
+  showOwnerActions,
+  profiles = {}
 }) => {
   const {
     updateProducto,
     deleteProducto
   } = useProductos();
-  const {
-    getMultipleProfiles
-  } = useProfiles();
   const {
     user
   } = useAuth();
@@ -36,20 +34,6 @@ export const ProductsList: React.FC<ProductsListProps> = ({
   const [selectedProduct, setSelectedProduct] = useState<Producto | null>(null);
   const [isGalleryOpen, setIsGalleryOpen] = useState(false);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
-  const [profiles, setProfiles] = useState<Map<string, any>>(new Map());
-  useEffect(() => {
-    if (!showOwnerActions && productos.length > 0) {
-      const userIds = [...new Set(productos.map(p => p.user_id))];
-      getMultipleProfiles(userIds).then(profilesData => {
-        const profilesMap = new Map();
-        profilesData.forEach(profile => {
-          profilesMap.set(profile.id, profile);
-        });
-        setProfiles(profilesMap);
-      });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [productos, showOwnerActions]);
   const handleViewImages = (producto: Producto) => {
     setSelectedProduct(producto);
     setIsGalleryOpen(true);
@@ -95,7 +79,7 @@ export const ProductsList: React.FC<ProductsListProps> = ({
       {productos.map(producto => <Card key={producto.id} className="hover:shadow-lg transition-shadow">
           <CardHeader>
             {/* Mostrar información del proveedor solo en productos públicos */}
-            {!showOwnerActions && profiles.get(producto.user_id) && <ProveedorInfo profile={profiles.get(producto.user_id)} />}
+            {!showOwnerActions && profiles[producto.user_id] && <ProveedorInfo profile={profiles[producto.user_id]} />}
             
             <div className="flex justify-between items-start">
               <CardTitle 
@@ -212,7 +196,7 @@ export const ProductsList: React.FC<ProductsListProps> = ({
             setSelectedProduct(null);
           }} 
           producto={selectedProduct} 
-          userProfile={profiles.get(selectedProduct.user_id)}
+          userProfile={profiles[selectedProduct.user_id]}
         />
       )}
     </div>;

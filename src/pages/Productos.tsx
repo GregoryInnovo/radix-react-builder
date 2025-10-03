@@ -163,7 +163,7 @@ const Productos = () => {
                           Limpiar filtros
                         </Button>}
                     </div>
-                    <ProductsList productos={filteredProductos} showOwnerActions={false} />
+                    <ProductsList productos={filteredProductos} showOwnerActions={false} profiles={profiles} />
                   </TabsContent>
 
                   <TabsContent value="my-products" className="space-y-6">
@@ -175,7 +175,7 @@ const Productos = () => {
                           Limpiar filtros
                         </Button>}
                     </div>
-                    <ProductsList productos={filteredProductos} showOwnerActions={true} />
+                    <ProductsList productos={filteredProductos} showOwnerActions={true} profiles={profiles} />
                   </TabsContent>
                 </Tabs>
               </div>
