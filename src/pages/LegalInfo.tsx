@@ -2,32 +2,19 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { Header } from '@/components/layout/Header';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/components/ui/accordion';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { ArrowLeft } from 'lucide-react';
-
 export default function LegalInfo() {
   const location = useLocation();
   const navigate = useNavigate();
   const isTerminos = location.pathname === '/terminos';
-
   const title = isTerminos ? 'Términos y Condiciones' : 'Tratamiento de Datos Personales';
   const lastUpdated = '1 de Enero de 2025';
-
-  return (
-    <div className="min-h-screen bg-background">
+  return <div className="min-h-screen bg-background">
       <Header />
       
       <main className="container max-w-4xl mx-auto px-4 py-8">
-        <Button
-          variant="ghost"
-          onClick={() => navigate('/auth?mode=register')}
-          className="mb-6"
-        >
+        <Button variant="ghost" onClick={() => navigate('/auth?mode=register')} className="mb-6">
           <ArrowLeft className="h-4 w-4 mr-2" />
           Volver
         </Button>
@@ -43,8 +30,7 @@ export default function LegalInfo() {
               </p>
             </div>
 
-            {isTerminos ? (
-              <Accordion type="single" collapsible className="w-full">
+            {isTerminos ? <Accordion type="single" collapsible className="w-full">
                 <AccordionItem value="item-1">
                   <AccordionTrigger>1. Aceptación de los Términos</AccordionTrigger>
                   <AccordionContent>
@@ -114,7 +100,7 @@ export default function LegalInfo() {
                     </p>
                     <ul className="list-disc list-inside space-y-2 text-muted-foreground ml-4">
                       <li>Daños directos, indirectos, incidentales o consecuentes derivados del uso del servicio</li>
-                      <li>La calidad, seguridad o legalidad de los residuos intercambiados</li>
+                      <li>La calidad, integridad o seguridad  de los residuos intercambiados</li>
                       <li>Interrupciones del servicio o pérdida de datos</li>
                       <li>Acciones u omisiones de los usuarios de la plataforma</li>
                     </ul>
@@ -142,9 +128,7 @@ export default function LegalInfo() {
                     </p>
                   </AccordionContent>
                 </AccordionItem>
-              </Accordion>
-            ) : (
-              <Accordion type="single" collapsible className="w-full">
+              </Accordion> : <Accordion type="single" collapsible className="w-full">
                 <AccordionItem value="item-1">
                   <AccordionTrigger>1. Responsable del Tratamiento</AccordionTrigger>
                   <AccordionContent>
@@ -251,8 +235,7 @@ export default function LegalInfo() {
                     </p>
                   </AccordionContent>
                 </AccordionItem>
-              </Accordion>
-            )}
+              </Accordion>}
 
             <div className="mt-8 pt-6 border-t">
               <p className="text-sm text-muted-foreground">
@@ -263,6 +246,5 @@ export default function LegalInfo() {
           </div>
         </Card>
       </main>
-    </div>
-  );
+    </div>;
 }
