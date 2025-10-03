@@ -15,7 +15,7 @@ type Producto = Database['public']['Tables']['productos']['Row'];
 interface ProductDetailsModalProps {
   isOpen: boolean;
   onClose: () => void;
-  producto: Producto;
+  producto?: Producto | null;
   userProfile?: any;
 }
 
@@ -27,13 +27,16 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
 }) => {
   const [showImageGallery, setShowImageGallery] = useState(false);
   const { user } = useAuth();
+  
+  // Guard: don't render if no producto
+  if (!isOpen || !producto) return null;
+  
   const isOwner = user?.id === producto.user_id;
-
   const images = producto.imagenes || [];
 
   return (
     <>
-      <Dialog open={isOpen} onOpenChange={onClose}>
+      <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
         <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <div className="flex items-start justify-between">

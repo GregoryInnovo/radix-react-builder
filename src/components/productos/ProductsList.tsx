@@ -204,11 +204,16 @@ export const ProductsList: React.FC<ProductsListProps> = ({
       <ProductImageGallery isOpen={isGalleryOpen} onClose={() => setIsGalleryOpen(false)} images={selectedProduct?.imagenes || []} productTitle={selectedProduct?.nombre || ''} />
       
       {/* Modal de detalles del producto */}
-      <ProductDetailsModal 
-        isOpen={isDetailsOpen} 
-        onClose={() => setIsDetailsOpen(false)} 
-        producto={selectedProduct!} 
-        userProfile={selectedProduct ? profiles.get(selectedProduct.user_id) : undefined}
-      />
+      {selectedProduct && (
+        <ProductDetailsModal 
+          isOpen={isDetailsOpen} 
+          onClose={() => {
+            setIsDetailsOpen(false);
+            setSelectedProduct(null);
+          }} 
+          producto={selectedProduct} 
+          userProfile={profiles.get(selectedProduct.user_id)}
+        />
+      )}
     </div>;
 };
