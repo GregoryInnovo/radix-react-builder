@@ -125,7 +125,7 @@ const Lotes = () => {
             <div className="space-y-6">
               <div>
                 <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                  Lotes de ROA
+                  Lotes de R.O.A
                 </h1>
                 <p className="text-gray-600">
                   Gestiona tus lotes o explora todos los lotes públicos disponibles
@@ -146,7 +146,7 @@ const Lotes = () => {
                   <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div>
                       <h2 className="text-xl font-semibold text-gray-900 mb-1">
-                        Mis Lotes de ROA
+                        Mis Lotes de R.O.A
                       </h2>
                       <p className="text-gray-600">
                         Gestiona tus residuos orgánicos aprovechables

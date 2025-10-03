@@ -159,13 +159,13 @@ export const LoteForm = ({ lote, onSubmit, loading, onCancel }: LoteFormProps) =
           {lote ? 'Editar Lote' : 'Crear Nuevo Lote'}
         </CardTitle>
         <CardDescription>
-          {lote ? 'Modifica la información de tu lote de ROA' : 'Registra un nuevo lote de residuos orgánicos aprovechables'}
+          {lote ? 'Modifica la información de tu lote de R.O.A' : 'Registra un nuevo lote de residuos orgánicos aprovechables'}
         </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-2">
-            <Label htmlFor="titulo">Título del ROA *</Label>
+            <Label htmlFor="titulo">Título del R.O.A *</Label>
             <Input
               id="titulo"
               type="text"
@@ -185,7 +185,7 @@ export const LoteForm = ({ lote, onSubmit, loading, onCancel }: LoteFormProps) =
               <Label htmlFor="tipo_residuo_id">Tipo de Residuo *</Label>
               <Select value={formData.tipo_residuo_id} onValueChange={(value) => handleInputChange('tipo_residuo_id', value)}>
                 <SelectTrigger>
-                  <SelectValue placeholder={loadingTipos ? "Cargando..." : "Selecciona el tipo de ROA"} />
+                  <SelectValue placeholder={loadingTipos ? "Cargando..." : "Selecciona el tipo de R.O.A"} />
                 </SelectTrigger>
                 <SelectContent>
                   {tiposResiduos

@@ -27,7 +27,7 @@ export const AuthForm = ({ mode, onToggleMode }: AuthFormProps) => {
 
   const userTypes = [
     { id: 'generator', label: 'Generador', icon: Recycle, description: 'Genero residuos orgánicos aprovechables' },
-    { id: 'transformer', label: 'Transformador', icon: Factory, description: 'Proceso y transformo ROA' },
+    { id: 'transformer', label: 'Transformador', icon: Factory, description: 'Proceso y transformo R.O.A' },
     { id: 'citizen', label: 'Consumidor', icon: Users, description: 'Compro productos transformados' }
   ];
 
@@ -80,8 +80,8 @@ export const AuthForm = ({ mode, onToggleMode }: AuthFormProps) => {
             </CardTitle>
             <CardDescription className="text-gray-600 mt-2">
               {mode === 'login' 
-                ? 'Inicia sesión para intercambiar ROA de forma sostenible'
-                : 'Crea tu cuenta y forma parte del cambio sostenible'
+                  ? 'Inicia sesión para intercambiar R.O.A de forma sostenible'
+                  : 'Crea tu cuenta y forma parte del cambio sostenible'
               }
             </CardDescription>
           </div>

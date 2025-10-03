@@ -45,9 +45,9 @@ export const TiposROASection: React.FC<TiposROASectionProps> = ({
   return (
     <section className="mb-8">
       <div className="text-center mb-6">
-        <h3 className="text-2xl font-bold text-gray-900 mb-2">
-          Tipos de ROA Disponibles
-        </h3>
+          <h3 className="text-2xl font-bold text-gray-900 mb-2">
+            Tipos de R.O.A Disponibles
+          </h3>
         <p className="text-gray-600">
           Encuentra el tipo de residuo orgánico que necesitas para tu proceso
         </p>

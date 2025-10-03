@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Edit2, Trash2, Package, Calendar, Image as ImageIcon, Eye } from 'lucide-react';
 import { SolicitarIntercambio } from '@/components/ordenes/SolicitarIntercambio';
 import { ProductImageGallery } from './ProductImageGallery';
+import { ProductDetailsModal } from './ProductDetailsModal';
 import { ProveedorInfo } from './ProveedorInfo';
 import { useProductos } from '@/hooks/useProductos';
 import { useProfiles } from '@/hooks/useProfiles';
@@ -34,6 +35,7 @@ export const ProductsList: React.FC<ProductsListProps> = ({
   const [loadingIds, setLoadingIds] = useState<Set<string>>(new Set());
   const [selectedProduct, setSelectedProduct] = useState<Producto | null>(null);
   const [isGalleryOpen, setIsGalleryOpen] = useState(false);
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [profiles, setProfiles] = useState<Map<string, any>>(new Map());
   useEffect(() => {
     if (!showOwnerActions && productos.length > 0) {
@@ -50,6 +52,11 @@ export const ProductsList: React.FC<ProductsListProps> = ({
   const handleViewImages = (producto: Producto) => {
     setSelectedProduct(producto);
     setIsGalleryOpen(true);
+  };
+
+  const handleViewDetails = (producto: Producto) => {
+    setSelectedProduct(producto);
+    setIsDetailsOpen(true);
   };
   const handleToggleDisponible = async (producto: Producto) => {
     setLoadingIds(prev => new Set(prev).add(producto.id));
@@ -90,7 +97,10 @@ export const ProductsList: React.FC<ProductsListProps> = ({
             {!showOwnerActions && profiles.get(producto.user_id) && <ProveedorInfo profile={profiles.get(producto.user_id)} />}
             
             <div className="flex justify-between items-start">
-              <CardTitle className="line-clamp-1 text-2xl font-extrabold">
+              <CardTitle 
+                className="line-clamp-1 text-2xl font-extrabold cursor-pointer hover:text-green-600 transition-colors" 
+                onClick={() => handleViewDetails(producto)}
+              >
                 {producto.nombre}
               </CardTitle>
               <div className="flex flex-col gap-1">
@@ -119,7 +129,7 @@ export const ProductsList: React.FC<ProductsListProps> = ({
             </p>
             
             {producto.origen_roa && <div className="text-sm text-green-600 bg-green-50 px-2 py-1 rounded">
-                <strong>Origen ROA:</strong> {producto.origen_roa}
+                <strong>Origen R.O.A:</strong> {producto.origen_roa}
               </div>}
 
             {/* Dirección del vendedor si incluye domicilio */}
@@ -172,11 +182,32 @@ export const ProductsList: React.FC<ProductsListProps> = ({
                 </Badge>
               </div>}
 
-            {!showOwnerActions && producto.disponible && <SolicitarIntercambio tipo_item="producto" item_id={producto.id} proveedor_id={producto.user_id} />}
+            {!showOwnerActions && producto.disponible && (
+              <div className="space-y-2">
+                <SolicitarIntercambio tipo_item="producto" item_id={producto.id} proveedor_id={producto.user_id} />
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => handleViewDetails(producto)}
+                  className="w-full"
+                >
+                  <Eye className="w-4 h-4 mr-2" />
+                  Ver
+                </Button>
+              </div>
+            )}
           </CardContent>
         </Card>)}
       
       {/* Modal de galería de imágenes */}
       <ProductImageGallery isOpen={isGalleryOpen} onClose={() => setIsGalleryOpen(false)} images={selectedProduct?.imagenes || []} productTitle={selectedProduct?.nombre || ''} />
+      
+      {/* Modal de detalles del producto */}
+      <ProductDetailsModal 
+        isOpen={isDetailsOpen} 
+        onClose={() => setIsDetailsOpen(false)} 
+        producto={selectedProduct!} 
+        userProfile={selectedProduct ? profiles.get(selectedProduct.user_id) : undefined}
+      />
     </div>;
 };

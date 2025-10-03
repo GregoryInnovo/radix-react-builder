@@ -187,7 +187,7 @@ export const OrdenesList: React.FC = () => {
               {getStatusText(orden.estado)}
             </Badge>
             <span className="text-sm text-muted-foreground">
-              {orden.tipo_item === 'producto' ? 'Producto' : 'Lote ROA'}
+              {orden.tipo_item === 'producto' ? 'Producto' : 'Lote R.O.A'}
             </span>
           </div>
           

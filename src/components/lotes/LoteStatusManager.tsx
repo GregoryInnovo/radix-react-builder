@@ -83,7 +83,7 @@ export const LoteStatusManager = ({ lote, onStatusChange, loading }: LoteStatusM
           Estado del Lote
         </CardTitle>
         <CardDescription>
-          Gestiona el estado actual de tu lote de ROA
+          Gestiona el estado actual de tu lote de R.O.A
         </CardDescription>
       </CardHeader>
       

@@ -97,7 +97,7 @@ export const LoteDetailsModal: React.FC<LoteDetailsModalProps> = ({
         <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-xl font-bold text-green-800">
-              {lote.titulo || 'Detalles del Lote de ROA'}
+              {lote.titulo || 'Detalles del Lote de R.O.A'}
             </DialogTitle>
           </DialogHeader>
 

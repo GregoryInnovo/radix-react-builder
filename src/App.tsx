@@ -12,6 +12,8 @@ import Productos from "./pages/Productos";
 import Ordenes from "./pages/Ordenes";
 import Admin from "./pages/Admin";
 import UserProfile from "./pages/UserProfile";
+import UserProducts from "./pages/UserProducts";
+import UserLotes from "./pages/UserLotes";
 import Guias from "./pages/Guias";
 import GuiaDetalle from "./pages/GuiaDetalle";
 import GuiaForm from "./pages/GuiaForm";
@@ -38,6 +40,8 @@ function App() {
               <Route path="/guias/:id" element={<GuiaDetalle />} />
               <Route path="/guias/nueva" element={<GuiaForm />} />
               <Route path="/perfil/:userId" element={<UserProfile />} />
+              <Route path="/perfil/:userId/productos" element={<UserProducts />} />
+              <Route path="/perfil/:userId/lotes" element={<UserLotes />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

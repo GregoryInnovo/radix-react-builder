@@ -157,7 +157,7 @@ export const LotesList = ({ lotes, loading, onEdit, onView, onDelete, onStatusCh
           <div className="text-gray-500">
             <Weight className="mx-auto h-12 w-12 mb-4" />
             <p className="text-lg font-medium">No tienes lotes creados aún</p>
-            <p className="text-sm mt-2">Crea tu primer lote de ROA para comenzar</p>
+            <p className="text-sm mt-2">Crea tu primer lote de R.O.A para comenzar</p>
           </div>
         </CardContent>
       </Card>

@@ -66,7 +66,7 @@ export const useLotes = () => {
 
       toast({
         title: "¡Lote creado exitosamente!",
-        description: "Tu lote de ROA ha sido registrado.",
+        description: "Tu lote de R.O.A ha sido registrado.",
       });
 
       await fetchLotes();

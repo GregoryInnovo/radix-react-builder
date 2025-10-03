@@ -150,7 +150,7 @@ export const LotesPublicos: React.FC = () => {
                       <div className="flex justify-between items-start">
                         <div className="space-y-1">
                           <CardTitle className="text-lg">
-                            {lote.titulo || `${lote.peso_estimado}kg de ROA`}
+                            {lote.titulo || `${lote.peso_estimado}kg de R.O.A`}
                           </CardTitle>
                           <CardDescription className="flex items-center gap-2">
                             <MapPin className="w-4 h-4" />

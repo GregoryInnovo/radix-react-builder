@@ -17,7 +17,7 @@ export const GuiasPreviewSection = () => {
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
             <h3 className="text-3xl font-bold text-gray-900 mb-4">
-              Guías ROA Destacadas
+              Guías R.O.A Destacadas
             </h3>
             <p className="text-lg text-gray-600">
               Aprende mejores prácticas para el manejo de residuos orgánicos

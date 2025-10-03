@@ -268,6 +268,26 @@ const UserProfile = () => {
                   </div>
                 </div>
               </div>
+
+              {/* Quick Access Buttons */}
+              <div className="flex gap-2 mt-4">
+                {stats.totalProductos > 0 && (
+                  <Button asChild variant="outline" className="flex-1">
+                    <Link to={`/perfil/${userId}/productos`}>
+                      <ShoppingBag className="w-4 h-4 mr-2" />
+                      Ver Productos
+                    </Link>
+                  </Button>
+                )}
+                {stats.totalLotes > 0 && (
+                  <Button asChild variant="outline" className="flex-1">
+                    <Link to={`/perfil/${userId}/lotes`}>
+                      <Package className="w-4 h-4 mr-2" />
+                      Ver Lotes R.O.A
+                    </Link>
+                  </Button>
+                )}
+              </div>
             </CardContent>
           </Card>
 

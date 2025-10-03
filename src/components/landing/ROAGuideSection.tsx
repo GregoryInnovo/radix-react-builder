@@ -26,10 +26,10 @@ export const ROAGuideSection: React.FC = () => {
       <div className="container mx-auto px-4">
         <div className="text-center mb-12">
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-            ¿Qué es ROA y cómo se dispone correctamente?
+            ¿Qué es R.O.A y cómo se dispone correctamente?
           </h2>
           <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-            Los Residuos Orgánicos Aprovechables (ROA) son materiales biodegradables que pueden transformarse en productos útiles como compost, biofertilizantes o alimento para animales.
+            Los Residuos Orgánicos Aprovechables (R.O.A) son materiales biodegradables que pueden transformarse en productos útiles como compost, biofertilizantes o alimento para animales.
           </p>
         </div>
 
@@ -40,7 +40,7 @@ export const ROAGuideSection: React.FC = () => {
               <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
                 <Leaf className="w-6 h-6 text-green-600" />
               </div>
-              Definición de ROA
+              Definición de R.O.A
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -100,7 +100,7 @@ export const ROAGuideSection: React.FC = () => {
           <CardContent className="p-8">
             <div className="text-center">
               <h3 className="text-2xl font-semibold text-gray-900 mb-4">
-                Video Guía: Clasificación de ROA
+                Video Guía: Clasificación de R.O.A
               </h3>
               <p className="text-gray-600 mb-6">
                 Aprende paso a paso cómo clasificar correctamente tus residuos orgánicos

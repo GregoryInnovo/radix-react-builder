@@ -9,6 +9,7 @@ import { ProductForm } from '@/components/productos/ProductForm';
 import { ProductsList } from '@/components/productos/ProductsList';
 import { ProductsFilter } from '@/components/productos/ProductsFilter';
 import { useProductos } from '@/hooks/useProductos';
+import { useProfiles } from '@/hooks/useProfiles';
 import { useAuth } from '@/hooks/useAuth';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -31,9 +32,42 @@ const Productos = () => {
   useEffect(() => {
     refreshProductos(activeTab === 'my-products');
   }, [activeTab]);
+  const { getProfileById } = useProfiles();
+  const [profiles, setProfiles] = useState<Record<string, any>>({});
+
+  // Fetch profiles for product owners
+  useEffect(() => {
+    const fetchProfiles = async () => {
+      const uniqueUserIds = [...new Set(productos.map(p => p.user_id))];
+      
+      for (const userId of uniqueUserIds) {
+        if (!profiles[userId]) {
+          const profile = await getProfileById(userId);
+          if (profile) {
+            setProfiles(prev => ({
+              ...prev,
+              [userId]: profile
+            }));
+          }
+        }
+      }
+    };
+    
+    if (productos.length > 0) {
+      fetchProfiles();
+    }
+  }, [productos, getProfileById]);
+
   const filteredProductos = productos.filter(producto => {
-    // Text search filter
-    const matchesSearch = producto.nombre.toLowerCase().includes(searchTerm.toLowerCase()) || producto.descripcion.toLowerCase().includes(searchTerm.toLowerCase()) || producto.origen_roa && producto.origen_roa.toLowerCase().includes(searchTerm.toLowerCase());
+    // Text search filter - incluye búsqueda por nombre del creador
+    const profile = profiles[producto.user_id];
+    const creatorName = profile ? (profile.full_name || profile.email || '').toLowerCase() : '';
+    
+    const matchesSearch = 
+      producto.nombre.toLowerCase().includes(searchTerm.toLowerCase()) || 
+      producto.descripcion.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (producto.origen_roa && producto.origen_roa.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      creatorName.includes(searchTerm.toLowerCase());
 
     // Category filters
     const matchesFuncionalidad = selectedFuncionalidad.length === 0 || producto.categoria_funcionalidad && selectedFuncionalidad.some(cat => producto.categoria_funcionalidad?.includes(cat));

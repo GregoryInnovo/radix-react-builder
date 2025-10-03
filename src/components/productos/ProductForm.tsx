@@ -11,6 +11,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
 import { Upload, X, ImagePlus } from 'lucide-react';
 import { useProductos } from '@/hooks/useProductos';
+import { useTiposResiduo } from '@/hooks/useTiposResiduo';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { CATEGORIAS_FUNCIONALIDAD, CATEGORIAS_TIPO } from './ProductsFilter';
 
 interface ProductFormProps {
@@ -36,6 +38,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({ onSuccess, onCancel })
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const { createProducto, uploadImage, loading } = useProductos();
+  const { tiposResiduos, loading: loadingTipos } = useTiposResiduo();
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -208,13 +211,29 @@ export const ProductForm: React.FC<ProductFormProps> = ({ onSuccess, onCancel })
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="origen_roa">Origen del ROA (opcional)</Label>
-            <Input
-              id="origen_roa"
-              value={formData.origen_roa}
-              onChange={(e) => handleInputChange('origen_roa', e.target.value)}
-              placeholder="ej. Cáscaras de frutas del mercado local"
-            />
+            <Label htmlFor="origen_roa">Origen del R.O.A (Opcional)</Label>
+            <Select 
+              value={formData.origen_roa} 
+              onValueChange={(value) => handleInputChange('origen_roa', value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder={loadingTipos ? "Cargando..." : "Selecciona el tipo de R.O.A (opcional)"} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Ninguno</SelectItem>
+                {tiposResiduos
+                  .sort((a, b) => {
+                    if (a.nombre.toLowerCase().includes('otros')) return 1;
+                    if (b.nombre.toLowerCase().includes('otros')) return -1;
+                    return a.nombre.localeCompare(b.nombre);
+                  })
+                  .map((tipo) => (
+                    <SelectItem key={tipo.id} value={tipo.nombre}>
+                      {tipo.nombre}
+                    </SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="space-y-2">
@@ -349,12 +368,12 @@ export const ProductForm: React.FC<ProductFormProps> = ({ onSuccess, onCancel })
                 {CATEGORIAS_FUNCIONALIDAD.map((categoria) => (
                   <div key={categoria} className="flex items-center space-x-2">
                     <Checkbox
-                      id={`func-${categoria}`}
+                      id={`form-func-${categoria}`}
                       checked={formData.categoria_funcionalidad.includes(categoria)}
                       onCheckedChange={() => handleCategoryToggle('categoria_funcionalidad', categoria)}
                     />
                     <label
-                      htmlFor={`func-${categoria}`}
+                      htmlFor={`form-func-${categoria}`}
                       className="text-sm cursor-pointer leading-relaxed"
                     >
                       {categoria}
@@ -375,12 +394,12 @@ export const ProductForm: React.FC<ProductFormProps> = ({ onSuccess, onCancel })
                 {CATEGORIAS_TIPO.map((categoria) => (
                   <div key={categoria} className="flex items-center space-x-2">
                     <Checkbox
-                      id={`tipo-${categoria}`}
+                      id={`form-tipo-${categoria}`}
                       checked={formData.categoria_tipo.includes(categoria)}
                       onCheckedChange={() => handleCategoryToggle('categoria_tipo', categoria)}
                     />
                     <label
-                      htmlFor={`tipo-${categoria}`}
+                      htmlFor={`form-tipo-${categoria}`}
                       className="text-sm cursor-pointer leading-relaxed"
                     >
                       {categoria}

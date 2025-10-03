@@ -150,7 +150,7 @@ export const SearchResultsMap: React.FC<SearchResultsMapProps> = ({
                     <MapPin className="w-5 h-5 text-white fill-white" />
                   </div>
                   <div className="mt-1 bg-emerald-600 text-white text-xs px-3 py-1 rounded shadow-lg whitespace-nowrap max-w-32 truncate hover:bg-emerald-700 font-medium">
-                    {result.lote.tipos_residuo?.nombre || 'Lote ROA'}
+                    {result.lote.tipos_residuo?.nombre || 'Lote R.O.A'}
                     {userLocation && (
                       <span className="block text-emerald-100">
                         {formatDistance(result.distance)}
@@ -186,7 +186,7 @@ export const SearchResultsMap: React.FC<SearchResultsMapProps> = ({
           <div className="bg-green-500 rounded-full p-1">
             <MapPin className="w-3 h-3 text-white fill-white" />
           </div>
-          <span>Lotes de ROA disponibles</span>
+          <span>Lotes de R.O.A disponibles</span>
         </div>
         <div className="flex items-center gap-2 text-gray-600">
           <span className="text-xs">Haz clic en un pin verde para ver detalles</span>

@@ -21,8 +21,32 @@ interface ProductosManagementProps {
 export const ProductosManagement: React.FC<ProductosManagementProps> = ({ productos }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [profiles, setProfiles] = useState<Record<string, any>>({});
   const { updateEntityStatus, deleteEntity } = useAdmin();
   const { getProfileById } = useProfiles();
+
+  // Fetch profiles for producto owners
+  React.useEffect(() => {
+    const fetchProfiles = async () => {
+      const uniqueUserIds = [...new Set(productos.map(p => p.user_id))];
+      
+      for (const userId of uniqueUserIds) {
+        if (!profiles[userId]) {
+          const profile = await getProfileById(userId);
+          if (profile) {
+            setProfiles(prev => ({
+              ...prev,
+              [userId]: profile
+            }));
+          }
+        }
+      }
+    };
+    
+    if (productos.length > 0) {
+      fetchProfiles();
+    }
+  }, [productos, getProfileById]);
 
   const getStatusBadge = (estado: string) => {
     const colors = {
@@ -47,10 +71,6 @@ export const ProductosManagement: React.FC<ProductosManagementProps> = ({ produc
     }
   };
 
-  const getUserProfile = (userId: string) => {
-    // For now return a placeholder - this will be improved with proper profile fetching
-    return { id: userId, full_name: 'Usuario' };
-  };
 
   const filteredProductos = productos.filter(producto => {
     const matchesSearch = 
@@ -93,7 +113,7 @@ export const ProductosManagement: React.FC<ProductosManagementProps> = ({ produc
 
       <div className="grid gap-4">
         {filteredProductos.map((producto) => {
-          const userProfile = getUserProfile(producto.user_id);
+          const userProfile = profiles[producto.user_id];
           return (
             <Card key={producto.id} className="p-4">
               <CardHeader className="pb-3">
@@ -104,11 +124,11 @@ export const ProductosManagement: React.FC<ProductosManagementProps> = ({ produc
                   </CardTitle>
                   {userProfile && (
                     <Link 
-                      to={`/user/${userProfile.id}`}
+                      to={`/perfil/${userProfile.id}`}
                       className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800 transition-colors"
                     >
                       <User className="h-4 w-4" />
-                      {userProfile.full_name || 'Usuario'}
+                      {userProfile.full_name || userProfile.email || 'Usuario'}
                     </Link>
                   )}
                 </div>

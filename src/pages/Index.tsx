@@ -74,21 +74,21 @@ const Index = () => {
       <section className="py-20 bg-inherit">
         <div className="container mx-auto px-4 text-center">
           <h2 className="mb-6 font-extrabold text-6xl text-green-600">¡Hola!</h2>
-          <p className="mb-8 max-w-3xl mx-auto text-2xl text-green-800">Conectamos generadores y transformadores de Residuos Orgánicos Aprovechables (ROA), creando un ecosistema circular sostenible</p>
+          <p className="mb-8 max-w-3xl mx-auto text-2xl text-green-800">Conectamos generadores y transformadores de Residuos Orgánicos Aprovechables (R.O.A), creando un ecosistema circular sostenible</p>
           <div className="flex flex-wrap justify-center gap-4">
             {!isAuthenticated ? <>
                 <Button size="lg" className="bg-green-600 hover:bg-green-700" asChild>
                   <Link to="/auth">Comenzar Ahora</Link>
                 </Button>
                 <Button size="lg" variant="outline" asChild>
-                  <Link to="/lotes">Explorar ROA</Link>
+                  <Link to="/lotes">Explorar R.O.A</Link>
                 </Button>
               </> : <>
                 <Button size="lg" className="bg-green-600 hover:bg-green-700" asChild>
                   <Link to="/lotes">Mis Lotes</Link>
                 </Button>
                 <Button size="lg" variant="outline" asChild>
-                  <Link to="/lotes">Buscar ROA</Link>
+                  <Link to="/lotes">Buscar R.O.A</Link>
                 </Button>
               </>}
           </div>
@@ -110,7 +110,7 @@ Hay usuarios generadores de estos residuos, quienes los transforman y quienes co
             <Card className="bg-green-50">
               <CardHeader className="bg-green-50">
                 <Recycle className="h-12 w-12 text-green-600 mb-4" />
-                <CardTitle>Registro de Lotes ROA</CardTitle>
+                <CardTitle>Registro de Lotes R.O.A</CardTitle>
                 <CardDescription>
                   Los generadores registran sus lotes de residuos orgánicos con ubicación, 
                   peso y tipo de material
@@ -183,7 +183,7 @@ Hay usuarios generadores de estos residuos, quienes los transforman y quienes co
             ¿Listo para formar parte de la economía circular?
           </h3>
           <p className="text-xl mb-8 opacity-90">
-            Únete a nuestra comunidad de generadores y transformadores de ROA
+            Únete a nuestra comunidad de generadores y transformadores de R.O.A
           </p>
           {!isAuthenticated ? <div className="flex flex-wrap justify-center gap-4">
               <Button size="lg" variant="secondary" asChild>
@@ -212,13 +212,13 @@ Hay usuarios generadores de estos residuos, quienes los transforman y quienes co
                 <Leaf className="h-6 w-6 text-green-400" />
                 <span className="text-lg font-semibold">Natuvital</span>
               </div>
-              <p className="text-gray-400">Conectando la comunidad de ROA para un futuro más sostenible y saludable.</p>
+              <p className="text-gray-400">Conectando la comunidad de R.O.A para un futuro más sostenible y saludable.</p>
             </div>
             
             <div>
               <h4 className="font-semibold mb-4">Plataforma</h4>
               <ul className="space-y-2 text-gray-400">
-                <li><Link to="/lotes" className="hover:text-white">Buscar ROA</Link></li>
+                <li><Link to="/lotes" className="hover:text-white">Buscar R.O.A</Link></li>
                 <li><Link to="/productos" className="hover:text-white">Productos</Link></li>
                 <li><Link to="/lotes" className="hover:text-white">Lotes</Link></li>
                 <li><Link to="/ordenes" className="hover:text-white">Órdenes</Link></li>
@@ -229,7 +229,7 @@ Hay usuarios generadores de estos residuos, quienes los transforman y quienes co
               <h4 className="font-semibold mb-4">Soporte</h4>
               <ul className="space-y-2 text-gray-400">
                 <li><a href="#" className="hover:text-white">Centro de Ayuda</a></li>
-                <li><a href="#" className="hover:text-white">Guías ROA</a></li>
+                <li><a href="#" className="hover:text-white">Guías R.O.A</a></li>
                 <li><a href="#" className="hover:text-white">Contacto</a></li>
                 <li><a href="#" className="hover:text-white">FAQ</a></li>
               </ul>

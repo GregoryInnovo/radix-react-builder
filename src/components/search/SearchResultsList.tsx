@@ -105,7 +105,7 @@ export const SearchResultsList: React.FC<SearchResultsListProps> = ({
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex-1">
                     <h3 className="font-semibold text-lg text-green-800 mb-2">
-                      Lote de ROA
+                      Lote de R.O.A
                       {result.lote.user_id === user?.id && (
                         <Badge variant="outline" className="ml-2 text-xs">
                           Tu lote
