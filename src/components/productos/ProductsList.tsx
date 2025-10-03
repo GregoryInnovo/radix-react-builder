@@ -48,7 +48,8 @@ export const ProductsList: React.FC<ProductsListProps> = ({
         setProfiles(profilesMap);
       });
     }
-  }, [productos, showOwnerActions, getMultipleProfiles]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [productos, showOwnerActions]);
   const handleViewImages = (producto: Producto) => {
     setSelectedProduct(producto);
     setIsGalleryOpen(true);
