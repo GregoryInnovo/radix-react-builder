@@ -221,7 +221,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({ onSuccess, onCancel })
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="">Ninguno</SelectItem>
-                {tiposResiduos
+                {(tiposResiduos || [])
                   .sort((a, b) => {
                     if (a.nombre.toLowerCase().includes('otros')) return 1;
                     if (b.nombre.toLowerCase().includes('otros')) return -1;

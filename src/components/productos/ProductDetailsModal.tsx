@@ -161,7 +161,7 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
                   <div>
                     <h4 className="text-sm font-medium mb-2">Funcionalidad:</h4>
                     <div className="flex flex-wrap gap-2">
-                      {producto.categoria_funcionalidad.map((cat, idx) => (
+                      {(producto.categoria_funcionalidad || []).map((cat, idx) => (
                         <Badge key={idx} variant="secondary">{cat}</Badge>
                       ))}
                     </div>
@@ -172,7 +172,7 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
                   <div>
                     <h4 className="text-sm font-medium mb-2">Tipo de producto:</h4>
                     <div className="flex flex-wrap gap-2">
-                      {producto.categoria_tipo.map((cat, idx) => (
+                      {(producto.categoria_tipo || []).map((cat, idx) => (
                         <Badge key={idx} variant="outline">{cat}</Badge>
                       ))}
                     </div>
