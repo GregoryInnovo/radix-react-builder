@@ -56,7 +56,8 @@ const Productos = () => {
     if (productos.length > 0) {
       fetchProfiles();
     }
-  }, [productos, getProfileById]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [productos]);
 
   const filteredProductos = productos.filter(producto => {
     // Text search filter - incluye búsqueda por nombre del creador
