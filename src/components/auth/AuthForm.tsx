@@ -4,9 +4,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
+import { Checkbox } from '@/components/ui/checkbox';
 import { ConfirmModal } from '@/components/ui/confirm-modal';
-import { Leaf, Mail, Lock, User, Chrome, Factory, Recycle, Users } from 'lucide-react';
+import { Leaf, Mail, Lock, User, Factory, Recycle, Users } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { cn } from '@/lib/utils';
 
@@ -20,10 +20,11 @@ export const AuthForm = ({ mode, onToggleMode }: AuthFormProps) => {
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [selectedUserType, setSelectedUserType] = useState<string>('');
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [showResend, setShowResend] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
   
-  const { signIn, signUp, signInWithGoogle, resendConfirmation, loading } = useAuth();
+  const { signIn, signUp, resendConfirmation, loading } = useAuth();
 
   const userTypes = [
     { id: 'generator', label: 'Generador', icon: Recycle, description: 'Genero residuos orgánicos aprovechables' },
@@ -39,6 +40,9 @@ export const AuthForm = ({ mode, onToggleMode }: AuthFormProps) => {
         return;
       }
       if (!selectedUserType) {
+        return;
+      }
+      if (!acceptedTerms) {
         return;
       }
       setShowConfirmation(true);
@@ -57,10 +61,6 @@ export const AuthForm = ({ mode, onToggleMode }: AuthFormProps) => {
     } else {
       setShowConfirmation(false);
     }
-  };
-
-  const handleGoogleSignIn = async () => {
-    await signInWithGoogle();
   };
 
   const handleResendConfirmation = async () => {
@@ -251,9 +251,46 @@ export const AuthForm = ({ mode, onToggleMode }: AuthFormProps) => {
                     </div>
                   )}
 
+                  {mode === 'register' && (
+                    <div className="flex items-start space-x-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                      <Checkbox
+                        id="terms"
+                        checked={acceptedTerms}
+                        onCheckedChange={(checked) => setAcceptedTerms(checked === true)}
+                        className="mt-0.5"
+                      />
+                      <div className="space-y-1 leading-none">
+                        <label
+                          htmlFor="terms"
+                          className="text-sm font-medium text-gray-700 cursor-pointer"
+                        >
+                          Acepto los{' '}
+                          <a 
+                            href="/terminos" 
+                            target="_blank" 
+                            className="text-green-600 hover:text-green-700 underline"
+                          >
+                            Términos y Condiciones
+                          </a>
+                          {' '}y el{' '}
+                          <a 
+                            href="/tratamiento-datos" 
+                            target="_blank" 
+                            className="text-green-600 hover:text-green-700 underline"
+                          >
+                            Tratamiento de Datos Personales
+                          </a>
+                        </label>
+                        <p className="text-xs text-gray-500">
+                          Es obligatorio aceptar para poder registrarte
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
                 <Button
                   type="submit"
-                  disabled={loading || (mode === 'register' && !selectedUserType)}
+                  disabled={loading || (mode === 'register' && (!selectedUserType || !acceptedTerms))}
                   className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-medium py-2.5 transition-all duration-200 disabled:opacity-50"
                 >
                   {loading 
@@ -264,25 +301,6 @@ export const AuthForm = ({ mode, onToggleMode }: AuthFormProps) => {
                   }
                 </Button>
               </form>
-
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <Separator className="w-full" />
-                </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-white px-2 text-gray-500">O continúa con</span>
-                </div>
-              </div>
-
-              <Button
-                onClick={handleGoogleSignIn}
-                variant="outline"
-                disabled={loading}
-                className="w-full border-gray-200 hover:bg-gray-50 transition-colors duration-200"
-              >
-                <Chrome className="w-4 h-4 mr-2" />
-                Google
-              </Button>
 
               <div className="text-center pt-4">
                 <p className="text-sm text-gray-600">
