@@ -81,6 +81,8 @@ export const LotesList = ({ lotes, loading, onEdit, onView, onDelete, onStatusCh
   const [showStatusManager, setShowStatusManager] = useState(false);
   const [loteForStatus, setLoteForStatus] = useState<Lote | null>(null);
   const [isChangingStatus, setIsChangingStatus] = useState(false);
+  const [showRejectReason, setShowRejectReason] = useState(false);
+  const [loteForRejectReason, setLoteForRejectReason] = useState<Lote | null>(null);
 
   const handleViewImages = (lote: Lote) => {
     setSelectedLote(lote);
@@ -128,6 +130,11 @@ export const LotesList = ({ lotes, loading, onEdit, onView, onDelete, onStatusCh
       setShowStatusManager(false);
       setLoteForStatus(null);
     }
+  };
+
+  const handleViewRejectReason = (lote: Lote) => {
+    setLoteForRejectReason(lote);
+    setShowRejectReason(true);
   };
   if (loading) {
     return (
@@ -205,7 +212,7 @@ export const LotesList = ({ lotes, loading, onEdit, onView, onDelete, onStatusCh
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => handleView(lote)}
+                      onClick={() => handleViewRejectReason(lote)}
                       className="h-auto px-2.5 py-0.5 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-full border-0"
                     >
                       ✗ Rechazado - Ver motivo
@@ -343,6 +350,39 @@ export const LotesList = ({ lotes, loading, onEdit, onView, onDelete, onStatusCh
               loading={isChangingStatus}
             />
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de motivo de rechazo */}
+      <Dialog open={showRejectReason} onOpenChange={setShowRejectReason}>
+        <DialogContent className="sm:max-w-md">
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <div className="h-10 w-10 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center">
+                <span className="text-red-600 dark:text-red-400 text-xl">✗</span>
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-foreground">Motivo del rechazo</h3>
+                {loteForRejectReason && (
+                  <p className="text-sm text-muted-foreground">Lote: {loteForRejectReason.titulo}</p>
+                )}
+              </div>
+            </div>
+            <div className="rounded-lg bg-muted p-4">
+              <p className="text-sm text-foreground whitespace-pre-wrap">
+                {loteForRejectReason?.admin_notes || 'No se especificó un motivo de rechazo.'}
+              </p>
+            </div>
+            <Button 
+              onClick={() => {
+                setShowRejectReason(false);
+                setLoteForRejectReason(null);
+              }}
+              className="w-full"
+            >
+              Cerrar
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

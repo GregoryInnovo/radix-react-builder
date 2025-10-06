@@ -29,19 +29,29 @@ serve(async (req) => {
 
     console.log(`Lote status change notification: ${loteId} changed from ${oldStatus} to ${newStatus}`)
 
-    // Get lote details with user profile
+    // Get lote details
     const { data: lote, error: loteError } = await supabase
       .from('lotes')
-      .select(`
-        *,
-        user:profiles!lotes_user_id_fkey(full_name, email),
-        tipo_residuo:tipos_residuo(nombre)
-      `)
+      .select('*')
       .eq('id', loteId)
       .single()
 
     if (loteError) {
       throw loteError
+    }
+
+    // Get tipo_residuo name if exists
+    let tipoResiduoNombre = 'residuo'
+    if (lote.tipo_residuo_id) {
+      const { data: tipoResiduo } = await supabase
+        .from('tipos_residuo')
+        .select('nombre')
+        .eq('id', lote.tipo_residuo_id)
+        .single()
+      
+      if (tipoResiduo) {
+        tipoResiduoNombre = tipoResiduo.nombre
+      }
     }
 
     // Create notification for lote owner
@@ -50,13 +60,13 @@ serve(async (req) => {
 
     if (newStatus === 'aprobado') {
       titulo = 'Lote aprobado'
-      mensaje = `Tu lote de ${lote.tipo_residuo?.nombre || 'residuo'} ha sido aprobado y ya está visible para otros usuarios`
+      mensaje = `Tu lote de ${tipoResiduoNombre} ha sido aprobado y ya está visible para otros usuarios`
     } else if (newStatus === 'rechazado') {
       titulo = 'Lote rechazado'
-      mensaje = `Tu lote de ${lote.tipo_residuo?.nombre || 'residuo'} ha sido rechazado. ${adminNotes ? `Razón: ${adminNotes}` : ''}`
+      mensaje = `Tu lote de ${tipoResiduoNombre} ha sido rechazado. ${adminNotes ? `Razón: ${adminNotes}` : ''}`
     } else if (newStatus === 'pendiente') {
       titulo = 'Lote en revisión'
-      mensaje = `Tu lote de ${lote.tipo_residuo?.nombre || 'residuo'} está siendo revisado por un administrador`
+      mensaje = `Tu lote de ${tipoResiduoNombre} está siendo revisado por un administrador`
     }
 
     const notification = {
@@ -72,7 +82,7 @@ serve(async (req) => {
         old_status: oldStatus,
         new_status: newStatus,
         peso_estimado: lote.peso_estimado,
-        tipo_residuo: lote.tipo_residuo?.nombre,
+        tipo_residuo: tipoResiduoNombre,
         admin_notes: adminNotes
       }
     }
