@@ -2,7 +2,8 @@ import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { MapPin, Weight, Calendar, Clock, User, FileText, Image, History, AlertTriangle } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { MapPin, Weight, Calendar, Clock, User, FileText, Image, History, AlertTriangle, XCircle, CheckCircle2 } from 'lucide-react';
 import { LoteImageGallery } from './LoteImageGallery';
 import { LoteStatusHistory } from './LoteStatusHistory';
 import { ReservarLote } from './ReservarLote';
@@ -102,6 +103,36 @@ export const LoteDetailsModal: React.FC<LoteDetailsModalProps> = ({
           </DialogHeader>
 
           <div className="space-y-6">
+            {/* Approval Status Alert */}
+            {lote.status === 'rechazado' && (
+              <Alert variant="destructive">
+                <XCircle className="h-4 w-4" />
+                <AlertTitle>Lote Rechazado</AlertTitle>
+                <AlertDescription>
+                  {lote.admin_notes || 'Este lote ha sido rechazado por un administrador. Por favor, revisa y corrige los problemas antes de volver a publicar.'}
+                </AlertDescription>
+              </Alert>
+            )}
+            {lote.status === 'pendiente' && (
+              <Alert className="border-yellow-500 bg-yellow-50">
+                <AlertTriangle className="h-4 w-4 text-yellow-600" />
+                <AlertTitle className="text-yellow-800">En Revisión</AlertTitle>
+                <AlertDescription className="text-yellow-700">
+                  Tu lote está siendo revisado por nuestro equipo. Recibirás una notificación cuando sea aprobado o si necesita algún ajuste.
+                </AlertDescription>
+              </Alert>
+            )}
+            {lote.status === 'aprobado' && (
+              <Alert className="border-green-500 bg-green-50">
+                <CheckCircle2 className="h-4 w-4 text-green-600" />
+                <AlertTitle className="text-green-800">Lote Aprobado</AlertTitle>
+                <AlertDescription className="text-green-700">
+                  Tu lote ha sido aprobado y ahora es visible para todos los usuarios de la plataforma.
+                  {lote.admin_notes && ` Mensaje del administrador: ${lote.admin_notes}`}
+                </AlertDescription>
+              </Alert>
+            )}
+
             {/* Status and Distance */}
             <div className="flex items-center justify-between">
               <Badge className={getStatusColor(lote.estado || 'pendiente')}>

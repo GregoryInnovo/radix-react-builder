@@ -189,10 +189,28 @@ export const LotesList = ({ lotes, loading, onEdit, onView, onDelete, onStatusCh
                     </Badge>
                   )}
                 </div>
+                {/* Approval Status Badge */}
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {lote.status === 'pendiente' && (
+                    <Badge className="bg-yellow-500 hover:bg-yellow-600 text-white">
+                      ⏳ En revisión - Pendiente de aprobación
+                    </Badge>
+                  )}
+                  {lote.status === 'aprobado' && (
+                    <Badge className="bg-green-600 hover:bg-green-700 text-white">
+                      ✓ Aprobado - Visible públicamente
+                    </Badge>
+                  )}
+                  {lote.status === 'rechazado' && (
+                    <Badge className="bg-red-600 hover:bg-red-700 text-white">
+                      ✗ Rechazado - Ver motivo
+                    </Badge>
+                  )}
+                  <Badge className={getStatusColor(lote.estado)}>
+                    {lote.estado}
+                  </Badge>
+                </div>
               </div>
-              <Badge className={getStatusColor(lote.estado)}>
-                {lote.estado}
-              </Badge>
             </div>
           </CardHeader>
           

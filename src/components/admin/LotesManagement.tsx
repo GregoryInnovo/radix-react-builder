@@ -4,7 +4,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useAdmin } from '@/hooks/useAdmin';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -30,6 +32,10 @@ interface LotesManagementProps {
 export const LotesManagement: React.FC<LotesManagementProps> = ({ lotes }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [showApprovalDialog, setShowApprovalDialog] = useState(false);
+  const [showRejectionDialog, setShowRejectionDialog] = useState(false);
+  const [selectedLoteId, setSelectedLoteId] = useState<string>('');
+  const [adminNotes, setAdminNotes] = useState('');
   const { updateEntityStatus, deleteEntity, profiles } = useAdmin();
   const { getProfileById } = useProfiles();
 
@@ -63,8 +69,34 @@ export const LotesManagement: React.FC<LotesManagementProps> = ({ lotes }) => {
     return 'Tipo no disponible';
   };
 
-  const handleStatusChange = async (loteId: string, newStatus: string) => {
-    await updateEntityStatus('lote', loteId, newStatus);
+  const handleApproveClick = (loteId: string) => {
+    setSelectedLoteId(loteId);
+    setAdminNotes('');
+    setShowApprovalDialog(true);
+  };
+
+  const handleRejectClick = (loteId: string) => {
+    setSelectedLoteId(loteId);
+    setAdminNotes('');
+    setShowRejectionDialog(true);
+  };
+
+  const handleConfirmApproval = async () => {
+    await updateEntityStatus('lote', selectedLoteId, 'aprobado', adminNotes || undefined);
+    setShowApprovalDialog(false);
+    setSelectedLoteId('');
+    setAdminNotes('');
+  };
+
+  const handleConfirmRejection = async () => {
+    if (!adminNotes.trim()) {
+      alert('Por favor, proporciona un motivo para el rechazo');
+      return;
+    }
+    await updateEntityStatus('lote', selectedLoteId, 'rechazado', adminNotes);
+    setShowRejectionDialog(false);
+    setSelectedLoteId('');
+    setAdminNotes('');
   };
 
   const handleDelete = async (loteId: string) => {
@@ -208,7 +240,7 @@ export const LotesManagement: React.FC<LotesManagementProps> = ({ lotes }) => {
                       <>
                         <Button
                           size="sm"
-                          onClick={() => handleStatusChange(lote.id, 'aprobado')}
+                          onClick={() => handleApproveClick(lote.id)}
                           className="flex items-center gap-1"
                         >
                           <CheckCircle className="h-4 w-4" />
@@ -217,7 +249,7 @@ export const LotesManagement: React.FC<LotesManagementProps> = ({ lotes }) => {
                         <Button
                           size="sm"
                           variant="destructive"
-                          onClick={() => handleStatusChange(lote.id, 'rechazado')}
+                          onClick={() => handleRejectClick(lote.id)}
                           className="flex items-center gap-1"
                         >
                           <XCircle className="h-4 w-4" />
@@ -241,6 +273,76 @@ export const LotesManagement: React.FC<LotesManagementProps> = ({ lotes }) => {
           );
         })}
       </div>
+
+      {/* Approval Dialog */}
+      <AlertDialog open={showApprovalDialog} onOpenChange={setShowApprovalDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Aprobar Lote</AlertDialogTitle>
+            <AlertDialogDescription>
+              ¿Estás seguro de que quieres aprobar este lote? Será visible públicamente.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Mensaje para el usuario (opcional)</label>
+            <Textarea
+              value={adminNotes}
+              onChange={(e) => setAdminNotes(e.target.value)}
+              placeholder="Ej: Tu lote ha sido aprobado y ahora está visible para todos los usuarios..."
+              rows={3}
+            />
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => {
+              setShowApprovalDialog(false);
+              setAdminNotes('');
+            }}>
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmApproval}>
+              Aprobar Lote
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Rejection Dialog */}
+      <AlertDialog open={showRejectionDialog} onOpenChange={setShowRejectionDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Rechazar Lote</AlertDialogTitle>
+            <AlertDialogDescription>
+              Por favor, proporciona un motivo claro del rechazo para que el usuario pueda corregir su lote.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-red-700">
+              Motivo del rechazo (obligatorio) *
+            </label>
+            <Textarea
+              value={adminNotes}
+              onChange={(e) => setAdminNotes(e.target.value)}
+              placeholder="Ej: Las imágenes no muestran claramente el tipo de residuo. Por favor, sube fotos más claras del material..."
+              rows={4}
+              className="border-red-300 focus:border-red-500"
+            />
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => {
+              setShowRejectionDialog(false);
+              setAdminNotes('');
+            }}>
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleConfirmRejection}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Rechazar Lote
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

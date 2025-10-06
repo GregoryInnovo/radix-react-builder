@@ -1,5 +1,6 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plus, ArrowLeft } from 'lucide-react';
@@ -10,6 +11,7 @@ import { LotesList } from '@/components/lotes/LotesList';
 import { LoteStatusManager } from '@/components/lotes/LoteStatusManager';
 import { LoteStatusHistory } from '@/components/lotes/LoteStatusHistory';
 import { LotesPublicos } from '@/components/lotes/LotesPublicos';
+import { LoteDetailsModal } from '@/components/lotes/LoteDetailsModal';
 import { useLotes } from '@/hooks/useLotes';
 import type { Database } from '@/integrations/supabase/types';
 
@@ -17,10 +19,28 @@ type Lote = Database['public']['Tables']['lotes']['Row'];
 type BatchStatus = Database['public']['Enums']['batch_status'];
 
 const Lotes = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [showForm, setShowForm] = useState(false);
   const [editingLote, setEditingLote] = useState<Lote | null>(null);
   const [viewingLote, setViewingLote] = useState<Lote | null>(null);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [selectedLoteForDetails, setSelectedLoteForDetails] = useState<Lote | null>(null);
   const { lotes, loading, createLote, updateLote, updateLoteStatus, deleteLote } = useLotes();
+
+  // Handle lote_id from URL (from notification redirect)
+  useEffect(() => {
+    const loteId = searchParams.get('lote_id');
+    if (loteId && lotes.length > 0) {
+      const lote = lotes.find(l => l.id === loteId);
+      if (lote) {
+        setSelectedLoteForDetails(lote);
+        setShowDetailsModal(true);
+        // Remove the query param after opening
+        searchParams.delete('lote_id');
+        setSearchParams(searchParams);
+      }
+    }
+  }, [searchParams, lotes, setSearchParams]);
 
   const handleCreate = () => {
     setEditingLote(null);
@@ -175,6 +195,19 @@ const Lotes = () => {
             </div>
           )}
         </main>
+
+        {/* Details Modal for notifications */}
+        {selectedLoteForDetails && (
+          <LoteDetailsModal
+            isOpen={showDetailsModal}
+            onClose={() => {
+              setShowDetailsModal(false);
+              setSelectedLoteForDetails(null);
+            }}
+            lote={selectedLoteForDetails}
+            showReservarButton={false}
+          />
+        )}
       </div>
     </ProtectedRoute>
   );

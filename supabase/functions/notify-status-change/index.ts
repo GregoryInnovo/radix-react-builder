@@ -66,7 +66,7 @@ serve(async (req) => {
       tipo: 'lote',
       entity_type: 'lote',
       entity_id: loteId,
-      redirect_url: '/lotes',
+      redirect_url: `/lotes?lote_id=${loteId}`,
       metadata: {
         lote_id: loteId,
         old_status: oldStatus,
