@@ -202,13 +202,20 @@ export const LotesList = ({ lotes, loading, onEdit, onView, onDelete, onStatusCh
                     </Badge>
                   )}
                   {lote.status === 'rechazado' && (
-                    <Badge className="bg-red-600 hover:bg-red-700 text-white">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleView(lote)}
+                      className="h-auto px-2.5 py-0.5 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-full border-0"
+                    >
                       ✗ Rechazado - Ver motivo
+                    </Button>
+                  )}
+                  {lote.status === 'aprobado' && (
+                    <Badge className={getStatusColor(lote.estado)}>
+                      {lote.estado}
                     </Badge>
                   )}
-                  <Badge className={getStatusColor(lote.estado)}>
-                    {lote.estado}
-                  </Badge>
                 </div>
               </div>
             </div>

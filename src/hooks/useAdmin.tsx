@@ -104,7 +104,7 @@ export const useAdmin = () => {
         console.log('Profiles fetched:', profilesData?.length || 0);
       }
 
-      // Fetch all lotes with the join using tipo_residuo_id
+      // Fetch all lotes with the join using tipo_residuo_id (excluding deleted)
       console.log('Fetching lotes...');
       const { data: lotesData, error: lotesError } = await supabase
         .from('lotes')
@@ -116,6 +116,7 @@ export const useAdmin = () => {
             descripcion
           )
         `)
+        .is('deleted_at', null)
         .order('created_at', { ascending: false });
 
       if (lotesError) {
