@@ -30,6 +30,7 @@ export const NotificacionesDropdown: React.FC = () => {
   const navigate = useNavigate();
   const [showAll, setShowAll] = React.useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = React.useState(false);
+  const [dropdownOpen, setDropdownOpen] = React.useState(false);
 
   const getNotificationIcon = (tipo: string, entityType?: string) => {
     switch (tipo) {
@@ -60,7 +61,7 @@ export const NotificacionesDropdown: React.FC = () => {
 
   return (
     <>
-    <DropdownMenu>
+    <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="sm" className="relative">
           <Bell className="h-5 w-5" />
@@ -146,17 +147,16 @@ export const NotificacionesDropdown: React.FC = () => {
                     {showAll ? 'Ver menos' : 'Ver todas'}
                   </DropdownMenuItem>
                   
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setShowDeleteDialog(true);
+                  <DropdownMenuItem 
+                    className="h-8 w-8 p-0 flex items-center justify-center cursor-pointer hover:bg-gray-50"
+                    onSelect={(e) => {
+                      e.preventDefault();
+                      setDropdownOpen(false);
+                      setTimeout(() => setShowDeleteDialog(true), 100);
                     }}
-                    className="h-8 w-8"
                   >
                     <Trash2 className="h-4 w-4 text-destructive" />
-                  </Button>
+                  </DropdownMenuItem>
                 </div>
               </>
             )}
@@ -164,20 +164,17 @@ export const NotificacionesDropdown: React.FC = () => {
             {notificaciones.length > 0 && notificaciones.length <= 5 && (
               <>
                 <DropdownMenuSeparator />
-                <div className="flex items-center justify-center p-1">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setShowDeleteDialog(true);
-                    }}
-                    className="h-8 text-xs"
-                  >
-                    <Trash2 className="h-3 w-3 mr-1 text-destructive" />
-                    Eliminar todas
-                  </Button>
-                </div>
+                <DropdownMenuItem 
+                  className="text-center text-xs cursor-pointer hover:bg-gray-50 justify-center"
+                  onSelect={(e) => {
+                    e.preventDefault();
+                    setDropdownOpen(false);
+                    setTimeout(() => setShowDeleteDialog(true), 100);
+                  }}
+                >
+                  <Trash2 className="h-3 w-3 mr-1 text-destructive" />
+                  Eliminar todas
+                </DropdownMenuItem>
               </>
             )}
           </>
