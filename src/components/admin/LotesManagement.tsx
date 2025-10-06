@@ -110,6 +110,9 @@ export const LotesManagement: React.FC<LotesManagementProps> = ({ lotes }) => {
   };
 
   const filteredLotes = lotes.filter(lote => {
+    // Exclude deleted lotes
+    if (lote.deleted_at) return false;
+    
     const matchesSearch = 
       getResiduoType(lote).toLowerCase().includes(searchTerm.toLowerCase()) ||
       lote.descripcion?.toLowerCase().includes(searchTerm.toLowerCase()) ||

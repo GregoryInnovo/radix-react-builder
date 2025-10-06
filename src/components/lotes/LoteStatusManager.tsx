@@ -53,6 +53,33 @@ export const LoteStatusManager = ({ lote, onStatusChange, loading }: LoteStatusM
   const [selectedStatus, setSelectedStatus] = useState<BatchStatus | ''>('');
   const [isChanging, setIsChanging] = useState(false);
 
+  // Only approved lotes can change availability status
+  if (lote.status !== 'aprobado') {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <AlertCircle className="w-5 h-5 text-yellow-600" />
+            Estado del Lote No Disponible
+          </CardTitle>
+          <CardDescription>
+            Solo los lotes aprobados pueden cambiar su estado de disponibilidad
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center gap-2 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+            <AlertCircle className="w-5 h-5 text-yellow-600 flex-shrink-0" />
+            <div className="text-sm text-yellow-800">
+              {lote.status === 'pendiente' && 'Este lote está pendiente de aprobación por un administrador.'}
+              {lote.status === 'rechazado' && 'Este lote fue rechazado. Revisa los comentarios del administrador.'}
+              {!lote.status && 'Este lote está pendiente de aprobación.'}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   const currentStatus = lote.estado;
   const availableStatuses = VALID_TRANSITIONS[currentStatus] || [];
   const StatusIcon = STATUS_ICONS[currentStatus];

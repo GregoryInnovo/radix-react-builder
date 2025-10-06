@@ -319,6 +319,11 @@ export const useAdmin = () => {
   };
 
   const deleteEntity = async (entityType: string, entityId: string, notes?: string) => {
+    if (loadingData) {
+      console.log('Already deleting, preventing duplicate call');
+      return;
+    }
+    
     setLoadingData(true);
     try {
       // Get entity data for audit before deletion
@@ -332,7 +337,7 @@ export const useAdmin = () => {
           .single();
         entityData = data;
         
-        // Send notification before deletion
+        // Send notification before soft deletion
         if (entityData) {
           try {
             await supabase.functions.invoke('notify-delete-entity', {
@@ -349,10 +354,10 @@ export const useAdmin = () => {
           }
         }
         
-        // Delete lote
+        // Soft delete lote using deleted_at timestamp
         const { error: deleteError } = await supabase
           .from('lotes')
-          .delete()
+          .update({ deleted_at: new Date().toISOString() })
           .eq('id', entityId);
         
         if (deleteError) throw deleteError;
@@ -381,7 +386,7 @@ export const useAdmin = () => {
           }
         }
         
-        // Delete producto
+        // Hard delete producto (no soft delete for products yet)
         const { error: deleteError } = await supabase
           .from('productos')
           .delete()

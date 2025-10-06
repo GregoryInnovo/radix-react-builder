@@ -271,15 +271,17 @@ export const LotesList = ({ lotes, loading, onEdit, onView, onDelete, onStatusCh
                 <Eye className="w-4 h-4 mr-1" />
                 {lote.imagenes && lote.imagenes.length > 0 ? 'Ver Imágenes' : 'Ver'}
               </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handleStatusClick(lote)}
-                className="flex-1"
-              >
-                <Settings className="w-4 h-4 mr-1" />
-                Estado
-              </Button>
+              {lote.status === 'aprobado' && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleStatusClick(lote)}
+                  className="flex-1"
+                >
+                  <Settings className="w-4 h-4 mr-1" />
+                  Estado
+                </Button>
+              )}
               <Button
                 variant="outline"
                 size="sm"
