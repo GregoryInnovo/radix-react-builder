@@ -5,12 +5,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Search, Calendar, Package, MapPin, DollarSign, Home, CheckCircle, XCircle, Trash2, User } from 'lucide-react';
+import { Search, Calendar, Package, MapPin, DollarSign, Home, CheckCircle, XCircle, Trash2, User, Eye } from 'lucide-react';
 import { useAdmin } from '@/hooks/useAdmin';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useProfiles } from '@/hooks/useProfiles';
 import { Link } from 'react-router-dom';
+import { ProductDetailsModal } from '@/components/productos/ProductDetailsModal';
 
 type Producto = Database['public']['Tables']['productos']['Row'];
 
@@ -22,6 +23,8 @@ export const ProductosManagement: React.FC<ProductosManagementProps> = ({ produc
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [profiles, setProfiles] = useState<Record<string, any>>({});
+  const [selectedProducto, setSelectedProducto] = useState<Producto | null>(null);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
   const { updateEntityStatus, deleteEntity } = useAdmin();
   const { getProfileById } = useProfiles();
 
@@ -69,6 +72,11 @@ export const ProductosManagement: React.FC<ProductosManagementProps> = ({ produc
     if (confirm('¿Estás seguro de que quieres eliminar este producto definitivamente? Esta acción no se puede deshacer.')) {
       await deleteEntity('producto', productId);
     }
+  };
+
+  const handleViewDetails = (producto: Producto) => {
+    setSelectedProducto(producto);
+    setShowDetailsModal(true);
   };
 
 
@@ -181,7 +189,16 @@ export const ProductosManagement: React.FC<ProductosManagementProps> = ({ produc
                     <span>Imágenes: {producto.imagenes?.length || 0}</span>
                   </div>
                   
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 flex-wrap">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleViewDetails(producto)}
+                      className="flex items-center gap-1"
+                    >
+                      <Eye className="h-4 w-4" />
+                      Ver Detalles
+                    </Button>
                     {producto.status === 'pendiente' && (
                       <>
                         <Button
@@ -219,6 +236,18 @@ export const ProductosManagement: React.FC<ProductosManagementProps> = ({ produc
           );
         })}
       </div>
+
+      {/* Details Modal */}
+      {selectedProducto && (
+        <ProductDetailsModal
+          producto={selectedProducto}
+          isOpen={showDetailsModal}
+          onClose={() => {
+            setShowDetailsModal(false);
+            setSelectedProducto(null);
+          }}
+        />
+      )}
     </div>
   );
 };

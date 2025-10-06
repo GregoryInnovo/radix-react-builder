@@ -26,6 +26,7 @@ export const LoteForm = ({ lote, onSubmit, loading, onCancel }: LoteFormProps) =
   const { tiposResiduos, loading: loadingTipos } = useTiposResiduo();
   const [showConfirm, setShowConfirm] = useState(false);
   const [pendingSubmitData, setPendingSubmitData] = useState<any>(null);
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [formData, setFormData] = useState({
     titulo: lote?.titulo || '',
     tipo_residuo_id: lote?.tipo_residuo_id || '',
@@ -59,6 +60,10 @@ export const LoteForm = ({ lote, onSubmit, loading, onCancel }: LoteFormProps) =
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+    // Limpiar error del campo al escribir
+    if (errors[field]) {
+      setErrors(prev => ({ ...prev, [field]: '' }));
+    }
   };
 
   const handleImagesChange = (images: string[]) => {
@@ -104,20 +109,41 @@ export const LoteForm = ({ lote, onSubmit, loading, onCancel }: LoteFormProps) =
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.titulo || !formData.tipo_residuo_id || !formData.peso_estimado || !formData.ubicacion_lat || !formData.ubicacion_lng || !formData.fecha_vencimiento) {
-      toast({
-        title: "Campos requeridos",
-        description: "Por favor completa todos los campos obligatorios",
-        variant: "destructive",
-      });
-      return;
+    const newErrors: Record<string, string> = {};
+
+    // Validaciones con mensajes en español
+    if (!formData.titulo.trim()) {
+      newErrors.titulo = 'El título es obligatorio';
+    } else if (formData.titulo.length > 25) {
+      newErrors.titulo = 'El título no puede exceder 25 caracteres';
     }
 
-    // Validar título (máximo 25 caracteres)
-    if (formData.titulo.length > 25) {
+    if (!formData.tipo_residuo_id) {
+      newErrors.tipo_residuo_id = 'Debes seleccionar un tipo de residuo';
+    }
+
+    if (!formData.peso_estimado) {
+      newErrors.peso_estimado = 'El peso estimado es obligatorio';
+    } else if (isNaN(parseFloat(formData.peso_estimado)) || parseFloat(formData.peso_estimado) <= 0) {
+      newErrors.peso_estimado = 'Ingresa un número válido mayor a 0 (ej: 5.5)';
+    }
+
+    if (!formData.ubicacion_lat || !formData.ubicacion_lng) {
+      newErrors.ubicacion = 'Debes obtener tu ubicación usando el botón "Mi Ubicación" o ingresar coordenadas válidas';
+    } else if (isNaN(parseFloat(formData.ubicacion_lat)) || isNaN(parseFloat(formData.ubicacion_lng))) {
+      newErrors.ubicacion = 'Las coordenadas deben ser números válidos. Usa el botón "Mi Ubicación" para obtenerlas automáticamente';
+    }
+
+    if (!formData.fecha_vencimiento) {
+      newErrors.fecha_vencimiento = 'La fecha de vencimiento es obligatoria';
+    }
+
+    // Si hay errores, mostrarlos y no continuar
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
       toast({
-        title: "Error",
-        description: "El título no puede exceder 25 caracteres",
+        title: "Campos incompletos",
+        description: "Por favor corrige los errores señalados en rojo",
         variant: "destructive",
       });
       return;
@@ -173,18 +199,21 @@ export const LoteForm = ({ lote, onSubmit, loading, onCancel }: LoteFormProps) =
               onChange={(e) => handleInputChange('titulo', e.target.value)}
               placeholder="ej. Cáscaras de Frutas Frescas"
               maxLength={25}
-              className="w-full"
+              className={`w-full ${errors.titulo ? 'border-red-500' : ''}`}
             />
             <div className="text-sm text-muted-foreground">
               {formData.titulo.length}/25 caracteres
             </div>
+            {errors.titulo && (
+              <p className="text-sm text-red-600">{errors.titulo}</p>
+            )}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="tipo_residuo_id">Tipo de Residuo *</Label>
               <Select value={formData.tipo_residuo_id} onValueChange={(value) => handleInputChange('tipo_residuo_id', value)}>
-                <SelectTrigger>
+                <SelectTrigger className={errors.tipo_residuo_id ? 'border-red-500' : ''}>
                   <SelectValue placeholder={loadingTipos ? "Cargando..." : "Selecciona el tipo de R.O.A"} />
                 </SelectTrigger>
                 <SelectContent>
@@ -202,6 +231,9 @@ export const LoteForm = ({ lote, onSubmit, loading, onCancel }: LoteFormProps) =
                     ))}
                 </SelectContent>
               </Select>
+              {errors.tipo_residuo_id && (
+                <p className="text-sm text-red-600">{errors.tipo_residuo_id}</p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -214,22 +246,31 @@ export const LoteForm = ({ lote, onSubmit, loading, onCancel }: LoteFormProps) =
                 placeholder="ej. 5.5"
                 value={formData.peso_estimado}
                 onChange={(e) => handleInputChange('peso_estimado', e.target.value)}
+                className={errors.peso_estimado ? 'border-red-500' : ''}
               />
+              {errors.peso_estimado && (
+                <p className="text-sm text-red-600">{errors.peso_estimado}</p>
+              )}
             </div>
           </div>
 
           <div className="space-y-2">
             <Label>Ubicación *</Label>
+            <p className="text-xs text-muted-foreground">
+              Usa el botón "Mi Ubicación" para obtener tus coordenadas automáticamente
+            </p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
               <Input
                 placeholder="Latitud"
                 value={formData.ubicacion_lat}
                 onChange={(e) => handleInputChange('ubicacion_lat', e.target.value)}
+                className={errors.ubicacion ? 'border-red-500' : ''}
               />
               <Input
                 placeholder="Longitud"
                 value={formData.ubicacion_lng}
                 onChange={(e) => handleInputChange('ubicacion_lng', e.target.value)}
+                className={errors.ubicacion ? 'border-red-500' : ''}
               />
               <Button
                 type="button"
@@ -246,6 +287,9 @@ export const LoteForm = ({ lote, onSubmit, loading, onCancel }: LoteFormProps) =
                 {gettingLocation ? 'Obteniendo...' : 'Mi Ubicación'}
               </Button>
             </div>
+            {errors.ubicacion && (
+              <p className="text-sm text-red-600">{errors.ubicacion}</p>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -266,10 +310,14 @@ export const LoteForm = ({ lote, onSubmit, loading, onCancel }: LoteFormProps) =
               value={formData.fecha_vencimiento}
               onChange={(e) => handleInputChange('fecha_vencimiento', e.target.value)}
               min={new Date(Date.now() + 86400000).toISOString().split('T')[0]}
+              className={errors.fecha_vencimiento ? 'border-red-500' : ''}
             />
             <div className="text-sm text-muted-foreground">
               Fecha estimada de vencimiento del lote
             </div>
+            {errors.fecha_vencimiento && (
+              <p className="text-sm text-red-600">{errors.fecha_vencimiento}</p>
+            )}
           </div>
 
           <ImageUpload

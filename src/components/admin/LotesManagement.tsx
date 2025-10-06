@@ -10,10 +10,11 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useAdmin } from '@/hooks/useAdmin';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { Search, Package, MapPin, Calendar, Weight, User, CheckCircle, XCircle, Trash2 } from 'lucide-react';
+import { Search, Package, MapPin, Calendar, Weight, User, CheckCircle, XCircle, Trash2, Eye } from 'lucide-react';
 import { useProfiles } from '@/hooks/useProfiles';
 import { Link } from 'react-router-dom';
 import type { Database } from '@/integrations/supabase/types';
+import { LoteDetailsModal } from '@/components/lotes/LoteDetailsModal';
 
 type Lote = Database['public']['Tables']['lotes']['Row'] & {
   tipos_residuo?: {
@@ -35,6 +36,8 @@ export const LotesManagement: React.FC<LotesManagementProps> = ({ lotes }) => {
   const [showApprovalDialog, setShowApprovalDialog] = useState(false);
   const [showRejectionDialog, setShowRejectionDialog] = useState(false);
   const [selectedLoteId, setSelectedLoteId] = useState<string>('');
+  const [selectedLote, setSelectedLote] = useState<Lote | null>(null);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [adminNotes, setAdminNotes] = useState('');
   const { updateEntityStatus, deleteEntity, profiles } = useAdmin();
   const { getProfileById } = useProfiles();
@@ -103,6 +106,11 @@ export const LotesManagement: React.FC<LotesManagementProps> = ({ lotes }) => {
     if (confirm('¿Estás seguro de que quieres eliminar este lote definitivamente? Esta acción no se puede deshacer.')) {
       await deleteEntity('lote', loteId);
     }
+  };
+
+  const handleViewDetails = (lote: Lote) => {
+    setSelectedLote(lote);
+    setShowDetailsModal(true);
   };
 
   const getUserProfile = (userId: string): Profile | null => {
@@ -238,7 +246,16 @@ export const LotesManagement: React.FC<LotesManagementProps> = ({ lotes }) => {
                     <span>Imágenes: {lote.imagenes?.length || 0}</span>
                   </div>
                   
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 flex-wrap">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleViewDetails(lote)}
+                      className="flex items-center gap-1"
+                    >
+                      <Eye className="h-4 w-4" />
+                      Ver Detalles
+                    </Button>
                     {lote.status === 'pendiente' && (
                       <>
                         <Button
@@ -346,6 +363,18 @@ export const LotesManagement: React.FC<LotesManagementProps> = ({ lotes }) => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Details Modal */}
+      {selectedLote && (
+        <LoteDetailsModal
+          lote={selectedLote}
+          isOpen={showDetailsModal}
+          onClose={() => {
+            setShowDetailsModal(false);
+            setSelectedLote(null);
+          }}
+        />
+      )}
     </div>
   );
 };

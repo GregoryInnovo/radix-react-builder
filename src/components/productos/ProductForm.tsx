@@ -44,38 +44,42 @@ export const ProductForm: React.FC<ProductFormProps> = ({ onSuccess, onCancel })
     const newErrors: Record<string, string> = {};
 
     if (!formData.nombre.trim()) {
-      newErrors.nombre = 'El nombre es requerido';
+      newErrors.nombre = 'El nombre del producto es obligatorio';
     }
 
     if (!formData.descripcion.trim()) {
-      newErrors.descripcion = 'La descripción es requerida';
+      newErrors.descripcion = 'La descripción es obligatoria';
     }
 
     if (selectedFiles.length === 0) {
-      newErrors.imagenes = 'Debe subir al menos una imagen';
+      newErrors.imagenes = 'Debes subir al menos 1 imagen en formato JPG, PNG o WEBP (máx. 5MB cada una)';
     }
 
-    if (!formData.precio_unidad || parseInt(formData.precio_unidad) <= 0) {
-      newErrors.precio_unidad = 'El precio por unidad es requerido y debe ser mayor a 0';
+    if (!formData.precio_unidad) {
+      newErrors.precio_unidad = 'El precio es obligatorio';
+    } else if (isNaN(parseInt(formData.precio_unidad)) || parseInt(formData.precio_unidad) <= 0) {
+      newErrors.precio_unidad = 'Ingresa un precio válido en pesos colombianos (solo números positivos)';
     }
 
     if (formData.incluye_domicilio) {
-      if (!formData.costo_domicilio || parseInt(formData.costo_domicilio) < 0 || parseInt(formData.costo_domicilio) > 20000) {
-        newErrors.costo_domicilio = 'El costo de domicilio debe estar entre 0 y 20,000 COP';
+      if (!formData.costo_domicilio) {
+        newErrors.costo_domicilio = 'El costo de domicilio es obligatorio cuando incluye envío';
+      } else if (isNaN(parseInt(formData.costo_domicilio)) || parseInt(formData.costo_domicilio) < 0 || parseInt(formData.costo_domicilio) > 20000) {
+        newErrors.costo_domicilio = 'El costo debe ser un número entre 0 y 20,000 COP';
       }
     } else {
       // Cuando NO incluye domicilio, la dirección es obligatoria
       if (!formData.direccion_vendedor.trim()) {
-        newErrors.direccion_vendedor = 'La dirección es requerida cuando no se incluye domicilio';
+        newErrors.direccion_vendedor = 'La dirección es obligatoria para que los compradores puedan recoger el producto';
       }
     }
 
     if (formData.categoria_funcionalidad.length === 0) {
-      newErrors.categoria_funcionalidad = 'Debe seleccionar al menos una funcionalidad';
+      newErrors.categoria_funcionalidad = 'Selecciona al menos una funcionalidad para tu producto';
     }
 
     if (formData.categoria_tipo.length === 0) {
-      newErrors.categoria_tipo = 'Debe seleccionar al menos un tipo de producto';
+      newErrors.categoria_tipo = 'Selecciona al menos un tipo de producto';
     }
 
     setErrors(newErrors);
@@ -84,16 +88,25 @@ export const ProductForm: React.FC<ProductFormProps> = ({ onSuccess, onCancel })
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []);
+    const invalidFiles: string[] = [];
+    
     const validFiles = files.filter(file => {
       const isValidType = ['image/jpeg', 'image/png', 'image/webp'].includes(file.type);
       const isValidSize = file.size <= 5 * 1024 * 1024; // 5MB
+      
+      if (!isValidType) {
+        invalidFiles.push(`${file.name}: formato no válido`);
+      } else if (!isValidSize) {
+        invalidFiles.push(`${file.name}: supera 5MB`);
+      }
+      
       return isValidType && isValidSize;
     });
 
-    if (validFiles.length !== files.length) {
+    if (invalidFiles.length > 0) {
       setErrors(prev => ({
         ...prev,
-        imagenes: 'Algunos archivos no son válidos. Solo se permiten JPG, PNG, WEBP hasta 5MB.'
+        imagenes: `Archivos rechazados: ${invalidFiles.join(', ')}. Solo se permiten JPG, PNG, WEBP hasta 5MB.`
       }));
     } else {
       setErrors(prev => ({ ...prev, imagenes: '' }));
