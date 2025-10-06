@@ -85,7 +85,9 @@ serve(async (req) => {
         break
 
       case 'status_change':
-        const targetUserId = newStatus === 'aceptada' || newStatus === 'rechazada' 
+        // When order is accepted or canceled (rejected) from pendiente, notify requester
+        // When order is canceled from aceptada, notify provider
+        const targetUserId = (newStatus === 'aceptada' || (newStatus === 'cancelada' && oldStatus === 'pendiente'))
           ? ordenWithProfiles.solicitante_id 
           : ordenWithProfiles.proveedor_id
 

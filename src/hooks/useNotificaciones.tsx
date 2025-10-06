@@ -62,6 +62,31 @@ export const useNotificaciones = () => {
     }
   };
 
+  const deleteAllNotifications = async () => {
+    try {
+      const { error } = await supabase
+        .from('notificaciones')
+        .delete()
+        .eq('user_id', user?.id);
+
+      if (error) throw error;
+      
+      toast({
+        title: "Notificaciones eliminadas",
+        description: "Todas tus notificaciones han sido eliminadas exitosamente.",
+      });
+      
+      await fetchNotificaciones();
+    } catch (error: any) {
+      console.error('Error deleting all notifications:', error);
+      toast({
+        title: "Error",
+        description: "No se pudieron eliminar las notificaciones. Intenta de nuevo.",
+        variant: "destructive",
+      });
+    }
+  };
+
   useEffect(() => {
     fetchNotificaciones();
   }, [user]);
@@ -107,6 +132,7 @@ export const useNotificaciones = () => {
     unreadCount,
     markAsRead,
     markAllAsRead,
+    deleteAllNotifications,
     refreshNotificaciones: fetchNotificaciones
   };
 };

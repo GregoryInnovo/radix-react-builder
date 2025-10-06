@@ -1,5 +1,5 @@
 import React from 'react';
-import { Bell, Package, ShoppingCart, MessageSquare, Check, MapPin, Star, AlertTriangle, CheckCheck } from 'lucide-react';
+import { Bell, Package, ShoppingCart, MessageSquare, Check, MapPin, Star, AlertTriangle, CheckCheck, Trash2 } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,15 +10,26 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { useNotificaciones } from '@/hooks/useNotificaciones';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
 
 export const NotificacionesDropdown: React.FC = () => {
-  const { notificaciones, unreadCount, markAsRead, markAllAsRead } = useNotificaciones();
+  const { notificaciones, unreadCount, markAsRead, markAllAsRead, deleteAllNotifications } = useNotificaciones();
   const navigate = useNavigate();
   const [showAll, setShowAll] = React.useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = React.useState(false);
 
   const getNotificationIcon = (tipo: string, entityType?: string) => {
     switch (tipo) {
@@ -48,6 +59,7 @@ export const NotificacionesDropdown: React.FC = () => {
   const displayedNotifications = showAll ? notificaciones : notificaciones.slice(0, 5);
 
   return (
+    <>
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="sm" className="relative">
@@ -123,20 +135,78 @@ export const NotificacionesDropdown: React.FC = () => {
             {notificaciones.length > 5 && (
               <>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem 
-                  className="text-center text-sm text-gray-500 cursor-pointer hover:bg-gray-50" 
-                  onSelect={(e) => {
-                    e.preventDefault();
-                    setShowAll(!showAll);
-                  }}
-                >
-                  {showAll ? 'Ver menos notificaciones' : 'Ver todas las notificaciones'}
-                </DropdownMenuItem>
+                <div className="flex items-center gap-1 p-1">
+                  <DropdownMenuItem 
+                    className="flex-1 text-center text-sm text-gray-500 cursor-pointer hover:bg-gray-50" 
+                    onSelect={(e) => {
+                      e.preventDefault();
+                      setShowAll(!showAll);
+                    }}
+                  >
+                    {showAll ? 'Ver menos' : 'Ver todas'}
+                  </DropdownMenuItem>
+                  
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowDeleteDialog(true);
+                    }}
+                    className="h-8 w-8"
+                  >
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                  </Button>
+                </div>
+              </>
+            )}
+            
+            {notificaciones.length > 0 && notificaciones.length <= 5 && (
+              <>
+                <DropdownMenuSeparator />
+                <div className="flex items-center justify-center p-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowDeleteDialog(true);
+                    }}
+                    className="h-8 text-xs"
+                  >
+                    <Trash2 className="h-3 w-3 mr-1 text-destructive" />
+                    Eliminar todas
+                  </Button>
+                </div>
               </>
             )}
           </>
         )}
       </DropdownMenuContent>
     </DropdownMenu>
+
+    <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>¿Eliminar todas las notificaciones?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Esta acción eliminará permanentemente todas tus notificaciones. No se puede deshacer.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={() => {
+              deleteAllNotifications();
+              setShowDeleteDialog(false);
+            }}
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+          >
+            Eliminar todas
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 };
