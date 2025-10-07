@@ -13,9 +13,10 @@ import { cn } from '@/lib/utils';
 interface AuthFormProps {
   mode: 'login' | 'register';
   onToggleMode: () => void;
+  onForgotPassword?: () => void;
 }
 
-export const AuthForm = ({ mode, onToggleMode }: AuthFormProps) => {
+export const AuthForm = ({ mode, onToggleMode, onForgotPassword }: AuthFormProps) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
@@ -38,6 +39,48 @@ export const AuthForm = ({ mode, onToggleMode }: AuthFormProps) => {
     { id: 'transformer', label: 'Transformador', icon: Factory, description: 'Proceso y transformo R.O.A' },
     { id: 'citizen', label: 'Consumidor', icon: Users, description: 'Compro productos transformados' }
   ];
+
+  const validateEmail = (email: string): { valid: boolean; error: string } => {
+    const trimmedEmail = email.trim();
+    
+    if (!trimmedEmail) {
+      return { valid: false, error: 'El correo electrónico es obligatorio' };
+    }
+    
+    if (trimmedEmail.includes(' ')) {
+      return { valid: false, error: 'El correo no puede contener espacios' };
+    }
+    
+    // Verificar doble @
+    if (trimmedEmail.includes('@@')) {
+      return { valid: false, error: 'Correo no válido' };
+    }
+    
+    // Verificar formato básico
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(trimmedEmail)) {
+      return { valid: false, error: 'Formato de correo incorrecto' };
+    }
+    
+    // Verificar dominio válido
+    const parts = trimmedEmail.split('@');
+    if (parts.length !== 2) {
+      return { valid: false, error: 'Correo no válido' };
+    }
+    
+    const domain = parts[1];
+    if (!domain.includes('.') || domain.endsWith('.') || domain.startsWith('.')) {
+      return { valid: false, error: 'El dominio del correo no es válido' };
+    }
+    
+    const domainParts = domain.split('.');
+    const extension = domainParts[domainParts.length - 1];
+    if (extension.length < 2) {
+      return { valid: false, error: 'El dominio del correo no es válido' };
+    }
+    
+    return { valid: true, error: '' };
+  };
 
   const validateForm = () => {
     const newErrors = {
@@ -67,11 +110,10 @@ export const AuthForm = ({ mode, onToggleMode }: AuthFormProps) => {
       }
     }
     
-    if (!email.trim()) {
-      newErrors.email = 'El correo electrónico es obligatorio';
-      isValid = false;
-    } else if (!/\S+@\S+\.\S+/.test(email)) {
-      newErrors.email = 'El correo electrónico no es válido';
+    // Usar validación mejorada de email
+    const emailValidation = validateEmail(email);
+    if (!emailValidation.valid) {
+      newErrors.email = emailValidation.error;
       isValid = false;
     }
     
@@ -401,6 +443,18 @@ export const AuthForm = ({ mode, onToggleMode }: AuthFormProps) => {
                   }
                 </Button>
               </form>
+
+              {mode === 'login' && onForgotPassword && (
+                <div className="text-center mt-3">
+                  <button
+                    type="button"
+                    onClick={onForgotPassword}
+                    className="text-sm text-green-600 hover:text-green-700 underline transition-colors duration-200"
+                  >
+                    ¿Olvidaste tu contraseña?
+                  </button>
+                </div>
+              )}
 
               <div className="text-center pt-4">
                 <p className="text-sm text-gray-600">

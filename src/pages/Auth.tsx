@@ -3,16 +3,19 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { AuthForm } from '@/components/auth/AuthForm';
 import { ExpiredLinkNotice } from '@/components/auth/ExpiredLinkNotice';
+import { ForgotPasswordForm } from '@/components/auth/ForgotPasswordForm';
+import { ResetPasswordForm } from '@/components/auth/ResetPasswordForm';
 import { useAuth } from '@/hooks/useAuth';
 
 const Auth = () => {
   const [searchParams] = useSearchParams();
   const modeParam = searchParams.get('mode');
+  const typeParam = searchParams.get('type');
   const error = searchParams.get('error');
   const errorDescription = searchParams.get('error_description');
   const email = searchParams.get('email');
   
-  const [mode, setMode] = useState<'login' | 'register'>(
+  const [mode, setMode] = useState<'login' | 'register' | 'forgot-password'>(
     modeParam === 'register' ? 'register' : 'login'
   );
   const { isAuthenticated, isEmailVerified, loading } = useAuth();
@@ -54,6 +57,14 @@ const Auth = () => {
     setMode(mode === 'login' ? 'register' : 'login');
   };
 
+  const handleForgotPassword = () => {
+    setMode('forgot-password');
+  };
+
+  const handleBackToLogin = () => {
+    setMode('login');
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-emerald-50">
@@ -70,7 +81,23 @@ const Auth = () => {
     return <ExpiredLinkNotice initialEmail={email || ''} errorType={errorType} />;
   }
 
-  return <AuthForm mode={mode} onToggleMode={toggleMode} />;
+  // Si es recuperación de contraseña (viene del email)
+  if (typeParam === 'recovery') {
+    return <ResetPasswordForm />;
+  }
+
+  // Si el usuario pidió recuperar contraseña
+  if (mode === 'forgot-password') {
+    return <ForgotPasswordForm onBack={handleBackToLogin} />;
+  }
+
+  return (
+    <AuthForm 
+      mode={mode} 
+      onToggleMode={toggleMode} 
+      onForgotPassword={handleForgotPassword}
+    />
+  );
 };
 
 export default Auth;

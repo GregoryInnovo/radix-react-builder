@@ -279,6 +279,86 @@ export const useAuth = () => {
     }
   };
 
+  const resetPassword = async (email: string) => {
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth?type=recovery`
+      });
+
+      if (error) {
+        toast({
+          title: "Error al enviar email",
+          description: error.message,
+          variant: "destructive",
+        });
+        return { error };
+      }
+
+      toast({
+        title: "Email enviado",
+        description: `Hemos enviado un enlace de recuperación a ${email}. Revisa tu bandeja de entrada.`,
+      });
+
+      return { error: null };
+    } catch (error: any) {
+      console.error('Reset password error:', error);
+      toast({
+        title: "Error al recuperar contraseña",
+        description: error.message,
+        variant: "destructive",
+      });
+      return { error };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updatePassword = async (newPassword: string) => {
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword
+      });
+
+      if (error) {
+        // Supabase rechaza contraseñas iguales a la anterior
+        if (error.message.includes('same') || error.message.includes('igual')) {
+          toast({
+            title: "Contraseña no válida",
+            description: "La nueva contraseña debe ser diferente a la anterior",
+            variant: "destructive",
+          });
+          return { error };
+        }
+        
+        toast({
+          title: "Error al actualizar contraseña",
+          description: error.message,
+          variant: "destructive",
+        });
+        return { error };
+      }
+
+      toast({
+        title: "Contraseña actualizada",
+        description: "Tu contraseña ha sido actualizada correctamente. Ya puedes iniciar sesión.",
+      });
+
+      return { error: null };
+    } catch (error: any) {
+      console.error('Update password error:', error);
+      toast({
+        title: "Error al actualizar contraseña",
+        description: error.message,
+        variant: "destructive",
+      });
+      return { error };
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return {
     user,
     session,
@@ -287,6 +367,8 @@ export const useAuth = () => {
     signIn,
     signOut,
     resendConfirmation,
+    resetPassword,
+    updatePassword,
     isAuthenticated: !!user,
     isEmailVerified: !!user?.email_confirmed_at
   };
