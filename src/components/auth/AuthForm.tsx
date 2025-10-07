@@ -24,6 +24,7 @@ export const AuthForm = ({ mode, onToggleMode, onForgotPassword }: AuthFormProps
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [showResend, setShowResend] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
+  const [loginError, setLoginError] = useState('');
   const [errors, setErrors] = useState({
     fullName: '',
     email: '',
@@ -139,7 +140,10 @@ export const AuthForm = ({ mode, onToggleMode, onForgotPassword }: AuthFormProps
     if (mode === 'register') {
       setShowConfirmation(true);
     } else {
-      await signIn(email, password);
+      const result = await signIn(email, password);
+      if (result.error) {
+        setLoginError(result.error.message);
+      }
     }
   };
 
@@ -229,6 +233,13 @@ export const AuthForm = ({ mode, onToggleMode, onForgotPassword }: AuthFormProps
           ) : (
             <>
               <form onSubmit={handleSubmit} noValidate className="space-y-4">
+                {loginError && mode === 'login' && (
+                  <div className="text-sm text-red-700 bg-red-50 p-3 rounded border border-red-200 flex items-center gap-2">
+                    <AlertCircle className="h-4 w-4 flex-shrink-0" />
+                    <span>{loginError}</span>
+                  </div>
+                )}
+                
                 {mode === 'register' && (
                   <div className="space-y-2">
                     <Label htmlFor="fullName" className="text-sm font-medium text-gray-700">
@@ -272,14 +283,15 @@ export const AuthForm = ({ mode, onToggleMode, onForgotPassword }: AuthFormProps
                   )}
                   <div className="relative">
                     <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                    <Input
-                      id="email"
-                      type="email"
-                      value={email}
-                      onChange={(e) => {
-                        setEmail(e.target.value);
-                        setErrors(prev => ({ ...prev, email: '' }));
-                      }}
+                      <Input
+                        id="email"
+                        type="email"
+                        value={email}
+                        onChange={(e) => {
+                          setEmail(e.target.value);
+                          setErrors(prev => ({ ...prev, email: '' }));
+                          setLoginError('');
+                        }}
                       placeholder="tu@email.com"
                       className={cn(
                         "pl-10 border-gray-200 focus:border-green-500 focus:ring-green-500",
@@ -308,6 +320,7 @@ export const AuthForm = ({ mode, onToggleMode, onForgotPassword }: AuthFormProps
                         onChange={(e) => {
                           setPassword(e.target.value);
                           setErrors(prev => ({ ...prev, password: '' }));
+                          setLoginError('');
                         }}
                         placeholder="Tu contraseña"
                         className={cn(

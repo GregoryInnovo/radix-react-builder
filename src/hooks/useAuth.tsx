@@ -202,9 +202,17 @@ export const useAuth = () => {
       return { data, error: null };
     } catch (error: any) {
       console.error('Sign in error:', error);
+      
+      // Traducir errores de credenciales sin mostrar toast
+      if (error.message?.includes('Invalid login credentials') || 
+          error.message?.includes('Invalid email or password')) {
+        return { data: null, error: { message: "Credenciales no válidas" } };
+      }
+      
+      // Para otros errores, mantener el toast
       toast({
         title: "Error al iniciar sesión",
-        description: error.message || "Credenciales incorrectas",
+        description: error.message || "Error inesperado",
         variant: "destructive",
       });
       return { data: null, error };
