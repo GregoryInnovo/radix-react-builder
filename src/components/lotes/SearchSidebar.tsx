@@ -231,8 +231,6 @@ export const SearchSidebar: React.FC<SearchSidebarProps> = ({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="1">1 km</SelectItem>
-                <SelectItem value="3">3 km</SelectItem>
                 <SelectItem value="5">5 km</SelectItem>
                 <SelectItem value="10">10 km</SelectItem>
                 <SelectItem value="20">20 km</SelectItem>

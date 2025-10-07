@@ -46,26 +46,52 @@ export const SearchResultsMap: React.FC<SearchResultsMapProps> = ({
     const lats = points.map(p => Number(p.lat));
     const lngs = points.map(p => Number(p.lng));
 
+    const minLat = Math.min(...lats);
+    const maxLat = Math.max(...lats);
+    const minLng = Math.min(...lngs);
+    const maxLng = Math.max(...lngs);
+
+    // Calculate range
+    const latRange = maxLat - minLat;
+    const lngRange = maxLng - minLng;
+
+    // Add padding (15% on each side) for better visualization
+    const latPadding = latRange * 0.15 || 0.005;
+    const lngPadding = lngRange * 0.15 || 0.005;
+
     return {
-      minLat: Math.min(...lats),
-      maxLat: Math.max(...lats),
-      minLng: Math.min(...lngs),
-      maxLng: Math.max(...lngs),
-      centerLat: (Math.min(...lats) + Math.max(...lats)) / 2,
-      centerLng: (Math.min(...lngs) + Math.max(...lngs)) / 2
+      minLat: minLat - latPadding,
+      maxLat: maxLat + latPadding,
+      minLng: minLng - lngPadding,
+      maxLng: maxLng + lngPadding,
+      centerLat: (minLat + maxLat) / 2,
+      centerLng: (minLng + maxLng) / 2,
+      latRange: latRange || 0.01,
+      lngRange: lngRange || 0.01
     };
   };
 
   const bounds = getMapBounds();
   if (!bounds) return null;
 
+  // Determine if lotes are too dispersed (> 100km max distance)
+  const maxDistance = results.length > 0 ? Math.max(...results.map(r => r.distance)) : 0;
+  const isVeryDispersed = maxDistance > 100;
+
+  // Filter results for very distant cases (only show within 100km)
+  const filteredResults = isVeryDispersed 
+    ? results.filter(r => r.distance <= 100)
+    : results;
+
+  const hiddenCount = results.length - filteredResults.length;
+
   // Create a visual representation of the map area
   const mapWidth = 600;
   const mapHeight = 400;
 
-  // Convert lat/lng to pixels for display
-  const latRange = bounds.maxLat - bounds.minLat || 0.01;
-  const lngRange = bounds.maxLng - bounds.minLng || 0.01;
+  // Convert lat/lng to pixels for display with padding
+  const latRange = bounds.maxLat - bounds.minLat;
+  const lngRange = bounds.maxLng - bounds.minLng;
 
   const getPixelPosition = (lat: number, lng: number) => {
     const x = ((lng - bounds.minLng) / lngRange) * (mapWidth - 40) + 20;
@@ -82,6 +108,25 @@ export const SearchResultsMap: React.FC<SearchResultsMapProps> = ({
 
   return (
     <div className="space-y-4">
+      {/* Warning for very dispersed lotes */}
+      {isVeryDispersed && (
+        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+          <div className="flex items-start gap-3">
+            <div className="bg-amber-100 rounded-full p-2">
+              <MapPin className="w-4 h-4 text-amber-700" />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-medium text-amber-900">
+                Algunos lotes están muy lejos
+              </p>
+              <p className="text-xs text-amber-700 mt-1">
+                El mapa muestra solo los lotes dentro de 100 km. Hay {hiddenCount} lote{hiddenCount !== 1 ? 's' : ''} más lejano{hiddenCount !== 1 ? 's' : ''} que se muestran en la lista principal.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Map Visualization */}
       <div className="relative bg-gradient-to-br from-green-50 via-blue-50 to-cyan-50 border border-gray-200 rounded-lg overflow-hidden">
         <div 
@@ -129,7 +174,7 @@ export const SearchResultsMap: React.FC<SearchResultsMapProps> = ({
           )}
 
           {/* Lote pins */}
-          {results.map((result, index) => {
+          {filteredResults.map((result, index) => {
             const position = getPixelPosition(
               Number(result.lote.ubicacion_lat),
               Number(result.lote.ubicacion_lng)
@@ -169,7 +214,7 @@ export const SearchResultsMap: React.FC<SearchResultsMapProps> = ({
 
           {/* Zoom indicator */}
           <div className="absolute bottom-2 right-2 bg-black bg-opacity-75 text-white text-xs px-2 py-1 rounded">
-            {results.length} lote{results.length !== 1 ? 's' : ''}
+            {filteredResults.length} lote{filteredResults.length !== 1 ? 's' : ''} en mapa
           </div>
         </div>
       </div>
