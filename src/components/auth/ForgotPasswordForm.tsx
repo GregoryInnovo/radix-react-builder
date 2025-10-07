@@ -102,7 +102,7 @@ export const ForgotPasswordForm = ({ onBack }: ForgotPasswordFormProps) => {
                   Email enviado correctamente
                 </p>
                 <p className="text-xs text-green-700">
-                  Hemos enviado un enlace de recuperación a <strong>{email}</strong>
+                  Si existe la cuenta, hemos enviado un enlace de recuperación a <strong>{email}</strong>
                 </p>
                 <p className="text-xs text-green-600 mt-3 bg-green-100 p-2 rounded">
                   💡 <strong>Tip:</strong> Revisa tu carpeta de spam si no encuentras el email
