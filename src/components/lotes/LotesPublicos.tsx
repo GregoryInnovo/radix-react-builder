@@ -2,13 +2,16 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { MapPin, Weight, Calendar, Eye, Package, AlertTriangle } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Separator } from '@/components/ui/separator';
+import { MapPin, Weight, Calendar, Eye, Package, AlertTriangle, Map as MapIcon, Navigation2 } from 'lucide-react';
 import { usePublicLotes } from '@/hooks/usePublicLotes';
 import { useProfiles } from '@/hooks/useProfiles';
 import { LoteDetailsModal } from '@/components/lotes/LoteDetailsModal';
 import { ReservarLote } from '@/components/lotes/ReservarLote';
 import { UserProfileLink } from '@/components/user/UserProfileLink';
 import { SearchSidebar } from './SearchSidebar';
+import { SearchResultsMap } from '@/components/search/SearchResultsMap';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/hooks/useAuth';
 import { format } from 'date-fns';
@@ -20,10 +23,15 @@ export const LotesPublicos: React.FC = () => {
   const { getProfileById } = useProfiles();
   const { user } = useAuth();
   const [selectedLote, setSelectedLote] = useState<any>(null);
+  const [selectedLoteDistance, setSelectedLoteDistance] = useState<number>(0);
   const [filteredLotes, setFilteredLotes] = useState<any[]>([]);
   const [profiles, setProfiles] = useState<Record<string, any>>({});
   const [selectedType, setSelectedType] = useState<string>('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [showMapModal, setShowMapModal] = useState(false);
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [activeRadius, setActiveRadius] = useState<number | null>(null);
+  const [searchTerm, setSearchTerm] = useState<string>('');
 
   React.useEffect(() => {
     applyFilters();
@@ -62,8 +70,22 @@ export const LotesPublicos: React.FC = () => {
     }
   }, [lotes, getProfileById, profiles]);
 
-  const handleSearchResults = (results: any[]) => {
+  const handleSearchResults = (
+    results: any[], 
+    location: { lat: number; lng: number } | null,
+    radius: number | null,
+    search: string
+  ) => {
     setSearchResults(results);
+    setUserLocation(location);
+    setActiveRadius(radius);
+    setSearchTerm(search);
+  };
+
+  const handleLoteSelectFromMap = (lote: any, distance: number) => {
+    setSelectedLote(lote);
+    setSelectedLoteDistance(distance);
+    setShowMapModal(false);
   };
 
   const handleTypeSelect = (typeId: string) => {
@@ -72,6 +94,17 @@ export const LotesPublicos: React.FC = () => {
     } else {
       setSelectedType(typeId === selectedType ? '' : typeId);
     }
+  };
+
+  const calculateDistance = (lat1: number, lng1: number, lat2: number, lng2: number) => {
+    const R = 6371;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLng = (lng2 - lng1) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+      Math.sin(dLng/2) * Math.sin(dLng/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
   };
 
   const formatDistance = (distance: number) => {
@@ -113,6 +146,7 @@ export const LotesPublicos: React.FC = () => {
           <SearchSidebar 
             allLotes={lotes}
             onSearchResults={handleSearchResults}
+            onShowMap={() => setShowMapModal(true)}
           />
         </div>
 
@@ -125,6 +159,29 @@ export const LotesPublicos: React.FC = () => {
               onTypeSelect={handleTypeSelect}
             />
           </div>
+
+          {/* Search Feedback */}
+          {searchTerm && filteredLotes.length > 0 && (
+            <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-sm text-blue-900">
+                Mostrando <strong>{filteredLotes.length}</strong> lote{filteredLotes.length !== 1 ? 's' : ''} que coincide{filteredLotes.length !== 1 ? 'n' : ''} con <strong>"{searchTerm}"</strong>
+              </p>
+            </div>
+          )}
+
+          {/* Radius Separator */}
+          {activeRadius && userLocation && filteredLotes.length > 0 && (
+            <div className="mb-6">
+              <Separator className="my-4" />
+              <div className="flex items-center justify-center gap-2 text-muted-foreground">
+                <Navigation2 className="w-4 h-4" />
+                <p className="text-sm font-medium">
+                  Lotes de R.O.A a menos de <span className="text-primary font-bold">{activeRadius} km</span>
+                </p>
+              </div>
+              <Separator className="my-4" />
+            </div>
+          )}
 
           {filteredLotes.length === 0 ? (
             <Card className="border-dashed">
@@ -144,11 +201,20 @@ export const LotesPublicos: React.FC = () => {
                 const profile = profiles[lote.user_id];
                 const isOwnLote = user?.id === lote.user_id;
 
+                const loteDistance = userLocation && lote.ubicacion_lat && lote.ubicacion_lng
+                  ? calculateDistance(
+                      userLocation.lat,
+                      userLocation.lng,
+                      parseFloat(lote.ubicacion_lat),
+                      parseFloat(lote.ubicacion_lng)
+                    )
+                  : null;
+
                 return (
                   <Card key={lote.id} className="hover:shadow-md transition-shadow">
                     <CardHeader className="pb-3">
-                      <div className="flex justify-between items-start">
-                        <div className="space-y-1">
+                      <div className="flex justify-between items-start gap-2">
+                        <div className="space-y-1 flex-1">
                           <CardTitle className="text-lg">
                             {lote.titulo || `${lote.peso_estimado}kg de R.O.A`}
                           </CardTitle>
@@ -157,9 +223,17 @@ export const LotesPublicos: React.FC = () => {
                             {lote.direccion || 'Dirección no especificada'}
                           </CardDescription>
                         </div>
-                        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                          {lote.tipos_residuo?.nombre || 'Sin categoría'}
-                        </Badge>
+                        <div className="flex flex-col gap-2 items-end">
+                          <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                            {lote.tipos_residuo?.nombre || 'Sin categoría'}
+                          </Badge>
+                          {loteDistance !== null && (
+                            <Badge variant="secondary" className="bg-blue-50 text-blue-700 border-blue-200">
+                              <Navigation2 className="w-3 h-3 mr-1" />
+                              {formatDistance(loteDistance)}
+                            </Badge>
+                          )}
+                        </div>
                       </div>
                     </CardHeader>
 
@@ -253,11 +327,45 @@ export const LotesPublicos: React.FC = () => {
       {selectedLote && (
         <LoteDetailsModal
           isOpen={!!selectedLote}
-          onClose={() => setSelectedLote(null)}
+          onClose={() => {
+            setSelectedLote(null);
+            setSelectedLoteDistance(0);
+          }}
           lote={selectedLote}
-          distance={0}
+          distance={selectedLoteDistance}
         />
       )}
+
+      {/* Map Modal */}
+      <Dialog open={showMapModal} onOpenChange={setShowMapModal}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <MapIcon className="w-5 h-5" />
+              Mapa de Lotes Disponibles
+            </DialogTitle>
+          </DialogHeader>
+          {userLocation && (
+            <SearchResultsMap
+              userLocation={userLocation}
+              results={filteredLotes.map(lote => {
+                const distance = calculateDistance(
+                  userLocation.lat,
+                  userLocation.lng,
+                  parseFloat(lote.ubicacion_lat),
+                  parseFloat(lote.ubicacion_lng)
+                );
+                return {
+                  lote,
+                  distance,
+                  relevanceScore: 1
+                };
+              })}
+              onLoteSelect={handleLoteSelectFromMap}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

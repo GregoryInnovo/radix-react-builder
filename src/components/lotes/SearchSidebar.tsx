@@ -3,17 +3,24 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, MapPin, Navigation } from 'lucide-react';
+import { Search, MapPin, Navigation, Map as MapIcon } from 'lucide-react';
 import { useProfiles } from '@/hooks/useProfiles';
 
 interface SearchSidebarProps {
   allLotes: any[];
-  onSearchResults: (results: any[]) => void;
+  onSearchResults: (
+    results: any[], 
+    location: { lat: number; lng: number } | null,
+    radius: number | null,
+    searchTerm: string
+  ) => void;
+  onShowMap: () => void;
 }
 
 export const SearchSidebar: React.FC<SearchSidebarProps> = ({
   allLotes,
-  onSearchResults
+  onSearchResults,
+  onShowMap
 }) => {
   const [textSearch, setTextSearch] = useState('');
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
@@ -115,22 +122,34 @@ export const SearchSidebar: React.FC<SearchSidebarProps> = ({
       });
     }
 
-    // Filter by location
+    // Filter by location and calculate distances
+    let lotesWithDistance = filteredLotes;
     if (userLocation) {
       const radiusKm = parseInt(radius);
-      filteredLotes = filteredLotes.filter(lote => {
-        if (!lote.ubicacion_lat || !lote.ubicacion_lng) return false;
-        const distance = calculateDistance(
-          userLocation.lat,
-          userLocation.lng,
-          parseFloat(lote.ubicacion_lat),
-          parseFloat(lote.ubicacion_lng)
-        );
-        return distance <= radiusKm;
-      });
+      lotesWithDistance = filteredLotes
+        .map(lote => {
+          if (!lote.ubicacion_lat || !lote.ubicacion_lng) return null;
+          const distance = calculateDistance(
+            userLocation.lat,
+            userLocation.lng,
+            parseFloat(lote.ubicacion_lat),
+            parseFloat(lote.ubicacion_lng)
+          );
+          return { lote, distance };
+        })
+        .filter((item): item is { lote: any; distance: number } => 
+          item !== null && item.distance <= radiusKm
+        )
+        .sort((a, b) => a.distance - b.distance)
+        .map(item => item.lote);
     }
 
-    onSearchResults(filteredLotes);
+    onSearchResults(
+      lotesWithDistance, 
+      userLocation, 
+      userLocation ? parseInt(radius) : null,
+      textSearch.trim()
+    );
   };
 
   const handleReset = () => {
@@ -139,7 +158,7 @@ export const SearchSidebar: React.FC<SearchSidebarProps> = ({
     setManualLocation({ lat: '', lng: '' });
     setRadius('50');
     setLocationError(null);
-    onSearchResults(allLotes);
+    onSearchResults(allLotes, null, null, '');
   };
 
   return (
@@ -230,6 +249,19 @@ export const SearchSidebar: React.FC<SearchSidebarProps> = ({
             <Search className="w-4 h-4 mr-2" />
             Filtrar
           </Button>
+          
+          {/* Show Map Button */}
+          <Button 
+            onClick={onShowMap} 
+            variant="secondary" 
+            className="w-full" 
+            size="sm"
+            disabled={!userLocation}
+          >
+            <MapIcon className="w-4 h-4 mr-2" />
+            Mostrar Mapa
+          </Button>
+          
           <Button onClick={handleReset} variant="outline" className="w-full" size="sm">
             Limpiar Filtros
           </Button>
