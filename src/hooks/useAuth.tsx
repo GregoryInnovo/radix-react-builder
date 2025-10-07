@@ -317,13 +317,24 @@ export const useAuth = () => {
   const updatePassword = async (newPassword: string) => {
     setLoading(true);
     try {
+      const { data: { session: activeSession } } = await supabase.auth.getSession();
+      if (!activeSession) {
+        const msg = "No hay sesión de recuperación activa. Abre el enlace de tu email nuevamente.";
+        toast({
+          title: "Enlace inválido o expirado",
+          description: msg,
+          variant: "destructive",
+        });
+        return { error: { message: msg } };
+      }
+
       const { error } = await supabase.auth.updateUser({
         password: newPassword
       });
 
       if (error) {
         // Supabase rechaza contraseñas iguales a la anterior
-        if (error.message.includes('same') || error.message.includes('igual')) {
+        if (error.message.includes('same') || error.message.toLowerCase().includes('same')) {
           toast({
             title: "Contraseña no válida",
             description: "La nueva contraseña debe ser diferente a la anterior",

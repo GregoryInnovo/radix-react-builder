@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,8 +16,20 @@ export const ResetPasswordForm = () => {
     confirmPassword: ''
   });
   
-  const { updatePassword, loading } = useAuth();
+  const [ready, setReady] = useState(false);
+  const [formError, setFormError] = useState('');
+  
+  const { updatePassword, loading, session, signOut } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    setFormError('');
+    if (session) {
+      setReady(true);
+    } else {
+      setReady(false);
+    }
+  }, [session]);
 
   const validatePasswords = () => {
     const newErrors = {
@@ -50,6 +62,11 @@ export const ResetPasswordForm = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (!ready) {
+      setFormError('Enlace inválido o expirado. Abre de nuevo el enlace de recuperación desde tu email.');
+      return;
+    }
+    
     if (!validatePasswords()) {
       return;
     }
@@ -57,10 +74,9 @@ export const ResetPasswordForm = () => {
     const result = await updatePassword(newPassword);
     
     if (!result.error) {
-      // Redirigir al login después de 2 segundos
-      setTimeout(() => {
-        navigate('/auth?mode=login', { replace: true });
-      }, 2000);
+      // Cerrar sesión temporal y redirigir al login
+      await signOut();
+      navigate('/auth?mode=login', { replace: true });
     }
   };
 
@@ -82,6 +98,17 @@ export const ResetPasswordForm = () => {
         </CardHeader>
 
         <CardContent className="space-y-6">
+          {!ready && (
+            <div className="text-sm text-blue-800 bg-blue-50 p-2 rounded border border-blue-200">
+              Validando enlace de recuperación…
+            </div>
+          )}
+          {formError && (
+            <div className="text-sm text-red-700 bg-red-50 p-2 rounded border border-red-200 flex items-center gap-2">
+              <AlertCircle className="h-4 w-4" />
+              {formError}
+            </div>
+          )}
           <form onSubmit={handleSubmit} noValidate className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="newPassword" className="text-sm font-medium text-gray-700">
@@ -148,7 +175,7 @@ export const ResetPasswordForm = () => {
 
             <Button
               type="submit"
-              disabled={loading}
+              disabled={loading || !ready}
               className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-medium py-2.5"
             >
               {loading ? 'Actualizando...' : 'Actualizar contraseña'}

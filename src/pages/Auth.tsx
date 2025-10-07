@@ -48,10 +48,11 @@ const Auth = () => {
   const errorType = getErrorType();
 
   useEffect(() => {
-    if (!loading && isAuthenticated && isEmailVerified) {
+    // Evitar redirección durante el flujo de recuperación de contraseña
+    if (!loading && isAuthenticated && isEmailVerified && typeParam !== 'recovery') {
       navigate('/', { replace: true });
     }
-  }, [isAuthenticated, isEmailVerified, loading, navigate]);
+  }, [isAuthenticated, isEmailVerified, loading, navigate, typeParam]);
 
   const toggleMode = () => {
     setMode(mode === 'login' ? 'register' : 'login');
