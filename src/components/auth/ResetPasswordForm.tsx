@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -18,18 +18,40 @@ export const ResetPasswordForm = () => {
   
   const [ready, setReady] = useState(false);
   const [formError, setFormError] = useState('');
+  const [linkExpired, setLinkExpired] = useState(false);
   
   const { updatePassword, loading, session, signOut } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   useEffect(() => {
-    setFormError('');
-    if (session) {
+    // Detectar errores en los parámetros de URL
+    const error = searchParams.get('error');
+    const errorCode = searchParams.get('error_code');
+    const errorDescription = searchParams.get('error_description');
+    
+    if (error || errorCode) {
+      setLinkExpired(true);
+      setReady(false);
+      
+      // Mensajes específicos según el tipo de error
+      if (errorCode === 'otp_expired' || errorDescription?.toLowerCase().includes('expired')) {
+        setFormError('Este enlace de recuperación ya expiró o fue usado. Solicita uno nuevo.');
+      } else if (error === 'access_denied' || errorCode === 'access_denied') {
+        setFormError('Este enlace de recuperación no es válido. Solicita uno nuevo.');
+      } else {
+        setFormError('Enlace inválido o expirado. Solicita un nuevo enlace de recuperación.');
+      }
+    } else if (session) {
       setReady(true);
+      setFormError('');
+      setLinkExpired(false);
     } else {
       setReady(false);
+      setFormError('');
+      setLinkExpired(false);
     }
-  }, [session]);
+  }, [session, searchParams]);
 
   const validatePasswords = () => {
     const newErrors = {
@@ -98,18 +120,33 @@ export const ResetPasswordForm = () => {
         </CardHeader>
 
         <CardContent className="space-y-6">
-          {!ready && (
+          {!ready && !linkExpired && (
             <div className="text-sm text-blue-800 bg-blue-50 p-2 rounded border border-blue-200">
               Validando enlace de recuperación…
             </div>
           )}
-          {formError && (
-            <div className="text-sm text-red-700 bg-red-50 p-2 rounded border border-red-200 flex items-center gap-2">
-              <AlertCircle className="h-4 w-4" />
-              {formError}
+          
+          {linkExpired ? (
+            <div className="space-y-4">
+              <div className="text-sm text-red-700 bg-red-50 p-4 rounded border border-red-200">
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-semibold mb-1">Enlace no válido</p>
+                    <p>{formError}</p>
+                  </div>
+                </div>
+              </div>
+              <Button
+                type="button"
+                onClick={() => navigate('/auth?mode=forgot-password')}
+                className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-medium py-2.5"
+              >
+                Solicitar nuevo enlace
+              </Button>
             </div>
-          )}
-          <form onSubmit={handleSubmit} noValidate className="space-y-4">
+          ) : (
+            <form onSubmit={handleSubmit} noValidate className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="newPassword" className="text-sm font-medium text-gray-700">
                 Nueva contraseña
@@ -173,20 +210,23 @@ export const ResetPasswordForm = () => {
               </div>
             </div>
 
-            <Button
-              type="submit"
-              disabled={loading || !ready}
-              className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-medium py-2.5"
-            >
-              {loading ? 'Actualizando...' : 'Actualizar contraseña'}
-            </Button>
-          </form>
+              <Button
+                type="submit"
+                disabled={loading || !ready}
+                className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-medium py-2.5"
+              >
+                {loading ? 'Actualizando...' : 'Actualizar contraseña'}
+              </Button>
+            </form>
+          )}
 
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-            <p className="text-xs text-blue-800">
-              <strong>Nota:</strong> La nueva contraseña debe ser diferente a tu contraseña anterior. Supabase valida esto automáticamente por seguridad.
-            </p>
-          </div>
+          {!linkExpired && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+              <p className="text-xs text-blue-800">
+                <strong>Nota:</strong> La nueva contraseña debe ser diferente a tu contraseña anterior. Supabase valida esto automáticamente por seguridad.
+              </p>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
