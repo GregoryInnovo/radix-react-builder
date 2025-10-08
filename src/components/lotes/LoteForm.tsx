@@ -346,7 +346,7 @@ export const LoteForm = ({ lote, onSubmit, loading, onCancel }: LoteFormProps) =
               {loading ? (
                 <Loader2 className="w-4 h-4 animate-spin mr-2" />
               ) : null}
-              {lote ? 'Actualizar Lote' : 'Crear Lote'}
+              {lote?.estado === 'recogido' ? 'Publicar Nuevamente' : lote ? 'Actualizar Lote' : 'Crear Lote'}
             </Button>
             <Button
               type="button"
@@ -363,8 +363,10 @@ export const LoteForm = ({ lote, onSubmit, loading, onCancel }: LoteFormProps) =
       
       <ConfirmModal
         isOpen={showConfirm}
-        title={lote ? "Confirmar actualización" : "Confirmar creación"}
-        message={lote ? "¿Estás seguro de que quieres actualizar este lote?" : "¿Estás seguro de que quieres crear este lote?"}
+        title={lote?.estado === 'recogido' ? "Confirmar republicación" : lote ? "Confirmar actualización" : "Confirmar creación"}
+        message={lote?.estado === 'recogido' 
+          ? "¿Estás seguro de que quieres publicar este lote nuevamente? El lote quedará disponible para reservas." 
+          : lote ? "¿Estás seguro de que quieres actualizar este lote?" : "¿Estás seguro de que quieres crear este lote?"}
         onConfirm={handleConfirmSubmit}
         onCancel={handleCancelConfirm}
         confirmLabel="Ok"

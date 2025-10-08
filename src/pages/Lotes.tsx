@@ -62,7 +62,12 @@ const Lotes = () => {
 
   const handleSubmit = async (data: any) => {
     if (editingLote) {
-      const result = await updateLote(editingLote.id, data);
+      // Si el lote está recogido, republicarlo automáticamente
+      const updatePayload = editingLote.estado === 'recogido' 
+        ? { ...data, estado: 'disponible' }
+        : data;
+      
+      const result = await updateLote(editingLote.id, updatePayload);
       if (result) {
         setShowForm(false);
         setEditingLote(null);

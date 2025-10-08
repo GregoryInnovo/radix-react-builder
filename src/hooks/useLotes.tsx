@@ -87,6 +87,13 @@ export const useLotes = () => {
   const updateLote = async (id: string, updates: LoteUpdate) => {
     setLoading(true);
     try {
+      // Obtener el lote actual para verificar si está recogido
+      const { data: currentLote } = await supabase
+        .from('lotes')
+        .select('estado')
+        .eq('id', id)
+        .single();
+
       const { data, error } = await supabase
         .from('lotes')
         .update(updates)
@@ -96,10 +103,26 @@ export const useLotes = () => {
 
       if (error) throw error;
 
-      toast({
-        title: "Lote actualizado",
-        description: "Los cambios han sido guardados exitosamente.",
-      });
+      // Si el lote estaba recogido y ahora está disponible, registrar en historial
+      if (currentLote?.estado === 'recogido' && updates.estado === 'disponible') {
+        await supabase.from('lotes_historial').insert({
+          lote_id: id,
+          estado_anterior: 'recogido',
+          estado_nuevo: 'disponible',
+          notas: 'Lote republicado después de edición',
+          usuario_accion_id: user?.id
+        });
+
+        toast({
+          title: "Lote republicado exitosamente",
+          description: "Tu lote ha sido actualizado y está nuevamente disponible.",
+        });
+      } else {
+        toast({
+          title: "Lote actualizado",
+          description: "Los cambios han sido guardados exitosamente.",
+        });
+      }
 
       await fetchLotes();
       return data;
