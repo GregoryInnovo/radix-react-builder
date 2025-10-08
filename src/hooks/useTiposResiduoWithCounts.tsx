@@ -36,7 +36,8 @@ export const useTiposResiduoWithCounts = () => {
             .select('*', { count: 'exact', head: true })
             .eq('tipo_residuo_id', tipo.id)
             .eq('estado', 'disponible')
-            .eq('status', 'aprobado');
+            .eq('status', 'aprobado')
+            .is('deleted_at', null);
 
           return {
             ...tipo,

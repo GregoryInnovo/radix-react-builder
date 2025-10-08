@@ -97,6 +97,7 @@ export const useSearchLotes = () => {
         `)
         .eq('estado', 'disponible') // Only show available lots
         .eq('status', 'aprobado') // Only show admin-approved lots
+        .is('deleted_at', null) // Exclude deleted lots
         .order('created_at', { ascending: false });
 
       // Add type filter if specified
