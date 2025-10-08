@@ -4,6 +4,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useProductos } from '@/hooks/useProductos';
 import { useLotes } from '@/hooks/useLotes';
 import { useOrdenLotes } from '@/hooks/useOrdenLotes';
+import { useOrdenProductos } from '@/hooks/useOrdenProductos';
 import { useProfiles } from '@/hooks/useProfiles';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -14,6 +15,7 @@ import { OrdenChat } from '@/components/ordenes/OrdenChat';
 import { OrdenTimeline } from '@/components/ordenes/OrdenTimeline';
 import { OrdenesStats } from '@/components/ordenes/OrdenesStats';
 import { LoteDetailsModal } from '@/components/lotes/LoteDetailsModal';
+import { ProductDetailsModal } from '@/components/productos/ProductDetailsModal';
 import { UserProfileLink } from '@/components/user/UserProfileLink';
 import { Loader2, CheckCircle2 } from 'lucide-react';
 import { format } from 'date-fns';
@@ -62,7 +64,15 @@ export const OrdenesList: React.FC = () => {
       .map(orden => orden.item_id);
   }, [ordenesComoSolicitante, ordenesComoProveedor]);
   
+  // Get all producto IDs from orders to fetch them
+  const productoIdsFromOrdenes = useMemo(() => {
+    return [...ordenesComoSolicitante, ...ordenesComoProveedor]
+      .filter(orden => orden.tipo_item === 'producto')
+      .map(orden => orden.item_id);
+  }, [ordenesComoSolicitante, ordenesComoProveedor]);
+  
   const { getLoteById } = useOrdenLotes(loteIdsFromOrdenes);
+  const { getProductoById } = useOrdenProductos(productoIdsFromOrdenes);
   
   const {
     getProfileById
@@ -88,6 +98,10 @@ export const OrdenesList: React.FC = () => {
 
   const getLoteInfo = (loteId: string) => {
     return getLoteById(loteId);
+  };
+
+  const getProductoInfo = (productoId: string) => {
+    return getProductoById(productoId);
   };
 
   // Fetch profiles for requesters and providers
@@ -167,12 +181,14 @@ export const OrdenesList: React.FC = () => {
     isProvider?: boolean;
   }) => {
     const [showLoteDetails, setShowLoteDetails] = useState(false);
+    const [showProductDetails, setShowProductDetails] = useState(false);
     const canUpdateStatus = isProvider && (orden.estado === 'pendiente' || orden.estado === 'aceptada');
     const canRate = !isProvider && orden.estado === 'completada';
     const requesterProfile = isProvider ? getRequesterProfile(orden.solicitante_id) : null;
     const providerProfile = !isProvider ? getProviderProfile(orden.proveedor_id) : null;
     const isCompleted = orden.estado === 'completada';
     const loteInfo = orden.tipo_item === 'lote' ? getLoteInfo(orden.item_id) : null;
+    const productoInfo = orden.tipo_item === 'producto' ? getProductoInfo(orden.item_id) : null;
 
     // Validate phone number - only allow numbers, spaces, hyphens, parentheses, and + sign
     const isValidPhone = (phone: string) => /^[\d\s\-\(\)\+]+$/.test(phone);
@@ -259,6 +275,18 @@ export const OrdenesList: React.FC = () => {
                 Ver Detalles del Lote
               </Button>
             )}
+
+            {/* Button to see product details */}
+            {orden.tipo_item === 'producto' && productoInfo && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowProductDetails(true)}
+                className="mt-2"
+              >
+                Ver Detalles del Producto
+              </Button>
+            )}
           </div>
 
           {/* Show requester contact info for providers - improved layout */}
@@ -331,6 +359,16 @@ export const OrdenesList: React.FC = () => {
               onClose={() => setShowLoteDetails(false)}
               lote={loteInfo}
               showReservarButton={false}
+            />
+          )}
+
+          {/* Product Details Modal */}
+          {productoInfo && (
+            <ProductDetailsModal
+              isOpen={showProductDetails}
+              onClose={() => setShowProductDetails(false)}
+              producto={productoInfo}
+              userProfile={getProviderProfile(productoInfo.user_id)}
             />
           )}
         </CardContent>
