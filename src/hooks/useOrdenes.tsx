@@ -101,17 +101,7 @@ export const useOrdenes = () => {
         // Don't fail the order creation if notification fails
       }
 
-      // If this is a lot reservation, update the lot status to 'reservado'
-      if (ordenData.tipo_item === 'lote') {
-        const { error: updateError } = await supabase
-          .from('lotes')
-          .update({ estado: 'reservado' })
-          .eq('id', ordenData.item_id);
-
-        if (updateError) {
-          console.error('Error updating lot status:', updateError);
-        }
-      }
+      // Don't change lot status on creation - it stays 'disponible' until order is accepted
 
       const messageType = ordenData.tipo_item === 'lote' ? 'reserva' : 'intercambio';
       
@@ -146,6 +136,30 @@ export const useOrdenes = () => {
 
       // Get current order to determine notification type
       const currentOrden = ordenes.find(o => o.id === id);
+      
+      // Update lot status based on order status changes (only for lot reservations)
+      if (updates.estado && currentOrden && currentOrden.tipo_item === 'lote') {
+        let newLoteEstado: 'disponible' | 'reservado' | 'recogido' | null = null;
+        
+        if (updates.estado === 'aceptada') {
+          newLoteEstado = 'reservado';
+        } else if (updates.estado === 'cancelada') {
+          newLoteEstado = 'disponible';
+        } else if (updates.estado === 'completada') {
+          newLoteEstado = 'recogido';
+        }
+        
+        if (newLoteEstado) {
+          const { error: updateLoteError } = await supabase
+            .from('lotes')
+            .update({ estado: newLoteEstado })
+            .eq('id', currentOrden.item_id);
+
+          if (updateLoteError) {
+            console.error('Error updating lot status:', updateLoteError);
+          }
+        }
+      }
       
       // Send appropriate notification
       if (updates.estado && currentOrden) {
