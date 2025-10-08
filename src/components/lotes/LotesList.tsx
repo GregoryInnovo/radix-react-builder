@@ -132,6 +132,12 @@ export const LotesList = ({ lotes, loading, onEdit, onView, onDelete, onStatusCh
     }
   };
 
+  const handleEditFromStatus = (lote: Lote) => {
+    setShowStatusManager(false);
+    setLoteForStatus(null);
+    onEdit(lote);
+  };
+
   const handleViewRejectReason = (lote: Lote) => {
     setLoteForRejectReason(lote);
     setShowRejectReason(true);
@@ -296,13 +302,15 @@ export const LotesList = ({ lotes, loading, onEdit, onView, onDelete, onStatusCh
                   Estado
                 </Button>
               )}
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => onEdit(lote)}
-              >
-                <Edit className="w-4 h-4" />
-              </Button>
+              {lote.estado !== 'recogido' && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onEdit(lote)}
+                >
+                  <Edit className="w-4 h-4" />
+                </Button>
+              )}
               <Button
                 variant="outline"
                 size="sm"
@@ -347,6 +355,7 @@ export const LotesList = ({ lotes, loading, onEdit, onView, onDelete, onStatusCh
             <LoteStatusManager
               lote={loteForStatus}
               onStatusChange={handleStatusChangeSubmit}
+              onEditLote={() => handleEditFromStatus(loteForStatus)}
               loading={isChangingStatus}
             />
           )}

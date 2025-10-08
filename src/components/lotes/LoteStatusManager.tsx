@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { AlertCircle, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import type { Database } from '@/integrations/supabase/types';
 
 type Lote = Database['public']['Tables']['lotes']['Row'];
@@ -13,6 +14,7 @@ type BatchStatus = Database['public']['Enums']['batch_status'];
 interface LoteStatusManagerProps {
   lote: Lote;
   onStatusChange: (newStatus: BatchStatus) => Promise<void>;
+  onEditLote?: () => void;
   loading: boolean;
 }
 
@@ -45,13 +47,14 @@ const VALID_TRANSITIONS: Record<BatchStatus, BatchStatus[]> = {
   'disponible': ['no_disponible', 'reservado'],
   'no_disponible': ['disponible'],
   'reservado': ['recogido', 'cancelado'],
-  'recogido': [], // Final state
+  'recogido': ['disponible'], // Can be republished
   'cancelado': ['disponible'], // Can be reactivated
 };
 
-export const LoteStatusManager = ({ lote, onStatusChange, loading }: LoteStatusManagerProps) => {
+export const LoteStatusManager = ({ lote, onStatusChange, onEditLote, loading }: LoteStatusManagerProps) => {
   const [selectedStatus, setSelectedStatus] = useState<BatchStatus | ''>('');
   const [isChanging, setIsChanging] = useState(false);
+  const [showRepublishConfirm, setShowRepublishConfirm] = useState(false);
 
   // Only approved lotes can change availability status
   if (lote.status !== 'aprobado') {
@@ -102,6 +105,29 @@ export const LoteStatusManager = ({ lote, onStatusChange, loading }: LoteStatusM
     setSelectedStatus(value as BatchStatus);
   };
 
+  const handleRepublishClick = () => {
+    setShowRepublishConfirm(true);
+  };
+
+  const handleRepublishNow = async () => {
+    setIsChanging(true);
+    try {
+      await onStatusChange('disponible');
+      setShowRepublishConfirm(false);
+    } catch (error) {
+      console.error('Error republishing lote:', error);
+    } finally {
+      setIsChanging(false);
+    }
+  };
+
+  const handleEditFirst = () => {
+    setShowRepublishConfirm(false);
+    if (onEditLote) {
+      onEditLote();
+    }
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -122,7 +148,24 @@ export const LoteStatusManager = ({ lote, onStatusChange, loading }: LoteStatusM
           </Badge>
         </div>
 
-        {availableStatuses.length > 0 ? (
+        {currentStatus === 'recogido' ? (
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg">
+              <CheckCircle className="w-4 h-4 text-blue-600" />
+              <span className="text-sm text-blue-800">
+                Este lote ya ha sido recogido
+              </span>
+            </div>
+            <Button
+              onClick={handleRepublishClick}
+              disabled={isChanging || loading}
+              className="w-full"
+              variant="default"
+            >
+              Publicar de Nuevo
+            </Button>
+          </div>
+        ) : availableStatuses.length > 0 ? (
           <div className="space-y-3">
             <div className="space-y-2">
               <label className="text-sm font-medium">Cambiar estado:</label>
@@ -152,10 +195,7 @@ export const LoteStatusManager = ({ lote, onStatusChange, loading }: LoteStatusM
           <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
             <AlertCircle className="w-4 h-4 text-gray-500" />
             <span className="text-sm text-gray-600">
-              {currentStatus === 'recogido' 
-                ? 'Este lote ya ha sido recogido (estado final)'
-                : 'No hay cambios de estado disponibles'
-              }
+              No hay cambios de estado disponibles
             </span>
           </div>
         )}
@@ -167,9 +207,46 @@ export const LoteStatusManager = ({ lote, onStatusChange, loading }: LoteStatusM
             <li>Disponible → Reservado</li>
             <li>Reservado → Recogido, Cancelado</li>
             <li>Cancelado → Disponible</li>
-            <li>Recogido → (Estado final)</li>
+            <li>Recogido → Publicar de nuevo</li>
           </ul>
         </div>
+
+        {/* Modal de confirmación para republicar */}
+        <Dialog open={showRepublishConfirm} onOpenChange={setShowRepublishConfirm}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>¿Publicar este lote nuevamente?</DialogTitle>
+              <DialogDescription>
+                Puedes publicarlo ahora con los datos actuales o editarlo primero antes de publicar.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter className="flex-col sm:flex-col gap-2 sm:gap-2">
+              <Button
+                onClick={handleRepublishNow}
+                disabled={isChanging}
+                className="w-full"
+              >
+                {isChanging ? 'Publicando...' : 'Sí, publicar ahora'}
+              </Button>
+              <Button
+                onClick={handleEditFirst}
+                disabled={isChanging}
+                variant="outline"
+                className="w-full"
+              >
+                Editar primero
+              </Button>
+              <Button
+                onClick={() => setShowRepublishConfirm(false)}
+                disabled={isChanging}
+                variant="ghost"
+                className="w-full"
+              >
+                Cancelar
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </CardContent>
     </Card>
   );
