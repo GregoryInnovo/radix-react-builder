@@ -100,8 +100,12 @@ export const ReservarLote: React.FC<ReservarLoteProps> = ({
                   step="0.1"
                   min="0.1"
                   max={lote.peso_estimado}
-                  value={cantidadSolicitada}
-                  onChange={(e) => setCantidadSolicitada(Number(e.target.value))}
+                  value={cantidadSolicitada === 0 ? '' : cantidadSolicitada}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setCantidadSolicitada(val === '' ? 0 : Number(val));
+                  }}
+                  placeholder="Ej: 4.5"
                   className={!isValidQuantity ? 'border-red-500' : 'border-green-500'}
                 />
                 <p className="text-sm text-muted-foreground">
