@@ -9,6 +9,7 @@ import { SolicitarIntercambio } from '@/components/ordenes/SolicitarIntercambio'
 import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import type { Database } from '@/integrations/supabase/types';
+import { EntityIdDisplay } from '@/components/ui/entity-id-display';
 
 type Producto = Database['public']['Tables']['productos']['Row'];
 
@@ -47,6 +48,10 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
           </DialogHeader>
 
           <div className="space-y-6">
+            {/* ID del Producto */}
+            <div className="pb-4 border-b">
+              <EntityIdDisplay id={producto.id} label="ID del Producto" />
+            </div>
             {/* Status and Availability */}
             <div className="flex items-center gap-2">
               <Badge variant={producto.disponible ? "default" : "secondary"}>

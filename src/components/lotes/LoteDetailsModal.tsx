@@ -9,6 +9,7 @@ import { LoteStatusHistory } from './LoteStatusHistory';
 import { ReservarLote } from './ReservarLote';
 import { useState } from 'react';
 import type { Database } from '@/integrations/supabase/types';
+import { EntityIdDisplay } from '@/components/ui/entity-id-display';
 
 type Lote = Database['public']['Tables']['lotes']['Row'] & {
   tipos_residuo?: {
@@ -103,6 +104,10 @@ export const LoteDetailsModal: React.FC<LoteDetailsModalProps> = ({
           </DialogHeader>
 
           <div className="space-y-6">
+            {/* ID del Lote */}
+            <div className="pb-4 border-b">
+              <EntityIdDisplay id={lote.id} label="ID del Lote" />
+            </div>
             {/* Approval Status Alert */}
             {lote.status === 'rechazado' && (
               <Alert variant="destructive">

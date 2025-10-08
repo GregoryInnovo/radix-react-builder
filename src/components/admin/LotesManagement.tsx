@@ -15,6 +15,7 @@ import { useProfiles } from '@/hooks/useProfiles';
 import { Link } from 'react-router-dom';
 import type { Database } from '@/integrations/supabase/types';
 import { LoteDetailsModal } from '@/components/lotes/LoteDetailsModal';
+import { EntityIdDisplay } from '@/components/ui/entity-id-display';
 
 type Lote = Database['public']['Tables']['lotes']['Row'] & {
   tipos_residuo?: {
@@ -178,11 +179,12 @@ export const LotesManagement: React.FC<LotesManagementProps> = ({ lotes }) => {
                         />
                       </div>
                     )}
-                    <div>
+                    <div className="space-y-2">
                       <CardTitle className="text-lg flex items-center gap-2">
                         <Package className="h-5 w-5" />
                         {lote.titulo || getResiduoType(lote)}
                       </CardTitle>
+                      <EntityIdDisplay id={lote.id} label="ID" showCopyButton={false} />
                       <div className="flex items-center gap-2 text-sm text-gray-600">
                         <Calendar className="h-4 w-4" />
                         {format(new Date(lote.created_at || ''), 'PP', { locale: es })}

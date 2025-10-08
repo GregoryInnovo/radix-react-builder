@@ -12,6 +12,7 @@ import { es } from 'date-fns/locale';
 import { useProfiles } from '@/hooks/useProfiles';
 import { Link } from 'react-router-dom';
 import { ProductDetailsModal } from '@/components/productos/ProductDetailsModal';
+import { EntityIdDisplay } from '@/components/ui/entity-id-display';
 
 type Producto = Database['public']['Tables']['productos']['Row'];
 
@@ -126,10 +127,13 @@ export const ProductosManagement: React.FC<ProductosManagementProps> = ({ produc
             <Card key={producto.id} className="p-4">
               <CardHeader className="pb-3">
                 <div className="flex justify-between items-start">
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <Package className="h-5 w-5" />
-                    {producto.nombre}
-                  </CardTitle>
+                  <div className="space-y-2 flex-1">
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <Package className="h-5 w-5" />
+                      {producto.nombre}
+                    </CardTitle>
+                    <EntityIdDisplay id={producto.id} label="ID" showCopyButton={false} />
+                  </div>
                   {userProfile && (
                     <Link 
                       to={`/perfil/${userProfile.id}`}
