@@ -24,11 +24,12 @@ export const ReservarLote: React.FC<ReservarLoteProps> = ({
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [loading, setLoading] = useState(false);
   const [requestCount, setRequestCount] = useState(0);
-  const [cantidadSolicitada, setCantidadSolicitada] = useState<number>(lote.peso_estimado);
+  const [cantidadSolicitada, setCantidadSolicitada] = useState<string>(lote.peso_estimado.toString());
   const { user } = useAuth();
   const { createOrden, getRequestCount } = useOrdenes();
 
-  const isValidQuantity = cantidadSolicitada > 0 && cantidadSolicitada <= lote.peso_estimado;
+  const numValue = parseFloat(cantidadSolicitada);
+  const isValidQuantity = !isNaN(numValue) && numValue > 0 && numValue <= lote.peso_estimado;
 
   useEffect(() => {
     const fetchRequestCount = async () => {
@@ -53,13 +54,13 @@ export const ReservarLote: React.FC<ReservarLoteProps> = ({
     
     setLoading(true);
     try {
-      const result = await createOrden({
-        proveedor_id: lote.user_id,
-        tipo_item: 'lote' as const,
-        item_id: lote.id,
-        cantidad_solicitada: cantidadSolicitada,
-        mensaje_solicitud: `Solicitud de reserva del lote con ${cantidadSolicitada} kg`
-      });
+        const result = await createOrden({
+          proveedor_id: lote.user_id,
+          tipo_item: 'lote' as const,
+          item_id: lote.id,
+          cantidad_solicitada: parseFloat(cantidadSolicitada),
+          mensaje_solicitud: `Solicitud de reserva del lote con ${parseFloat(cantidadSolicitada)} kg`
+        });
 
       if (result.data) {
         setShowConfirmDialog(false);
@@ -98,13 +99,8 @@ export const ReservarLote: React.FC<ReservarLoteProps> = ({
                 <Input
                   type="number"
                   step="0.1"
-                  min="0.1"
-                  max={lote.peso_estimado}
-                  value={cantidadSolicitada === 0 ? '' : cantidadSolicitada}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    setCantidadSolicitada(val === '' ? 0 : Number(val));
-                  }}
+                  value={cantidadSolicitada}
+                  onChange={(e) => setCantidadSolicitada(e.target.value)}
                   placeholder="Ej: 4.5"
                   className={!isValidQuantity ? 'border-red-500' : 'border-green-500'}
                 />
