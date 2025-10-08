@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useAuth } from '@/hooks/useAuth';
 import { useOrdenes } from '@/hooks/useOrdenes';
@@ -23,8 +24,11 @@ export const ReservarLote: React.FC<ReservarLoteProps> = ({
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [loading, setLoading] = useState(false);
   const [requestCount, setRequestCount] = useState(0);
+  const [cantidadSolicitada, setCantidadSolicitada] = useState<number>(lote.peso_estimado);
   const { user } = useAuth();
   const { createOrden, getRequestCount } = useOrdenes();
+
+  const isValidQuantity = cantidadSolicitada > 0 && cantidadSolicitada <= lote.peso_estimado;
 
   useEffect(() => {
     const fetchRequestCount = async () => {
@@ -45,7 +49,7 @@ export const ReservarLote: React.FC<ReservarLoteProps> = ({
   }
 
   const handleReservar = async () => {
-    if (!user) return;
+    if (!user || !isValidQuantity) return;
     
     setLoading(true);
     try {
@@ -53,8 +57,8 @@ export const ReservarLote: React.FC<ReservarLoteProps> = ({
         proveedor_id: lote.user_id,
         tipo_item: 'lote' as const,
         item_id: lote.id,
-        cantidad_solicitada: lote.peso_estimado,
-        mensaje_solicitud: `Solicitud de reserva para lote de ${lote.peso_estimado} kg`
+        cantidad_solicitada: cantidadSolicitada,
+        mensaje_solicitud: `Solicitud de reserva del lote con ${cantidadSolicitada} kg`
       });
 
       if (result.data) {
@@ -86,11 +90,30 @@ export const ReservarLote: React.FC<ReservarLoteProps> = ({
               <MessageSquare className="w-5 h-5" />
               Confirmar Reserva de Lote
             </AlertDialogTitle>
-            <AlertDialogDescription className="space-y-2">
-              <p>
-                ¿Estás seguro de que deseas reservar este lote de {lote.peso_estimado} kg?
-              </p>
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mt-3">
+            <AlertDialogDescription className="space-y-3">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground">
+                  Cantidad que necesitas (kg):
+                </label>
+                <Input
+                  type="number"
+                  step="0.1"
+                  min="0.1"
+                  max={lote.peso_estimado}
+                  value={cantidadSolicitada}
+                  onChange={(e) => setCantidadSolicitada(Number(e.target.value))}
+                  className={!isValidQuantity ? 'border-red-500' : 'border-green-500'}
+                />
+                <p className="text-sm text-muted-foreground">
+                  Disponible: {lote.peso_estimado} kg
+                </p>
+                {!isValidQuantity && (
+                  <p className="text-sm text-red-500">
+                    La cantidad debe ser mayor a 0 y no exceder lo disponible
+                  </p>
+                )}
+              </div>
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
                 <p className="text-sm text-yellow-800">
                   <strong>Importante:</strong> Al confirmar, se enviará una solicitud de reserva al generador del lote. 
                   La reserva estará pendiente hasta que el generador la apruebe.
@@ -102,7 +125,7 @@ export const ReservarLote: React.FC<ReservarLoteProps> = ({
             <AlertDialogCancel disabled={loading}>Cancelar</AlertDialogCancel>
             <AlertDialogAction 
               onClick={handleReservar}
-              disabled={loading}
+              disabled={loading || !isValidQuantity}
               className="bg-green-600 hover:bg-green-700"
             >
               {loading ? 'Procesando...' : 'Confirmar Reserva'}
