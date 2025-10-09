@@ -123,8 +123,19 @@ export const useOrdenes = () => {
     }
   };
 
-  const updateOrden = async (id: string, updates: OrdenUpdate) => {
+  const updateOrden = async (id: string, updates: OrdenUpdate, mensajeCancelacion?: string) => {
     try {
+      // If there's a cancellation message, add it to the order chat
+      if (mensajeCancelacion && updates.estado === 'cancelada' && user) {
+        await supabase
+          .from('orden_mensajes')
+          .insert({
+            orden_id: id,
+            usuario_id: user.id,
+            mensaje: `[Cancelación] ${mensajeCancelacion}`
+          });
+      }
+
       const { data, error } = await supabase
         .from('ordenes')
         .update(updates)

@@ -14,6 +14,7 @@ import { CalificarOrden } from '@/components/calificaciones/CalificarOrden';
 import { OrdenChat } from '@/components/ordenes/OrdenChat';
 import { OrdenTimeline } from '@/components/ordenes/OrdenTimeline';
 import { OrdenesStats } from '@/components/ordenes/OrdenesStats';
+import { CancelarOrdenModal } from '@/components/ordenes/CancelarOrdenModal';
 import { LoteDetailsModal } from '@/components/lotes/LoteDetailsModal';
 import { ProductDetailsModal } from '@/components/productos/ProductDetailsModal';
 import { UserProfileLink } from '@/components/user/UserProfileLink';
@@ -182,6 +183,8 @@ export const OrdenesList: React.FC = () => {
   }) => {
     const [showLoteDetails, setShowLoteDetails] = useState(false);
     const [showProductDetails, setShowProductDetails] = useState(false);
+    const [showCancelDialog, setShowCancelDialog] = useState(false);
+    const [cancelLoading, setCancelLoading] = useState(false);
     const canUpdateStatus = isProvider && (orden.estado === 'pendiente' || orden.estado === 'aceptada');
     const canRate = !isProvider && orden.estado === 'completada';
     const requesterProfile = isProvider ? getRequesterProfile(orden.solicitante_id) : null;
@@ -192,6 +195,16 @@ export const OrdenesList: React.FC = () => {
 
     // Validate phone number - only allow numbers, spaces, hyphens, parentheses, and + sign
     const isValidPhone = (phone: string) => /^[\d\s\-\(\)\+]+$/.test(phone);
+
+    const handleCancel = async (mensaje: string) => {
+      setCancelLoading(true);
+      try {
+        await updateOrden(orden.id, { estado: 'cancelada' }, mensaje);
+        setShowCancelDialog(false);
+      } finally {
+        setCancelLoading(false);
+      }
+    };
     return <Card key={orden.id} className={cn(
         "overflow-hidden",
         isCompleted && "border-blue-200 bg-blue-50/30"
@@ -217,9 +230,14 @@ export const OrdenesList: React.FC = () => {
                     Rechazar
                   </Button>
                 </>}
-              {orden.estado === 'aceptada' && <Button size="sm" onClick={() => handleStatusUpdate(orden.id, 'completada')}>
-                  Completar
-                </Button>}
+              {orden.estado === 'aceptada' && <div className="flex gap-2">
+                  <Button size="sm" onClick={() => handleStatusUpdate(orden.id, 'completada')}>
+                    Completar
+                  </Button>
+                  <Button size="sm" variant="destructive" onClick={() => setShowCancelDialog(true)}>
+                    Cancelar
+                  </Button>
+                </div>}
             </div>}
           
           {canRate && (
@@ -371,6 +389,14 @@ export const OrdenesList: React.FC = () => {
               userProfile={getProviderProfile(productoInfo.user_id)}
             />
           )}
+
+          {/* Cancel Order Modal */}
+          <CancelarOrdenModal
+            isOpen={showCancelDialog}
+            onConfirm={handleCancel}
+            onCancel={() => setShowCancelDialog(false)}
+            isLoading={cancelLoading}
+          />
         </CardContent>
       </Card>;
   };
