@@ -5,7 +5,8 @@ import { GuiasFilters } from '@/components/guias/GuiasFilters';
 import { GuiasGrid } from '@/components/guias/GuiasGrid';
 import { GuiasCategoriesSection } from '@/components/guias/GuiasCategoriesSection';
 import { Button } from '@/components/ui/button';
-import { useGuias, GuiaCategoria, GuiaType, GuiaNivel } from '@/hooks/useGuias';
+import { useGuias, GuiaCategoria } from '@/hooks/useGuias';
+import { useGuiasGuardadas } from '@/hooks/useGuiasGuardadas';
 import { useAdmin } from '@/hooks/useAdmin';
 import { Plus, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -13,12 +14,13 @@ import { Link } from 'react-router-dom';
 export default function Guias() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { isAdmin } = useAdmin();
+  const { guiasGuardadas, isLoading: isLoadingGuardadas } = useGuiasGuardadas();
+  
+  const [showGuardadas, setShowGuardadas] = useState(false);
   
   // Get initial values from URL params
   const [filters, setFilters] = useState({
     categoria: searchParams.get('categoria') as GuiaCategoria | undefined,
-    tipo: searchParams.get('tipo') as GuiaType | undefined,
-    nivel: searchParams.get('nivel') as GuiaNivel | undefined,
     search: searchParams.get('search') || '',
   });
 
@@ -28,8 +30,6 @@ export default function Guias() {
   useEffect(() => {
     const newParams = new URLSearchParams();
     if (filters.categoria) newParams.set('categoria', filters.categoria);
-    if (filters.tipo) newParams.set('tipo', filters.tipo);
-    if (filters.nivel) newParams.set('nivel', filters.nivel);
     if (filters.search) newParams.set('search', filters.search);
     
     setSearchParams(newParams);
@@ -42,11 +42,22 @@ export default function Guias() {
   const clearAllFilters = () => {
     setFilters({
       categoria: undefined,
-      tipo: undefined,
-      nivel: undefined,
       search: '',
     });
   };
+
+  // Prepare displayed guides based on showGuardadas state
+  const displayedGuias = showGuardadas 
+    ? guiasGuardadas.map(item => item.guias).filter((guia): guia is any => guia !== null && guia !== undefined) as any[]
+    : guias;
+
+  // Filter saved guides by search if needed
+  const filteredDisplayedGuias = showGuardadas && filters.search
+    ? displayedGuias.filter(guia => 
+        guia.titulo.toLowerCase().includes(filters.search.toLowerCase()) ||
+        guia.descripcion.toLowerCase().includes(filters.search.toLowerCase())
+      )
+    : displayedGuias;
 
   return (
     <div className="min-h-screen bg-background">
@@ -80,36 +91,43 @@ export default function Guias() {
         {/* Filters */}
         <div className="mb-8">
           <GuiasFilters
-            categoria={filters.categoria}
-            tipo={filters.tipo}
-            nivel={filters.nivel}
             search={filters.search}
-            onCategoriaChange={(categoria) => updateFilter('categoria', categoria)}
-            onTipoChange={(tipo) => updateFilter('tipo', tipo)}
-            onNivelChange={(nivel) => updateFilter('nivel', nivel)}
             onSearchChange={(search) => updateFilter('search', search)}
-            onClearFilters={clearAllFilters}
+            showGuardadas={showGuardadas}
+            onToggleGuardadas={() => {
+              setShowGuardadas(!showGuardadas);
+              if (!showGuardadas) {
+                // Clear categoria filter when showing saved guides
+                setFilters(prev => ({ ...prev, categoria: undefined }));
+              }
+            }}
+            savedCount={guiasGuardadas.length}
+            categoria={filters.categoria}
+            onClearCategoria={() => updateFilter('categoria', undefined)}
           />
         </div>
 
         {/* Results Count */}
-        {!isLoading && (
+        {!(showGuardadas ? isLoadingGuardadas : isLoading) && (
           <div className="mb-6">
             <p className="text-sm text-muted-foreground">
-              {guias.length} {guias.length === 1 ? 'guía encontrada' : 'guías encontradas'}
+              {showGuardadas && (
+                <span className="font-medium">Guardadas: </span>
+              )}
+              {filteredDisplayedGuias.length} {filteredDisplayedGuias.length === 1 ? 'guía encontrada' : 'guías encontradas'}
             </p>
           </div>
         )}
 
         {/* Guides Grid */}
         <GuiasGrid 
-          guias={guias} 
-          isLoading={isLoading}
+          guias={filteredDisplayedGuias} 
+          isLoading={showGuardadas ? isLoadingGuardadas : isLoading}
           showAuthor={true}
         />
 
-        {/* Load More Button */}
-        {hasNextPage && !isLoading && (
+        {/* Load More Button - only show when not viewing saved guides */}
+        {!showGuardadas && hasNextPage && !isLoading && (
           <div className="text-center mt-12">
             <Button 
               onClick={loadNextPage}
@@ -124,7 +142,7 @@ export default function Guias() {
         )}
 
         {/* Loading State for Load More */}
-        {isLoading && guias.length > 0 && (
+        {!showGuardadas && isLoading && guias.length > 0 && (
           <div className="text-center mt-12">
             <div className="inline-flex items-center gap-2 text-muted-foreground">
               <Loader2 className="w-4 h-4 animate-spin" />
