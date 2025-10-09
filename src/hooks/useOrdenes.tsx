@@ -87,6 +87,19 @@ export const useOrdenes = () => {
 
       if (error) throw error;
 
+      // Register audit log for order creation
+      if (user) {
+        await supabase.from('auditoria_admin').insert({
+          user_id: user.id,
+          entity_type: 'orden',
+          entity_id: data.id,
+          action: 'create',
+          previous_status: null,
+          new_status: 'pendiente',
+          notes: `Usuario creó orden de ${ordenData.tipo_item}`
+        });
+      }
+
       // Send notification to provider
       try {
         await supabase.functions.invoke('notify-order-status', {
@@ -147,6 +160,19 @@ export const useOrdenes = () => {
 
       // Get current order to determine notification type
       const currentOrden = ordenes.find(o => o.id === id);
+
+      // Register audit log for order update
+      if (user && currentOrden) {
+        await supabase.from('auditoria_admin').insert({
+          user_id: user.id,
+          entity_type: 'orden',
+          entity_id: id,
+          action: updates.estado || 'update',
+          previous_status: currentOrden.estado || null,
+          new_status: updates.estado || null,
+          notes: mensajeCancelacion || `Orden actualizada a ${updates.estado}`
+        });
+      }
       
       // Update lot status based on order status changes (only for lot reservations)
       if (updates.estado && currentOrden && currentOrden.tipo_item === 'lote') {
@@ -168,6 +194,22 @@ export const useOrdenes = () => {
 
           if (updateLoteError) {
             console.error('Error updating lot status:', updateLoteError);
+          } else if (user) {
+            // Register batch status change in audit
+            const previousLoteStatus = 
+              updates.estado === 'aceptada' ? 'disponible' :
+              updates.estado === 'completada' ? 'reservado' :
+              (currentOrden.estado === 'aceptada' ? 'reservado' : 'disponible');
+            
+            await supabase.from('auditoria_admin').insert({
+              user_id: user.id,
+              entity_type: 'lote',
+              entity_id: currentOrden.item_id,
+              action: 'status_change',
+              previous_status: previousLoteStatus,
+              new_status: newLoteEstado,
+              notes: `Lote cambió a ${newLoteEstado} automáticamente por ${updates.estado} de orden ${id}`
+            });
           }
         }
       }

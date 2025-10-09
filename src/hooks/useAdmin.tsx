@@ -292,7 +292,7 @@ export const useAdmin = () => {
       await supabase
         .from('auditoria_admin')
         .insert({
-          admin_id: user!.id,
+          user_id: user!.id,
           entity_type: entityType,
           entity_id: entityId,
           action: newStatus,
@@ -402,7 +402,7 @@ export const useAdmin = () => {
       const { error: auditError } = await supabase
         .from('auditoria_admin')
         .insert({
-          admin_id: user!.id,
+          user_id: user!.id,
           entity_type: entityType,
           entity_id: entityId,
           action: 'delete',
@@ -450,7 +450,7 @@ export const useAdmin = () => {
       await supabase
         .from('auditoria_admin')
         .insert({
-          admin_id: user!.id,
+          user_id: user!.id,
           entity_type: 'usuario',
           entity_id: userId,
           action: 'delete_completely',

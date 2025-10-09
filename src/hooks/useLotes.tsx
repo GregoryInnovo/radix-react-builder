@@ -64,6 +64,17 @@ export const useLotes = () => {
 
       if (error) throw error;
 
+      // Register audit log for batch creation
+      await supabase.from('auditoria_admin').insert({
+        user_id: user.id,
+        entity_type: 'lote',
+        entity_id: data.id,
+        action: 'create',
+        previous_status: null,
+        new_status: 'pendiente',
+        notes: `Usuario creó lote de ${loteData.peso_estimado}kg`
+      });
+
       toast({
         title: "¡Lote creado exitosamente!",
         description: "Tu lote de R.O.A ha sido registrado.",

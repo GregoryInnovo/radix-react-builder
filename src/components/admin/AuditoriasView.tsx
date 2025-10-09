@@ -245,8 +245,8 @@ export const AuditoriasView: React.FC<AuditoriasViewProps> = ({ auditorias }) =>
                         </p>
                         <p className="text-xs text-gray-500">{auditoria.admin_data.email}</p>
                         <EntityIdDisplay 
-                          id={auditoria.admin_id} 
-                          label="ID Admin"
+                          id={auditoria.user_id} 
+                          label="ID Usuario"
                           showCopyButton={false}
                           className="mt-1"
                         />

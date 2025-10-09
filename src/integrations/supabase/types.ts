@@ -17,7 +17,6 @@ export type Database = {
       auditoria_admin: {
         Row: {
           action: string
-          admin_id: string
           created_at: string | null
           entity_id: string
           entity_type: string
@@ -25,10 +24,10 @@ export type Database = {
           new_status: string | null
           notes: string | null
           previous_status: string | null
+          user_id: string
         }
         Insert: {
           action: string
-          admin_id: string
           created_at?: string | null
           entity_id: string
           entity_type: string
@@ -36,10 +35,10 @@ export type Database = {
           new_status?: string | null
           notes?: string | null
           previous_status?: string | null
+          user_id: string
         }
         Update: {
           action?: string
-          admin_id?: string
           created_at?: string | null
           entity_id?: string
           entity_type?: string
@@ -47,6 +46,7 @@ export type Database = {
           new_status?: string | null
           notes?: string | null
           previous_status?: string | null
+          user_id?: string
         }
         Relationships: []
       }

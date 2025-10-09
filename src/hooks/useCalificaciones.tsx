@@ -28,6 +28,17 @@ export const useCalificaciones = () => {
 
       if (error) throw error;
 
+      // Register audit log for rating creation
+      await supabase.from('auditoria_admin').insert({
+        user_id: user.id,
+        entity_type: 'calificacion',
+        entity_id: data.id,
+        action: 'create',
+        previous_status: null,
+        new_status: 'creada',
+        notes: `Calificación de ${data.puntuacion} estrellas para orden ${calificacionData.orden_id}`
+      });
+
       // Send notification to the rated user
       await supabase.functions.invoke('notify-order-status', {
         body: {
@@ -177,6 +188,19 @@ export const useCalificaciones = () => {
 
       if (error) throw error;
 
+      // Register audit log for rating deletion
+      if (user) {
+        await supabase.from('auditoria_admin').insert({
+          user_id: user.id,
+          entity_type: 'calificacion',
+          entity_id: id,
+          action: 'delete',
+          previous_status: 'activa',
+          new_status: 'eliminada',
+          notes: `Usuario eliminó su calificación`
+        });
+      }
+
       toast({
         title: "Calificación eliminada",
         description: "La calificación ha sido eliminada correctamente.",
@@ -203,6 +227,17 @@ export const useCalificaciones = () => {
       .eq('id', calificacionId);
 
     if (error) throw error;
+
+    // Register audit log for rating report
+    await supabase.from('auditoria_admin').insert({
+      user_id: user.id,
+      entity_type: 'calificacion',
+      entity_id: calificacionId,
+      action: 'report',
+      previous_status: 'activa',
+      new_status: 'reportada',
+      notes: `Usuario reportó calificación: ${motivo}`
+    });
   };
 
   const getCalificacionesRecientes = useCallback(async (userId: string, limit: number = 3) => {
@@ -265,6 +300,17 @@ export const useCalificaciones = () => {
       .eq('id', calificacionId);
 
     if (error) throw error;
+
+    // Register audit log for hiding rating
+    await supabase.from('auditoria_admin').insert({
+      user_id: user.id,
+      entity_type: 'calificacion',
+      entity_id: calificacionId,
+      action: 'hide',
+      previous_status: 'visible',
+      new_status: 'oculta',
+      notes: `Admin ocultó calificación`
+    });
   };
 
   const unhideCalificacion = async (calificacionId: string) => {

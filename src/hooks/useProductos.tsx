@@ -92,6 +92,17 @@ export const useProductos = () => {
 
       if (error) throw error;
 
+      // Register audit log for product creation
+      await supabase.from('auditoria_admin').insert({
+        user_id: user.id,
+        entity_type: 'producto',
+        entity_id: data.id,
+        action: 'create',
+        previous_status: null,
+        new_status: 'pendiente',
+        notes: `Usuario creó producto: ${productoData.nombre}`
+      });
+
       toast({
         title: "¡Producto enviado para revisión!",
         description: "Tu producto será revisado por nuestro equipo antes de ser publicado.",

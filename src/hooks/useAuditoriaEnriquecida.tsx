@@ -40,11 +40,11 @@ export const useAuditoriaEnriquecida = (auditorias: AuditoriaAdmin[]) => {
       for (const auditoria of auditorias) {
         const enrichedItem: EnrichedAuditoria = { ...auditoria };
 
-        // Obtener datos del admin
+        // Obtener datos del usuario que realizó la acción
         const { data: adminData } = await supabase
           .from('profiles')
           .select('full_name, email, avatar_url')
-          .eq('id', auditoria.admin_id)
+          .eq('id', auditoria.user_id)
           .single();
 
         if (adminData) {
