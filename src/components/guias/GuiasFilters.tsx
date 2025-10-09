@@ -25,11 +25,11 @@ interface GuiasFiltersProps {
 }
 
 const categoriaOptions = [
-  { value: 'compostaje', label: 'Compostaje' },
-  { value: 'reciclaje', label: 'Reciclaje' },
-  { value: 'reduccion', label: 'Reducción' },
-  { value: 'reutilizacion', label: 'Reutilización' },
-  { value: 'sostenibilidad', label: 'Sostenibilidad' },
+  { value: 'sabias_que', label: '🧠 ¿Sabías que...?' },
+  { value: 'reutilizacion_aprovechamiento', label: '♻️ Reutilización y aprovechamiento' },
+  { value: 'manuales_tecnicos', label: '🧾 Manuales técnicos / operativos' },
+  { value: 'salud_bienestar', label: '🌿 Salud y bienestar natural' },
+  { value: 'impacto_sostenibilidad', label: '🌎 Impacto y sostenibilidad local' },
 ];
 
 const tipoOptions = [

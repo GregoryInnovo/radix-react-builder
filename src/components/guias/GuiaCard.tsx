@@ -30,11 +30,11 @@ const typeIcons = {
 };
 
 const categoryColors = {
-  compostaje: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100',
-  reciclaje: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100',
-  reduccion: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-100',
-  reutilizacion: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-100',
-  sostenibilidad: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-100',
+  sabias_que: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300',
+  reutilizacion_aprovechamiento: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
+  manuales_tecnicos: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
+  salud_bienestar: 'bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-300',
+  impacto_sostenibilidad: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-300',
 };
 
 const levelColors = {

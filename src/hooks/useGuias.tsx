@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
 export type GuiaType = 'video' | 'articulo' | 'infografia';
-export type GuiaCategoria = 'compostaje' | 'reciclaje' | 'reduccion' | 'reutilizacion' | 'sostenibilidad';
+export type GuiaCategoria = 'sabias_que' | 'reutilizacion_aprovechamiento' | 'manuales_tecnicos' | 'salud_bienestar' | 'impacto_sostenibilidad';
 export type GuiaNivel = 'principiante' | 'intermedio' | 'avanzado';
 
 export interface Guia {

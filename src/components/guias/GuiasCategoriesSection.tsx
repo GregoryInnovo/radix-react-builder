@@ -3,11 +3,36 @@ import { Link } from 'react-router-dom';
 
 export const GuiasCategoriesSection = () => {
   const categorias = [
-    { name: 'Compostaje', icon: '🌱', count: '12 guías' },
-    { name: 'Reciclaje', icon: '♻️', count: '15 guías' },
-    { name: 'Reducción', icon: '📉', count: '8 guías' },
-    { name: 'Reutilización', icon: '🔄', count: '10 guías' },
-    { name: 'Sostenibilidad', icon: '🌍', count: '14 guías' },
+    { 
+      name: '¿Sabías que...?', 
+      slug: 'sabias_que',
+      icon: '🧠', 
+      description: 'Crea conciencia sobre el valor de los residuos y su impacto ambiental positivo.'
+    },
+    { 
+      name: 'Reutilización y aprovechamiento', 
+      slug: 'reutilizacion_aprovechamiento',
+      icon: '♻️', 
+      description: 'Enseña formas simples y prácticas de transformar residuos en nuevos recursos.'
+    },
+    { 
+      name: 'Manuales técnicos / operativos', 
+      slug: 'manuales_tecnicos',
+      icon: '🧾', 
+      description: 'Explica paso a paso cómo gestionar lotes, órdenes y productos según el rol del usuario.'
+    },
+    { 
+      name: 'Salud y bienestar natural', 
+      slug: 'salud_bienestar',
+      icon: '🌿', 
+      description: 'Promueve hábitos saludables y consumo responsable con enfoque sostenible.'
+    },
+    { 
+      name: 'Impacto y sostenibilidad local', 
+      slug: 'impacto_sostenibilidad',
+      icon: '🌎', 
+      description: 'Muestra resultados, historias y métricas del impacto real de la red Natuvital.'
+    },
   ];
 
   return (
@@ -22,17 +47,19 @@ export const GuiasCategoriesSection = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
         {categorias.map((categoria) => (
           <Link 
-            key={categoria.name}
-            to={`/guias?categoria=${categoria.name.toLowerCase()}`}
+            key={categoria.slug}
+            to={`/guias?categoria=${categoria.slug}`}
             className="group"
           >
-            <Card className="text-center hover:shadow-md transition-all duration-200 hover:scale-105">
-              <CardContent className="p-4">
-                <div className="text-3xl mb-2">{categoria.icon}</div>
-                <h4 className="font-medium mb-1 group-hover:text-primary transition-colors">
+            <Card className="text-center hover:shadow-md transition-all duration-200 hover:scale-105 cursor-pointer">
+              <CardContent className="p-6">
+                <div className="text-4xl mb-3">{categoria.icon}</div>
+                <h4 className="font-semibold mb-2 group-hover:text-primary transition-colors">
                   {categoria.name}
                 </h4>
-                <p className="text-xs text-muted-foreground">{categoria.count}</p>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  {categoria.description}
+                </p>
               </CardContent>
             </Card>
           </Link>
