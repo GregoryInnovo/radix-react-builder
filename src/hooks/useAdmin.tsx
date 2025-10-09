@@ -11,6 +11,7 @@ type Producto = Database['public']['Tables']['productos']['Row'];
 type Calificacion = Database['public']['Tables']['calificaciones']['Row'];
 type Orden = Database['public']['Tables']['ordenes']['Row'];
 type AuditoriaAdmin = Database['public']['Tables']['auditoria_admin']['Row'];
+type Guia = Database['public']['Tables']['guias']['Row'];
 
 export const useAdmin = () => {
   const [isAdmin, setIsAdmin] = useState(false);
@@ -25,6 +26,7 @@ export const useAdmin = () => {
   const [calificaciones, setCalificaciones] = useState<Calificacion[]>([]);
   const [ordenes, setOrdenes] = useState<Orden[]>([]);
   const [auditorias, setAuditorias] = useState<AuditoriaAdmin[]>([]);
+  const [guias, setGuias] = useState<Guia[]>([]);
 
   // Combined loading state for UI
   const loading = checkingAdmin || loadingData;
@@ -177,12 +179,26 @@ export const useAdmin = () => {
         console.log('Auditorias fetched:', auditoriasData?.length || 0);
       }
 
+      // Fetch all guias (including inactive for admin)
+      console.log('Fetching all guias...');
+      const { data: guiasData, error: guiasError } = await supabase
+        .from('guias')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (guiasError) {
+        console.error('Error fetching guias:', guiasError);
+      } else {
+        console.log('Guias fetched:', guiasData?.length || 0);
+      }
+
       setProfiles(profilesData || []);
       setLotes(lotesData || []);
       setProductos(productosData || []);
       setCalificaciones(calificacionesData || []);
       setOrdenes(ordenesData || []);
       setAuditorias(auditoriasData || []);
+      setGuias(guiasData || []);
       setDataLoaded(true);
 
       console.log('All admin data fetched successfully');
@@ -488,6 +504,7 @@ export const useAdmin = () => {
     calificaciones,
     ordenes,
     auditorias,
+    guias,
     fetchAllData,
     updateEntityStatus,
     deleteEntity,

@@ -173,6 +173,31 @@ export const useGuias = (filters: UseGuiasFilters = {}) => {
     },
   });
 
+  const deleteGuiaMutation = useMutation({
+    mutationFn: async (guiaId: string) => {
+      const { error } = await supabase
+        .from('guias')
+        .delete()
+        .eq('id', guiaId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['guias'] });
+      toast({
+        title: "Guía eliminada",
+        description: "La guía se ha eliminado permanentemente.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "No se pudo eliminar la guía.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const incrementViewsMutation = useMutation({
     mutationFn: async (guiaId: string) => {
       // Simple implementation without SQL functions for now
@@ -215,8 +240,10 @@ export const useGuias = (filters: UseGuiasFilters = {}) => {
     loadNextPage,
     createGuia: createGuiaMutation.mutate,
     updateGuia: updateGuiaMutation.mutate,
+    deleteGuia: deleteGuiaMutation.mutate,
     incrementViews: incrementViewsMutation.mutate,
     isCreating: createGuiaMutation.isPending,
     isUpdating: updateGuiaMutation.isPending,
+    isDeleting: deleteGuiaMutation.isPending,
   };
 };

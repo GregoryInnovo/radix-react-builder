@@ -9,7 +9,8 @@ import { TiposResiduoManagement } from './TiposResiduoManagement';
 import { CalificacionesView } from './CalificacionesView';
 import { OrdenesView } from './OrdenesView';
 import { AuditoriasView } from './AuditoriasView';
-import { Users, Package, ShoppingBag, Star, ClipboardList, FileText, Leaf } from 'lucide-react';
+import { GuiasManagement } from './GuiasManagement';
+import { Users, Package, ShoppingBag, Star, ClipboardList, FileText, Leaf, BookOpen } from 'lucide-react';
 
 export const AdminDashboard: React.FC = () => {
   const { 
@@ -19,6 +20,7 @@ export const AdminDashboard: React.FC = () => {
     calificaciones, 
     ordenes, 
     auditorias,
+    guias,
     loading 
   } = useAdmin();
 
@@ -33,7 +35,7 @@ export const AdminDashboard: React.FC = () => {
 
   return (
     <Tabs defaultValue="users" className="w-full">
-      <TabsList className="grid w-full grid-cols-7">
+      <TabsList className="grid w-full grid-cols-8">
         <TabsTrigger value="users" className="flex items-center gap-2">
           <Users className="h-4 w-4" />
           Usuarios ({profiles.length})
@@ -49,6 +51,10 @@ export const AdminDashboard: React.FC = () => {
         <TabsTrigger value="tipos-residuo" className="flex items-center gap-2">
           <Leaf className="h-4 w-4" />
           Tipos Residuo
+        </TabsTrigger>
+        <TabsTrigger value="guias" className="flex items-center gap-2">
+          <BookOpen className="h-4 w-4" />
+          Guías ({guias.length})
         </TabsTrigger>
         <TabsTrigger value="calificaciones" className="flex items-center gap-2">
           <Star className="h-4 w-4" />
@@ -78,6 +84,10 @@ export const AdminDashboard: React.FC = () => {
       
       <TabsContent value="tipos-residuo">
         <TiposResiduoManagement />
+      </TabsContent>
+      
+      <TabsContent value="guias">
+        <GuiasManagement guias={guias} />
       </TabsContent>
       
       <TabsContent value="calificaciones">
