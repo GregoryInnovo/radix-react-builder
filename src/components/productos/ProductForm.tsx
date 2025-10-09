@@ -49,6 +49,8 @@ export const ProductForm: React.FC<ProductFormProps> = ({ onSuccess, onCancel })
 
     if (!formData.descripcion.trim()) {
       newErrors.descripcion = 'La descripción es obligatoria';
+    } else if (formData.descripcion.length > 300) {
+      newErrors.descripcion = 'La descripción no puede superar los 300 caracteres';
     }
 
     if (selectedFiles.length === 0) {
@@ -216,8 +218,18 @@ export const ProductForm: React.FC<ProductFormProps> = ({ onSuccess, onCancel })
               onChange={(e) => handleInputChange('descripcion', e.target.value)}
               placeholder="Describe tu producto, sus beneficios y características..."
               rows={4}
+              maxLength={300}
               className={errors.descripcion ? 'border-red-500' : ''}
             />
+            <p className={`text-xs ${
+              formData.descripcion.length > 290 
+                ? 'text-red-600' 
+                : formData.descripcion.length > 250 
+                ? 'text-yellow-600' 
+                : 'text-muted-foreground'
+            }`}>
+              {formData.descripcion.length}/300 caracteres
+            </p>
             {errors.descripcion && (
               <p className="text-sm text-red-600">{errors.descripcion}</p>
             )}
