@@ -186,6 +186,7 @@ export const OrdenesList: React.FC = () => {
     const [showCancelDialog, setShowCancelDialog] = useState(false);
     const [cancelLoading, setCancelLoading] = useState(false);
     const canUpdateStatus = isProvider && (orden.estado === 'pendiente' || orden.estado === 'aceptada');
+    const canCancelAsRequester = !isProvider && (orden.estado === 'pendiente' || orden.estado === 'aceptada');
     const canRate = !isProvider && orden.estado === 'completada';
     const requesterProfile = isProvider ? getRequesterProfile(orden.solicitante_id) : null;
     const providerProfile = !isProvider ? getProviderProfile(orden.proveedor_id) : null;
@@ -239,6 +240,17 @@ export const OrdenesList: React.FC = () => {
                   </Button>
                 </div>}
             </div>}
+          
+          {/* Cancel button for requesters - visible and prominent */}
+          {canCancelAsRequester && (
+            <Button 
+              size="sm" 
+              variant="destructive" 
+              onClick={() => setShowCancelDialog(true)}
+            >
+              Cancelar
+            </Button>
+          )}
           
           {canRate && (
             <CalificarOrden 
