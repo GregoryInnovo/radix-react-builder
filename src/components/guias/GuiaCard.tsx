@@ -37,11 +37,6 @@ const categoryColors = {
   impacto_sostenibilidad: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-300',
 };
 
-const levelColors = {
-  principiante: 'bg-green-50 text-green-700 border-green-200',
-  intermedio: 'bg-yellow-50 text-yellow-700 border-yellow-200',
-  avanzado: 'bg-red-50 text-red-700 border-red-200',
-};
 
 export const GuiaCard = ({ guia, showAuthor = false }: GuiaCardProps) => {
   const { isGuardada, toggleGuardada, isToggling } = useGuiasGuardadas();
@@ -180,26 +175,17 @@ export const GuiaCard = ({ guia, showAuthor = false }: GuiaCardProps) => {
             )}
 
             {/* Meta Information */}
-            <div className="flex items-center justify-between text-xs text-muted-foreground">
-              <div className="flex items-center gap-3">
-                {guia.tiempo_lectura && (
-                  <div className="flex items-center gap-1">
-                    <Clock className="w-3 h-3" />
-                    <span>{guia.tiempo_lectura} min</span>
-                  </div>
-                )}
+            <div className="flex items-center gap-3 text-xs text-muted-foreground">
+              {guia.tiempo_lectura && (
                 <div className="flex items-center gap-1">
-                  <Eye className="w-3 h-3" />
-                  <span>{guia.vistas}</span>
+                  <Clock className="w-3 h-3" />
+                  <span>{guia.tiempo_lectura} min</span>
                 </div>
+              )}
+              <div className="flex items-center gap-1">
+                <Eye className="w-3 h-3" />
+                <span>{guia.vistas}</span>
               </div>
-              
-              <Badge 
-                variant="outline" 
-                className={`text-xs ${levelColors[guia.nivel]}`}
-              >
-                {guia.nivel}
-              </Badge>
             </div>
 
             {/* Author Info */}
