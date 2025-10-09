@@ -14,8 +14,10 @@ import {
 } from '@/components/ui/select';
 import { useGuias, GuiaCategoria } from '@/hooks/useGuias';
 import { useAuth } from '@/hooks/useAuth';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Eye } from 'lucide-react';
 import { CoverImageUpload } from '@/components/guias/CoverImageUpload';
+import { GuideImagesUpload } from '@/components/guias/GuideImagesUpload';
+import { ProductImageGallery } from '@/components/productos/ProductImageGallery';
 import { toast } from 'sonner';
 
 export default function GuiaForm() {
@@ -30,7 +32,9 @@ export default function GuiaForm() {
     categoria: '' as GuiaCategoria | '',
     portada_url: '',
     video_url: '',
+    imagenes: [] as string[],
   });
+  const [showImageViewer, setShowImageViewer] = useState(false);
 
   const categoriaOptions: { value: GuiaCategoria; label: string; icon: string }[] = [
     { value: 'sabias_que', label: '¿Sabías que...?', icon: '🧠' },
@@ -70,7 +74,6 @@ export default function GuiaForm() {
       tipo: 'articulo' as const,
       nivel: 'principiante' as const,
       tags: [],
-      imagenes: [],
       tiempo_lectura: null,
       destacada: false,
       activa: true,
@@ -191,11 +194,43 @@ export default function GuiaForm() {
                 <CardHeader>
                   <CardTitle>Multimedia</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <CoverImageUpload
-                    currentImage={formData.portada_url}
-                    onImageChange={(url) => handleInputChange('portada_url', url)}
-                  />
+                <CardContent className="space-y-6">
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">
+                      Foto de portada (requerida)
+                    </label>
+                    <CoverImageUpload
+                      currentImage={formData.portada_url}
+                      onImageChange={(url) => handleInputChange('portada_url', url)}
+                    />
+                  </div>
+
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="text-sm font-medium">
+                        Imágenes adjuntas (opcional)
+                      </label>
+                      {formData.imagenes.length > 0 && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setShowImageViewer(true)}
+                          className="gap-2"
+                        >
+                          <Eye className="w-4 h-4" />
+                          Ver imágenes
+                        </Button>
+                      )}
+                    </div>
+                    <GuideImagesUpload
+                      onImagesChange={(urls) => handleInputChange('imagenes', urls)}
+                      currentImages={formData.imagenes}
+                    />
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Puedes agregar hasta 20 imágenes adicionales (máx. 5MB cada una)
+                    </p>
+                  </div>
 
                   <div>
                     <label className="text-sm font-medium mb-2 block">
@@ -229,6 +264,16 @@ export default function GuiaForm() {
               </Button>
             </div>
           </form>
+
+          {/* Image Viewer Modal */}
+          {showImageViewer && (
+            <ProductImageGallery
+              isOpen={showImageViewer}
+              onClose={() => setShowImageViewer(false)}
+              images={formData.imagenes}
+              productTitle={formData.titulo || 'Imágenes de la guía'}
+            />
+          )}
         </div>
       </main>
     </div>

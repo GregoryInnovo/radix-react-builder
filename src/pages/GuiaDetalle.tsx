@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Header } from '@/components/layout/Header';
@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Separator } from '@/components/ui/separator';
+import { ProductImageGallery } from '@/components/productos/ProductImageGallery';
 import { supabase } from '@/integrations/supabase/client';
 import { useGuiasGuardadas } from '@/hooks/useGuiasGuardadas';
 import { 
@@ -16,9 +16,9 @@ import {
   Bookmark, 
   BookmarkCheck,
   Share2,
-  Play,
   ExternalLink,
-  Calendar
+  Calendar,
+  Images
 } from 'lucide-react';
 import { Guia } from '@/hooks/useGuias';
 import { format } from 'date-fns';
@@ -28,6 +28,7 @@ export default function GuiaDetalle() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { isGuardada, toggleGuardada, isToggling } = useGuiasGuardadas();
+  const [showImageGallery, setShowImageGallery] = useState(false);
 
   const { data: guia, isLoading, error } = useQuery({
     queryKey: ['guia', id],
@@ -226,27 +227,16 @@ export default function GuiaDetalle() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Cover Image or Video */}
-            {guia.portada_url && (
-              <div className="relative aspect-video rounded-lg overflow-hidden bg-muted">
-                <img
-                  src={guia.portada_url}
-                  alt={guia.titulo}
-                  className="w-full h-full object-cover"
-                />
-                {guia.tipo === 'video' && guia.video_url && (
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <Button
-                      size="lg"
-                      className="gap-2 bg-black/70 hover:bg-black/80"
-                      onClick={() => window.open(guia.video_url!, '_blank')}
-                    >
-                      <Play className="w-5 h-5" />
-                      Ver Video
-                    </Button>
-                  </div>
-                )}
-              </div>
+            {/* View Images Button - Only show if there are attached images */}
+            {guia.imagenes && guia.imagenes.length > 0 && (
+              <Button
+                variant="outline"
+                className="w-full gap-2"
+                onClick={() => setShowImageGallery(true)}
+              >
+                <Images className="w-4 h-4" />
+                Ver imágenes ({guia.imagenes.length})
+              </Button>
             )}
 
             {/* Content */}
@@ -258,27 +248,6 @@ export default function GuiaDetalle() {
                 />
               </CardContent>
             </Card>
-
-            {/* Additional Images */}
-            {guia.imagenes && guia.imagenes.length > 0 && (
-              <Card>
-                <CardContent className="p-6">
-                  <h3 className="text-lg font-semibold mb-4">Imágenes adicionales</h3>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    {guia.imagenes.map((imagen, index) => (
-                      <div key={index} className="aspect-square rounded-lg overflow-hidden bg-muted">
-                        <img
-                          src={imagen}
-                          alt={`${guia.titulo} - Imagen ${index + 1}`}
-                          className="w-full h-full object-cover hover:scale-105 transition-transform cursor-pointer"
-                          onClick={() => window.open(imagen, '_blank')}
-                        />
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
           </div>
 
           {/* Sidebar */}
@@ -368,6 +337,16 @@ export default function GuiaDetalle() {
             </Card>
           </div>
         </div>
+
+        {/* Image Gallery Modal */}
+        {guia.imagenes && guia.imagenes.length > 0 && (
+          <ProductImageGallery
+            isOpen={showImageGallery}
+            onClose={() => setShowImageGallery(false)}
+            images={guia.imagenes}
+            productTitle={guia.titulo}
+          />
+        )}
       </main>
     </div>
   );

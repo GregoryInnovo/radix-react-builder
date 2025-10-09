@@ -86,7 +86,16 @@ export default function Guias() {
         </div>
 
         {/* Categories Section */}
-        <GuiasCategoriesSection />
+        <GuiasCategoriesSection 
+          selectedCategoria={filters.categoria}
+          onSelectCategoria={(slug) => {
+            if (filters.categoria === slug) {
+              updateFilter('categoria', undefined);
+            } else {
+              updateFilter('categoria', slug as GuiaCategoria);
+            }
+          }}
+        />
 
         {/* Filters */}
         <div className="mb-8">
