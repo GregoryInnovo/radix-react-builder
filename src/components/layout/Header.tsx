@@ -2,7 +2,8 @@ import { Button } from "@/components/ui/button";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdmin } from "@/hooks/useAdmin";
-import { LogOut, User, Package, Search, ShoppingBag, ClipboardList, Settings, Menu, X, BookOpen } from "lucide-react";
+import { LogOut, User, Package, Search, ShoppingBag, ClipboardList, Settings, Menu, X, BookOpen, Leaf } from "lucide-react";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { NotificacionesDropdown } from "@/components/notificaciones/NotificacionesDropdown";
 import { useState, useEffect } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -76,7 +77,10 @@ export const Header = () => {
     return <header className="bg-white shadow-sm border-b sticky top-0 z-50">
         <div className="container mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
-            <Link to="/" className="text-xl lg:text-2xl font-bold text-green-600">NatuVital</Link>
+            <Link to="/" className="flex items-center space-x-2">
+              <Leaf className="h-5 w-5 lg:h-6 lg:w-6 text-green-600" />
+              <span className="text-xl lg:text-2xl font-bold text-green-600">NatuVital</span>
+            </Link>
             
             <div className="flex items-center space-x-3">
               {isAuthenticated && <NotificacionesDropdown />}
@@ -96,7 +100,12 @@ export const Header = () => {
                     {isAuthenticated ? <>
                          {/* User Info */}
                          <button onClick={() => handleNavigation(`/perfil/${user?.id}`)} className="flex items-center space-x-3 p-3 lg:p-4 bg-green-50 rounded-lg hover:bg-green-100 transition-colors w-full text-left">
-                           <User className="h-5 w-5 lg:h-6 lg:w-6 text-green-600" />
+                           <Avatar className="h-10 w-10 lg:h-12 lg:w-12">
+                             <AvatarImage src={userProfile?.avatar_url || undefined} />
+                             <AvatarFallback className="bg-green-100 text-green-600">
+                               <User className="h-5 w-5 lg:h-6 lg:w-6" />
+                             </AvatarFallback>
+                           </Avatar>
                            <div className="flex-1 min-w-0">
                              <p className="text-sm lg:text-base font-medium text-gray-900 truncate">
                                {userProfile ? getFirstName(userProfile.full_name) : getFirstName(user?.email?.split('@')[0] || '')}
@@ -138,8 +147,9 @@ export const Header = () => {
   return <header className="bg-white shadow-sm border-b">
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
-          <Link to="/" className="text-2xl font-bold text-green-600">
-            NatuVital 0.1.0
+          <Link to="/" className="flex items-center space-x-2">
+            <Leaf className="h-6 w-6 text-green-600" />
+            <span className="text-2xl font-bold text-green-600">NatuVital</span>
           </Link>
           
           <nav className="hidden xl:flex items-center space-x-6">

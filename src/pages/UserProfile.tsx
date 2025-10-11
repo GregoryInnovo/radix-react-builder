@@ -4,10 +4,13 @@ import { Header } from '@/components/layout/Header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { StarRating } from '@/components/calificaciones/StarRating';
 import { UserRating } from '@/components/calificaciones/UserRating';
 import { CalificacionesList } from '@/components/calificaciones/CalificacionesList';
 import { useCalificaciones } from '@/hooks/useCalificaciones';
+import { useAuth } from '@/hooks/useAuth';
+import { AvatarUpload } from '@/components/user/AvatarUpload';
 import { supabase } from '@/integrations/supabase/client';
 import { User, Mail, MapPin, Calendar, Star, MessageSquare, Package, ShoppingBag } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -17,6 +20,8 @@ type Profile = Database['public']['Tables']['profiles']['Row'];
 
 const UserProfile = () => {
   const { userId } = useParams<{ userId: string }>();
+  const { user } = useAuth();
+  const isOwnProfile = user?.id === userId;
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [showReviews, setShowReviews] = useState(false);
@@ -177,9 +182,23 @@ const UserProfile = () => {
             <CardHeader>
               <div className="flex items-start justify-between">
                 <div className="flex items-center space-x-4">
-                  <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
-                    <User className="w-8 h-8 text-green-600" />
-                  </div>
+                  {isOwnProfile ? (
+                    <AvatarUpload
+                      userId={userId!}
+                      currentAvatarUrl={profile.avatar_url}
+                      userName={profile.full_name || 'Usuario'}
+                      onAvatarChange={(newUrl) => {
+                        setProfile(prev => prev ? { ...prev, avatar_url: newUrl } : null);
+                      }}
+                    />
+                  ) : (
+                    <Avatar className="w-16 h-16">
+                      <AvatarImage src={profile.avatar_url || undefined} alt={profile.full_name || 'Usuario'} />
+                      <AvatarFallback className="bg-green-100 text-green-700 text-xl font-bold">
+                        {profile.full_name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'U'}
+                      </AvatarFallback>
+                    </Avatar>
+                  )}
                   <div>
                     <CardTitle className="text-2xl font-bold">
                       {profile.full_name || 'Usuario sin nombre'}
