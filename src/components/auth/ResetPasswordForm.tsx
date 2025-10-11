@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Leaf, Lock, AlertCircle } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { cn } from '@/lib/utils';
+import { parseAuthParams } from '@/lib/authUtils';
 
 export const ResetPasswordForm = () => {
   const [newPassword, setNewPassword] = useState('');
@@ -25,10 +26,11 @@ export const ResetPasswordForm = () => {
   const [searchParams] = useSearchParams();
 
   useEffect(() => {
-    // Detectar errores en los parámetros de URL
-    const error = searchParams.get('error');
-    const errorCode = searchParams.get('error_code');
-    const errorDescription = searchParams.get('error_description');
+    // Detectar errores en los parámetros de URL (query o hash)
+    const authParams = parseAuthParams();
+    const error = searchParams.get('error') || authParams.get('error');
+    const errorCode = searchParams.get('error_code') || authParams.get('error_code');
+    const errorDescription = searchParams.get('error_description') || authParams.get('error_description');
     
     if (error || errorCode) {
       setLinkExpired(true);

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -11,10 +11,11 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { AlertTriangle } from 'lucide-react';
+import { parseAuthParams, clearAuthParams } from '@/lib/authUtils';
 
 export const AuthErrorHandler = () => {
-  const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const [showErrorDialog, setShowErrorDialog] = useState(false);
   const [errorMessage, setErrorMessage] = useState({
     title: '',
@@ -22,9 +23,10 @@ export const AuthErrorHandler = () => {
   });
 
   useEffect(() => {
-    const error = searchParams.get('error');
-    const errorDescription = searchParams.get('error_description');
-    const typeParam = searchParams.get('type');
+    const authParams = parseAuthParams();
+    const error = authParams.get('error');
+    const errorDescription = authParams.get('error_description');
+    const typeParam = authParams.get('type');
 
     if (error || errorDescription) {
       const description = errorDescription?.toLowerCase() || '';
@@ -48,32 +50,26 @@ export const AuthErrorHandler = () => {
         setShowErrorDialog(true);
       }
     }
-  }, [searchParams]);
+  }, [location]);
 
   const handleRegisterAgain = () => {
     setShowErrorDialog(false);
-    // Limpiar parámetros de error antes de navegar
-    searchParams.delete('error');
-    searchParams.delete('error_description');
-    searchParams.delete('error_code');
-    searchParams.delete('type');
-    setSearchParams(searchParams);
+    clearAuthParams();
     navigate('/auth?mode=register');
   };
 
   const handleGoToLogin = () => {
     setShowErrorDialog(false);
-    // Limpiar parámetros de error antes de navegar
-    const isRecovery = searchParams.get('type') === 'recovery';
-    searchParams.delete('error');
-    searchParams.delete('error_description');
-    searchParams.delete('error_code');
-    searchParams.delete('type');
-    setSearchParams(searchParams);
+    const authParams = parseAuthParams();
+    const isRecovery = authParams.get('type') === 'recovery';
+    clearAuthParams();
     
     // Si es recuperación, redirigir a forgot-password
     navigate(isRecovery ? '/auth?mode=forgot-password' : '/auth');
   };
+
+  const authParams = parseAuthParams();
+  const isRecovery = authParams.get('type') === 'recovery';
 
   return (
     <AlertDialog open={showErrorDialog} onOpenChange={setShowErrorDialog}>
@@ -89,9 +85,9 @@ export const AuthErrorHandler = () => {
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel onClick={handleGoToLogin}>
-            {searchParams.get('type') === 'recovery' ? 'Solicitar nuevo enlace' : 'Ir a inicio de sesión'}
+            {isRecovery ? 'Solicitar nuevo enlace' : 'Ir a inicio de sesión'}
           </AlertDialogCancel>
-          {searchParams.get('type') !== 'recovery' && (
+          {!isRecovery && (
             <AlertDialogAction onClick={handleRegisterAgain}>
               Registrarse nuevamente
             </AlertDialogAction>

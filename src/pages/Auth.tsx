@@ -6,14 +6,17 @@ import { ExpiredLinkNotice } from '@/components/auth/ExpiredLinkNotice';
 import { ForgotPasswordForm } from '@/components/auth/ForgotPasswordForm';
 import { ResetPasswordForm } from '@/components/auth/ResetPasswordForm';
 import { useAuth } from '@/hooks/useAuth';
+import { parseAuthParams } from '@/lib/authUtils';
 
 const Auth = () => {
   const [searchParams] = useSearchParams();
-  const modeParam = searchParams.get('mode');
-  const typeParam = searchParams.get('type');
-  const error = searchParams.get('error');
-  const errorDescription = searchParams.get('error_description');
-  const email = searchParams.get('email');
+  const authParams = parseAuthParams();
+  
+  const modeParam = searchParams.get('mode') || authParams.get('mode');
+  const typeParam = searchParams.get('type') || authParams.get('type');
+  const error = searchParams.get('error') || authParams.get('error');
+  const errorDescription = searchParams.get('error_description') || authParams.get('error_description');
+  const email = searchParams.get('email') || authParams.get('email');
   
   const [mode, setMode] = useState<'login' | 'register' | 'forgot-password'>(
     modeParam === 'register' ? 'register' : 'login'

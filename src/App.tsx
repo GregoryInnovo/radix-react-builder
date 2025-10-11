@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { MobileNavigation } from "@/components/layout/MobileNavigation";
 import { AuthErrorHandler } from "@/components/auth/AuthErrorHandler";
+import { HashToQueryBridge } from "@/components/auth/HashToQueryBridge";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";  
 import Lotes from "./pages/Lotes";
@@ -30,6 +31,7 @@ function App() {
         <Toaster />
         <Sonner />
         <BrowserRouter>
+          <HashToQueryBridge />
           <AuthErrorHandler />
           <div className="min-h-screen pb-16 lg:pb-20 xl:pb-0">
             <Routes>

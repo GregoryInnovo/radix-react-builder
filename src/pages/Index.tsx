@@ -18,20 +18,6 @@ const Index = () => {
   const { getProfileById } = useProfiles();
   const [userProfile, setUserProfile] = React.useState<any>(null);
 
-  // Redirect to /auth if there are error parameters in URL
-  React.useEffect(() => {
-    const error = searchParams.get('error');
-    const errorDescription = searchParams.get('error_description');
-    
-    if (error || errorDescription) {
-      // Preserve all error parameters when redirecting
-      const errorParams = new URLSearchParams();
-      searchParams.forEach((value, key) => {
-        errorParams.set(key, value);
-      });
-      navigate(`/auth?${errorParams.toString()}`, { replace: true });
-    }
-  }, [searchParams, navigate]);
 
   // Get user profile for displaying first name
   React.useEffect(() => {
