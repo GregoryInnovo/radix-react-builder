@@ -3,18 +3,35 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Leaf, Recycle, Users, MapPin, Star, TrendingUp, User } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useProfiles } from '@/hooks/useProfiles';
 import { UserProfileLink } from '@/components/user/UserProfileLink';
 import { GuiasPreviewSection } from '@/components/guias/GuiasPreviewSection';
 const Index = () => {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const {
     isAuthenticated,
     user
   } = useAuth();
   const { getProfileById } = useProfiles();
   const [userProfile, setUserProfile] = React.useState<any>(null);
+
+  // Redirect to /auth if there are error parameters in URL
+  React.useEffect(() => {
+    const error = searchParams.get('error');
+    const errorDescription = searchParams.get('error_description');
+    
+    if (error || errorDescription) {
+      // Preserve all error parameters when redirecting
+      const errorParams = new URLSearchParams();
+      searchParams.forEach((value, key) => {
+        errorParams.set(key, value);
+      });
+      navigate(`/auth?${errorParams.toString()}`, { replace: true });
+    }
+  }, [searchParams, navigate]);
 
   // Get user profile for displaying first name
   React.useEffect(() => {

@@ -24,20 +24,26 @@ export const AuthErrorHandler = () => {
   useEffect(() => {
     const error = searchParams.get('error');
     const errorDescription = searchParams.get('error_description');
+    const typeParam = searchParams.get('type');
 
     if (error || errorDescription) {
       const description = errorDescription?.toLowerCase() || '';
       
-      // Detectar errores relacionados con enlaces de verificación expirados/inválidos
+      // Detectar errores relacionados con enlaces expirados/inválidos
       if (
         description.includes('email link is invalid') ||
         description.includes('expired') ||
         description.includes('token') ||
         error === 'access_denied'
       ) {
+        // Distinguir entre enlace de verificación vs recuperación de contraseña
+        const isRecovery = typeParam === 'recovery';
+        
         setErrorMessage({
-          title: 'Enlace de verificación expirado',
-          description: 'Tu enlace de verificación ha expirado o es inválido. Los enlaces son válidos por 24 horas por seguridad. Por favor, regístrate nuevamente o solicita un nuevo enlace.'
+          title: isRecovery ? 'Enlace de recuperación expirado' : 'Enlace de verificación expirado',
+          description: isRecovery 
+            ? 'Tu enlace de recuperación de contraseña ha expirado o es inválido. Los enlaces son válidos por 24 horas por seguridad. Por favor, solicita un nuevo enlace de recuperación.'
+            : 'Tu enlace de verificación ha expirado o es inválido. Los enlaces son válidos por 24 horas por seguridad. Por favor, regístrate nuevamente o solicita un nuevo enlace.'
         });
         setShowErrorDialog(true);
       }
@@ -50,6 +56,7 @@ export const AuthErrorHandler = () => {
     searchParams.delete('error');
     searchParams.delete('error_description');
     searchParams.delete('error_code');
+    searchParams.delete('type');
     setSearchParams(searchParams);
     navigate('/auth?mode=register');
   };
@@ -57,11 +64,15 @@ export const AuthErrorHandler = () => {
   const handleGoToLogin = () => {
     setShowErrorDialog(false);
     // Limpiar parámetros de error antes de navegar
+    const isRecovery = searchParams.get('type') === 'recovery';
     searchParams.delete('error');
     searchParams.delete('error_description');
     searchParams.delete('error_code');
+    searchParams.delete('type');
     setSearchParams(searchParams);
-    navigate('/auth');
+    
+    // Si es recuperación, redirigir a forgot-password
+    navigate(isRecovery ? '/auth?mode=forgot-password' : '/auth');
   };
 
   return (
@@ -78,11 +89,13 @@ export const AuthErrorHandler = () => {
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel onClick={handleGoToLogin}>
-            Ir a inicio de sesión
+            {searchParams.get('type') === 'recovery' ? 'Solicitar nuevo enlace' : 'Ir a inicio de sesión'}
           </AlertDialogCancel>
-          <AlertDialogAction onClick={handleRegisterAgain}>
-            Registrarse nuevamente
-          </AlertDialogAction>
+          {searchParams.get('type') !== 'recovery' && (
+            <AlertDialogAction onClick={handleRegisterAgain}>
+              Registrarse nuevamente
+            </AlertDialogAction>
+          )}
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
