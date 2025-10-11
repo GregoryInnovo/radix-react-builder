@@ -29,9 +29,6 @@ export const UsersManagement: React.FC<UsersManagementProps> = ({ users }) => {
     if (user.is_active === false) {
       return <Badge variant="destructive">Suspendido</Badge>;
     }
-    if (user.is_verified) {
-      return <Badge className="bg-green-100 text-green-800">Verificado</Badge>;
-    }
     return <Badge variant="secondary">Activo</Badge>;
   };
 
@@ -57,7 +54,6 @@ export const UsersManagement: React.FC<UsersManagementProps> = ({ users }) => {
       statusFilter === 'all' ||
       (statusFilter === 'active' && user.is_active !== false) ||
       (statusFilter === 'suspended' && user.is_active === false) ||
-      (statusFilter === 'verified' && user.is_verified) ||
       (statusFilter === 'admin' && user.is_admin);
     
     return matchesSearch && matchesStatus;
@@ -83,7 +79,6 @@ export const UsersManagement: React.FC<UsersManagementProps> = ({ users }) => {
             <SelectItem value="all">Todos</SelectItem>
             <SelectItem value="active">Activos</SelectItem>
             <SelectItem value="suspended">Suspendidos</SelectItem>
-            <SelectItem value="verified">Verificados</SelectItem>
             <SelectItem value="admin">Administradores</SelectItem>
           </SelectContent>
         </Select>
@@ -155,15 +150,6 @@ export const UsersManagement: React.FC<UsersManagementProps> = ({ users }) => {
                       onClick={() => handleStatusChange(user.id, 'activo')}
                     >
                       Restaurar
-                    </Button>
-                  )}
-                  {!user.is_verified && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleStatusChange(user.id, 'verificado')}
-                    >
-                      Verificar
                     </Button>
                   )}
                   <Button
