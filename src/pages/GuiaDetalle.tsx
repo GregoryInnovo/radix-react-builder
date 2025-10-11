@@ -135,11 +135,6 @@ export default function GuiaDetalle() {
     sostenibilidad: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-100',
   };
 
-  const levelColors = {
-    principiante: 'bg-green-50 text-green-700 border-green-200',
-    intermedio: 'bg-yellow-50 text-yellow-700 border-yellow-200',
-    avanzado: 'bg-red-50 text-red-700 border-red-200',
-  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -163,9 +158,6 @@ export default function GuiaDetalle() {
           <div className="flex flex-wrap items-center gap-2 mb-4">
             <Badge className={categoryColors[guia.categoria]}>
               {guia.categoria}
-            </Badge>
-            <Badge variant="outline" className={levelColors[guia.nivel]}>
-              {guia.nivel}
             </Badge>
             {guia.destacada && (
               <Badge variant="default" className="bg-primary">
