@@ -1,0 +1,763 @@
+# NatuVital - Documentación Técnica en Diagramas Mermaid
+
+## 1. ARQUITECTURA DEL SISTEMA
+
+```mermaid
+graph TB
+    subgraph "Frontend - React Application"
+        A[React 18.3.1 + TypeScript]
+        B[Vite 5.4.1]
+        C[React Router 6.26.2]
+        D[TanStack Query 5.56.2]
+        E[Tailwind CSS + shadcn/ui]
+        F[React Hook Form + Zod]
+    end
+
+    subgraph "Backend - Supabase Cloud"
+        G[Supabase Auth - JWT]
+        H[PostgreSQL 15 Database]
+        I[Storage Buckets]
+        J[Edge Functions - Deno]
+        K[Realtime - WebSocket]
+    end
+
+    subgraph "Servicios Externos"
+        L[Mapbox GL 3.14.0]
+        M[Email Service]
+    end
+
+    A --> G
+    A --> H
+    A --> I
+    A --> J
+    A --> K
+    A --> L
+    J --> M
+    G --> H
+    J --> H
+```
+
+## 2. TIPOS DE USUARIOS Y PERMISOS
+
+```mermaid
+graph TD
+    subgraph "Jerarquía de Usuarios"
+        V[Visitante - No Autenticado]
+        C[Ciudadano - citizen]
+        G[Generador - generator]
+        T[Transformador - transformer]
+        A[Administrador - admin]
+    end
+
+    subgraph "Permisos Visitante"
+        V1[Ver Landing Page]
+        V2[Ver Guías Públicas]
+        V3[Registro/Login]
+    end
+
+    subgraph "Permisos Ciudadano"
+        C1[Ver Lotes Públicos]
+        C2[Ver Productos Públicos]
+        C3[Solicitar Intercambios]
+        C4[Gestionar sus Órdenes]
+        C5[Calificar Intercambios]
+        C6[Ver/Editar Perfil]
+        C7[Guardar Guías]
+        C8[Recibir Notificaciones]
+    end
+
+    subgraph "Permisos Generador"
+        G1[Crear/Editar Lotes R.O.A]
+        G2[Gestionar sus Lotes]
+        G3[Ver Historial de Lotes]
+        G4[Recibir Solicitudes de Lotes]
+        G5[Chat con Solicitantes]
+        G6[Completar Intercambios]
+    end
+
+    subgraph "Permisos Transformador"
+        T1[Crear/Editar Productos]
+        T2[Gestionar sus Productos]
+        T3[Recibir Solicitudes de Productos]
+        T4[Chat con Compradores]
+        T5[Completar Ventas]
+    end
+
+    subgraph "Permisos Administrador"
+        A1[Aprobar/Rechazar Lotes]
+        A2[Aprobar/Rechazar Productos]
+        A3[Suspender/Restaurar Usuarios]
+        A4[Gestionar Tipos de Residuos]
+        A5[Gestionar Guías]
+        A6[Ver Auditorías Completas]
+        A7[Gestionar Calificaciones Reportadas]
+        A8[Eliminar Usuarios Permanentemente]
+        A9[Ver Todas las Órdenes]
+    end
+
+    V --> V1 & V2 & V3
+    C --> C1 & C2 & C3 & C4 & C5 & C6 & C7 & C8
+    G --> C1 & C2 & C3 & C4 & C5 & C6 & C7 & C8
+    G --> G1 & G2 & G3 & G4 & G5 & G6
+    T --> C1 & C2 & C3 & C4 & C5 & C6 & C7 & C8
+    T --> T1 & T2 & T3 & T4 & T5
+    A --> A1 & A2 & A3 & A4 & A5 & A6 & A7 & A8 & A9
+```
+
+## 3. FLUJO DE AUTENTICACIÓN
+
+```mermaid
+sequenceDiagram
+    participant U as Usuario
+    participant F as Frontend React
+    participant SA as Supabase Auth
+    participant DB as PostgreSQL
+    participant E as Email Service
+
+    Note over U,E: REGISTRO DE USUARIO
+    U->>F: Click "Registrarse"
+    F->>F: Validación (Zod Schema)
+    F->>SA: signUp(email, password, metadata)
+    SA->>DB: INSERT auth.users
+    SA->>E: Enviar email verificación
+    SA-->>F: Usuario creado (no verificado)
+    F-->>U: "Revisa tu email"
+
+    Note over U,E: TRIGGER AUTOMÁTICO
+    DB->>DB: Trigger: handle_new_user()
+    DB->>DB: INSERT profiles (id, email, full_name, user_type)
+
+    Note over U,E: VERIFICACIÓN EMAIL
+    U->>E: Click link verificación
+    E->>SA: Verificar token
+    SA->>DB: UPDATE auth.users (email_confirmed_at)
+    SA-->>U: Redirigir a /auth
+
+    Note over U,E: LOGIN
+    U->>F: Ingresar email/password
+    F->>SA: signIn(email, password)
+    SA->>DB: SELECT auth.users
+    SA->>DB: CHECK email_confirmed_at
+    SA->>DB: CHECK profiles.is_active
+    alt Usuario suspendido
+        SA-->>F: Error "Cuenta suspendida"
+        F-->>U: Mostrar mensaje error
+    else Email no verificado
+        SA-->>F: Error "Email no verificado"
+        F-->>U: Opción reenviar email
+    else Login exitoso
+        SA-->>F: Session + JWT Token
+        F->>F: localStorage.setItem(session)
+        F-->>U: Redirigir a "/"
+    end
+
+    Note over U,E: RECUPERAR CONTRASEÑA
+    U->>F: Click "Olvidé contraseña"
+    F->>SA: resetPasswordForEmail(email)
+    SA->>E: Enviar email recuperación
+    E-->>U: Email con link
+    U->>E: Click link recuperación
+    E->>F: Redirigir /auth?type=recovery
+    F->>U: Formulario nueva contraseña
+    U->>F: Ingresar nueva contraseña
+    F->>SA: updateUser(password)
+    SA->>DB: UPDATE auth.users
+    SA-->>F: Contraseña actualizada
+    F-->>U: "Contraseña cambiada exitosamente"
+```
+
+## 4. FLUJO DE ÓRDENES/INTERCAMBIOS
+
+```mermaid
+sequenceDiagram
+    participant S as Solicitante
+    participant F as Frontend
+    participant DB as Database
+    participant EF as Edge Function
+    participant P as Proveedor
+
+    Note over S,P: CREAR SOLICITUD
+    S->>F: Click "Solicitar Intercambio"
+    F->>F: Formulario (cantidad, fecha, dirección, mensaje)
+    S->>F: Submit formulario
+    F->>DB: INSERT ordenes (estado=pendiente)
+    DB->>DB: RLS: Check solicitante_id = auth.uid()
+    DB-->>F: Orden creada
+
+    Note over S,P: NOTIFICAR PROVEEDOR
+    DB->>EF: Trigger notify-order-status
+    EF->>DB: INSERT notificaciones (user_id=proveedor_id)
+    EF-->>P: Email/Push notification
+    P->>F: Ver notificación
+    F->>DB: SELECT ordenes WHERE proveedor_id = auth.uid()
+    DB-->>F: Lista de órdenes pendientes
+    F-->>P: Mostrar solicitud
+
+    Note over S,P: PROVEEDOR RESPONDE
+    alt Aceptar Orden
+        P->>F: Click "Aceptar"
+        F->>DB: UPDATE ordenes (estado=aceptada, mensaje_respuesta)
+        DB->>EF: notify-order-status
+        EF->>DB: INSERT notificaciones (user_id=solicitante_id)
+        EF-->>S: Notificación "Orden aceptada"
+    else Rechazar Orden
+        P->>F: Click "Rechazar"
+        F->>DB: UPDATE ordenes (estado=rechazada, mensaje_respuesta)
+        DB->>EF: notify-order-status
+        EF->>DB: INSERT notificaciones (user_id=solicitante_id)
+        EF-->>S: Notificación "Orden rechazada"
+    end
+
+    Note over S,P: CHAT DE COORDINACIÓN
+    S->>F: Enviar mensaje
+    F->>DB: INSERT orden_mensajes
+    DB->>DB: RLS: Check usuario_id IN (solicitante_id, proveedor_id)
+    DB->>EF: notify-new-message
+    EF->>DB: INSERT notificaciones
+    EF-->>P: Notificación nuevo mensaje
+    P->>F: Responder mensaje
+    F->>DB: INSERT orden_mensajes
+    DB->>EF: notify-new-message
+    EF-->>S: Notificación respuesta
+
+    Note over S,P: COMPLETAR INTERCAMBIO
+    alt Solicitante completa
+        S->>F: Click "Completar Orden"
+        F->>DB: UPDATE ordenes (estado=completada)
+    else Proveedor completa
+        P->>F: Click "Completar Orden"
+        F->>DB: UPDATE ordenes (estado=completada)
+    end
+    DB->>EF: notify-order-status
+    EF-->>S: Notificación "Orden completada"
+    EF-->>P: Notificación "Orden completada"
+
+    Note over S,P: CALIFICACIONES MUTUAS
+    S->>F: Calificar a Proveedor (1-5 estrellas + comentario)
+    F->>DB: INSERT calificaciones (calificador_id, calificado_id, puntuacion)
+    DB->>DB: RLS: Check orden completada
+    DB-->>F: Calificación guardada
+    
+    P->>F: Calificar a Solicitante
+    F->>DB: INSERT calificaciones
+    DB-->>F: Calificación guardada
+
+    Note over S,P: ACTUALIZAR REPUTACIÓN
+    F->>DB: SELECT AVG(puntuacion) FROM calificaciones WHERE calificado_id = user_id
+    DB-->>F: Rating promedio actualizado
+```
+
+## 5. ESTRUCTURA DE BASE DE DATOS (ERD)
+
+```mermaid
+erDiagram
+    auth_users ||--|| profiles : "1:1"
+    profiles ||--o{ lotes : "crea"
+    profiles ||--o{ productos : "crea"
+    profiles ||--o{ ordenes_solicitante : "solicita"
+    profiles ||--o{ ordenes_proveedor : "provee"
+    profiles ||--o{ calificaciones_calificador : "califica"
+    profiles ||--o{ calificaciones_calificado : "recibe"
+    profiles ||--o{ guias : "autor"
+    profiles ||--o{ guias_guardadas : "guarda"
+    profiles ||--o{ notificaciones : "recibe"
+    profiles ||--o{ orden_mensajes : "envia"
+    profiles ||--o{ auditoria_admin : "ejecuta"
+    
+    lotes ||--o{ ordenes : "referenciado_en"
+    productos ||--o{ ordenes : "referenciado_en"
+    ordenes ||--|| calificaciones : "genera"
+    ordenes ||--o{ orden_mensajes : "contiene"
+    ordenes ||--o{ notificaciones : "genera"
+    
+    tipos_residuo ||--o{ lotes : "categoriza"
+    lotes ||--o{ lotes_historial : "trackea"
+    guias ||--o{ guias_guardadas : "guardada_por"
+
+    profiles {
+        uuid id PK
+        text email UK
+        text full_name
+        text user_type
+        text phone
+        text address
+        numeric location_lat
+        numeric location_lng
+        text avatar_url
+        boolean is_admin
+        boolean is_active
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    lotes {
+        uuid id PK
+        uuid user_id FK
+        uuid tipo_residuo_id FK
+        varchar titulo
+        text descripcion
+        numeric peso_estimado
+        numeric ubicacion_lat
+        numeric ubicacion_lng
+        text direccion
+        date fecha_disponible
+        date fecha_vencimiento
+        batch_status estado
+        text status
+        text[] imagenes
+        text admin_notes
+        timestamp deleted_at
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    productos {
+        uuid id PK
+        uuid user_id FK
+        text nombre
+        text descripcion
+        text[] imagenes
+        text origen_roa
+        text[] categoria_tipo
+        text[] categoria_funcionalidad
+        integer precio_unidad
+        boolean incluye_domicilio
+        integer costo_domicilio
+        text direccion_vendedor
+        boolean disponible
+        text status
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    ordenes {
+        uuid id PK
+        uuid solicitante_id FK
+        uuid proveedor_id FK
+        uuid item_id FK
+        item_type tipo_item
+        order_status estado
+        numeric cantidad_solicitada
+        date fecha_propuesta_retiro
+        time hora_propuesta_retiro
+        text modalidad_entrega
+        text direccion_contacto
+        text telefono_contacto
+        text mensaje_solicitud
+        text mensaje_respuesta
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    calificaciones {
+        uuid id PK
+        uuid orden_id FK
+        uuid calificador_id FK
+        uuid calificado_id FK
+        uuid producto_id FK
+        integer puntuacion
+        text comentario
+        boolean reportada
+        boolean oculta
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    tipos_residuo {
+        uuid id PK
+        text nombre UK
+        text descripcion
+        boolean activo
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    guias {
+        uuid id PK
+        uuid autor_id FK
+        text titulo
+        text descripcion
+        text contenido
+        text tipo
+        text categoria
+        text nivel
+        text portada_url
+        text[] imagenes
+        text video_url
+        text[] tags
+        integer tiempo_lectura
+        integer vistas
+        boolean activa
+        boolean destacada
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    guias_guardadas {
+        uuid id PK
+        uuid user_id FK
+        uuid guia_id FK
+        timestamp created_at
+    }
+
+    notificaciones {
+        uuid id PK
+        uuid user_id FK
+        uuid orden_id FK
+        uuid entity_id FK
+        text entity_type
+        text tipo
+        text titulo
+        text mensaje
+        text redirect_url
+        jsonb metadata
+        boolean leida
+        timestamp created_at
+    }
+
+    orden_mensajes {
+        uuid id PK
+        uuid orden_id FK
+        uuid usuario_id FK
+        text mensaje
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    lotes_historial {
+        uuid id PK
+        uuid lote_id FK
+        batch_status estado_anterior
+        batch_status estado_nuevo
+        uuid usuario_accion_id FK
+        text notas
+        timestamp created_at
+    }
+
+    auditoria_admin {
+        uuid id PK
+        uuid user_id FK
+        uuid entity_id FK
+        text entity_type
+        text action
+        text previous_status
+        text new_status
+        text notes
+        timestamp created_at
+    }
+```
+
+## 6. FLUJO DE MODERACIÓN ADMIN
+
+```mermaid
+sequenceDiagram
+    participant U as Usuario
+    participant F as Frontend
+    participant DB as Database
+    participant A as Admin
+    participant EF as Edge Function
+
+    Note over U,A: CREACIÓN DE CONTENIDO
+    U->>F: Crear Lote/Producto
+    F->>DB: INSERT lotes/productos (status=pendiente)
+    DB-->>F: Contenido creado
+    F-->>U: "Tu publicación está en revisión"
+
+    Note over U,A: NOTIFICACIÓN A ADMIN
+    DB->>A: Dashboard muestra contenido pendiente
+
+    Note over U,A: REVISIÓN ADMIN
+    A->>F: Ver contenido pendiente
+    F->>DB: SELECT * WHERE status=pendiente
+    DB-->>F: Lista de contenido
+    F-->>A: Mostrar items pendientes
+
+    alt Aprobar Contenido
+        A->>F: Click "Aprobar"
+        F->>DB: UPDATE status=aprobado
+        DB->>DB: INSERT auditoria_admin
+        DB->>EF: notify-product-status / notify-status-change
+        EF->>DB: INSERT notificaciones
+        EF-->>U: "Tu publicación fue aprobada"
+        DB-->>F: Actualizado
+    else Rechazar Contenido
+        A->>F: Click "Rechazar" + Notas
+        F->>DB: UPDATE status=rechazado, admin_notes
+        DB->>DB: INSERT auditoria_admin
+        DB->>EF: notify-product-status / notify-status-change
+        EF->>DB: INSERT notificaciones
+        EF-->>U: "Tu publicación fue rechazada: [razón]"
+    end
+
+    Note over U,A: SUSPENDER USUARIO
+    A->>F: Click "Suspender Usuario"
+    F->>EF: Edge Function suspend-user
+    EF->>DB: UPDATE profiles (is_active=false)
+    EF->>DB: UPDATE auth.users (user_metadata.suspended=true)
+    EF->>DB: INSERT notificaciones
+    EF->>DB: INSERT auditoria_admin
+    EF-->>U: "Tu cuenta ha sido suspendida"
+    EF-->>A: "Usuario suspendido exitosamente"
+
+    Note over U,A: RESTAURAR USUARIO
+    A->>F: Click "Restaurar Usuario"
+    F->>EF: Edge Function suspend-user (action=restore)
+    EF->>DB: UPDATE profiles (is_active=true)
+    EF->>DB: UPDATE auth.users (user_metadata.suspended=false)
+    EF->>DB: INSERT notificaciones
+    EF->>DB: INSERT auditoria_admin
+    EF-->>U: "Tu cuenta ha sido restaurada"
+
+    Note over U,A: ELIMINAR USUARIO PERMANENTEMENTE
+    A->>F: Click "Eliminar Permanentemente"
+    F->>EF: Edge Function delete-user-completely
+    EF->>DB: DELETE FROM ordenes WHERE user_id
+    EF->>DB: DELETE FROM calificaciones WHERE user_id
+    EF->>DB: DELETE FROM orden_mensajes WHERE user_id
+    EF->>DB: DELETE FROM notificaciones WHERE user_id
+    EF->>DB: DELETE FROM guias_guardadas WHERE user_id
+    EF->>DB: DELETE FROM lotes WHERE user_id
+    EF->>DB: DELETE FROM productos WHERE user_id
+    EF->>DB: DELETE FROM profiles WHERE id
+    EF->>DB: auth.admin.deleteUser(user_id)
+    EF-->>A: "Usuario eliminado completamente"
+
+    Note over U,A: GESTIÓN DE CALIFICACIONES REPORTADAS
+    U->>F: Reportar calificación
+    F->>DB: UPDATE calificaciones (reportada=true)
+    DB-->>F: Calificación reportada
+    
+    A->>F: Ver calificaciones reportadas
+    F->>DB: SELECT * WHERE reportada=true
+    DB-->>F: Lista de reportes
+    
+    alt Ocultar Calificación
+        A->>F: Click "Ocultar"
+        F->>DB: UPDATE calificaciones (oculta=true)
+    else Eliminar Calificación
+        A->>F: Click "Eliminar"
+        F->>DB: DELETE FROM calificaciones
+    end
+```
+
+## 7. SISTEMA DE SEGURIDAD (RLS)
+
+```mermaid
+graph TB
+    subgraph "Row-Level Security Policies"
+        subgraph "profiles"
+            P1[Users can view own profile]
+            P2[Users can view active profiles]
+            P3[Users can update own profile]
+            P4[Admins can update any profile]
+        end
+
+        subgraph "lotes"
+            L1[Users can view own lotes]
+            L2[Users can view approved public lotes]
+            L3[Admins can view all lotes]
+            L4[Users can create own lotes]
+            L5[Users can update own lotes]
+            L6[Admins can update lote status]
+        end
+
+        subgraph "productos"
+            PR1[Users can view approved available products]
+            PR2[Users can view own products]
+            PR3[Admins can view all products]
+            PR4[Users can create own products]
+            PR5[Admins can update product status]
+        end
+
+        subgraph "ordenes"
+            O1[Users can view own orders as solicitante]
+            O2[Users can view own orders as proveedor]
+            O3[Admins can view all orders]
+            O4[Users can create orders as solicitante]
+            O5[Solicitante/Proveedor can update order]
+        end
+
+        subgraph "calificaciones"
+            C1[Users can view relevant ratings]
+            C2[Non-reported ratings are public]
+            C3[Users can create ratings for completed orders]
+            C4[Users can update own ratings]
+            C5[Users can report ratings]
+            C6[Admins can manage all ratings]
+        end
+
+        subgraph "notificaciones"
+            N1[Users can view own notifications]
+            N2[Users can update own notifications]
+            N3[Users can delete own notifications]
+        end
+
+        subgraph "orden_mensajes"
+            M1[Users can view messages from own orders]
+            M2[Users can create messages in own orders]
+            M3[Admins can manage all messages]
+        end
+
+        subgraph "auditoria_admin"
+            A1[Only admins can access audit logs]
+            A2[Users can insert audit logs for their actions]
+        end
+    end
+
+    subgraph "Security Functions"
+        SF1[is_current_user_admin]
+        SF2[get_user_average_rating]
+        SF3[get_user_rating_count]
+        SF4[handle_new_user trigger]
+        SF5[track_lote_status_change trigger]
+        SF6[update_updated_at_column trigger]
+    end
+```
+
+## 8. EDGE FUNCTIONS
+
+```mermaid
+graph LR
+    subgraph "Edge Functions - Deno Runtime"
+        EF1[notify-order-status]
+        EF2[notify-product-status]
+        EF3[notify-status-change]
+        EF4[notify-new-message]
+        EF5[notify-delete-entity]
+        EF6[suspend-user]
+        EF7[delete-user-completely]
+    end
+
+    subgraph "Triggers"
+        T1[Orden status change]
+        T2[Producto status change]
+        T3[Lote status change]
+        T4[Nuevo mensaje]
+        T5[Eliminación entidad]
+    end
+
+    subgraph "Actions"
+        A1[INSERT notificaciones]
+        A2[UPDATE profiles]
+        A3[UPDATE auth.users]
+        A4[DELETE cascade]
+        A5[Email notifications]
+    end
+
+    T1 --> EF1
+    T2 --> EF2
+    T3 --> EF3
+    T4 --> EF4
+    T5 --> EF5
+
+    EF1 --> A1
+    EF2 --> A1
+    EF3 --> A1
+    EF4 --> A1
+    EF5 --> A1
+    EF6 --> A2
+    EF6 --> A3
+    EF7 --> A4
+```
+
+## 9. STORAGE BUCKETS
+
+```mermaid
+graph TB
+    subgraph "Supabase Storage"
+        B1[avatars - Public]
+        B2[lote-images - Public]
+        B3[product-images - Public]
+        B4[guia-images - Public]
+    end
+
+    subgraph "RLS Policies - avatars"
+        AP1[Users can upload own avatar]
+        AP2[Users can update own avatar]
+        AP3[Public can view avatars]
+    end
+
+    subgraph "RLS Policies - lote-images"
+        LP1[Users can upload to own lotes]
+        LP2[Public can view approved lotes]
+    end
+
+    subgraph "RLS Policies - product-images"
+        PP1[Users can upload to own products]
+        PP2[Public can view approved products]
+    end
+
+    subgraph "RLS Policies - guia-images"
+        GP1[Admins can upload guide images]
+        GP2[Public can view guide images]
+    end
+
+    B1 --> AP1 & AP2 & AP3
+    B2 --> LP1 & LP2
+    B3 --> PP1 & PP2
+    B4 --> GP1 & GP2
+```
+
+## 10. FLUJO COMPLETO DE USUARIO TÍPICO
+
+```mermaid
+journey
+    title Experiencia de Usuario Transformador
+    section Registro
+      Visitar landing: 5: Usuario
+      Registrarse como Transformador: 5: Usuario
+      Verificar email: 4: Usuario
+      Login exitoso: 5: Usuario
+    section Crear Producto
+      Crear producto nuevo: 5: Usuario
+      Subir imágenes: 4: Usuario
+      Esperar aprobación admin: 3: Usuario
+      Recibir notificación aprobación: 5: Usuario
+    section Recibir Solicitud
+      Ver notificación nueva orden: 5: Usuario
+      Revisar solicitud: 5: Usuario
+      Aceptar orden: 5: Usuario
+    section Coordinar Intercambio
+      Chatear con comprador: 4: Usuario
+      Confirmar detalles entrega: 4: Usuario
+      Completar intercambio: 5: Usuario
+    section Post-Intercambio
+      Recibir calificación: 5: Usuario
+      Calificar al comprador: 4: Usuario
+      Ver reputación actualizada: 5: Usuario
+```
+
+---
+
+## NOTAS TÉCNICAS
+
+### Enums Principales
+- **user_type**: 'citizen', 'generator', 'transformer', 'admin'
+- **batch_status**: 'disponible', 'reservado', 'intercambiado'
+- **order_status**: 'pendiente', 'aceptada', 'rechazada', 'completada', 'cancelada'
+- **item_type**: 'lote', 'producto'
+
+### Funciones de Base de Datos
+- `is_current_user_admin()`: Valida si auth.uid() es admin
+- `get_user_average_rating(user_id)`: Calcula rating promedio
+- `get_user_rating_count(user_id)`: Cuenta calificaciones
+- `handle_new_user()`: Trigger para crear perfil automáticamente
+- `track_lote_status_change()`: Trigger para historial de cambios
+- `increment_guia_views(guia_id)`: Incrementa contador de vistas
+
+### Integraciones Externas
+- **Mapbox GL 3.14.0**: Visualización de mapas y geolocalización
+- **Supabase Auth**: Autenticación JWT, verificación email
+- **Supabase Storage**: 4 buckets públicos con RLS
+- **Edge Functions**: 7 funciones serverless para notificaciones
+
+### Proyecto IDs
+- **Lovable Project**: 1d555952-e541-42bc-a567-a28cc29c7f0a
+- **Supabase Project**: gvegsztwqsaomkuywirl
+- **Database**: PostgreSQL 15
+
+---
+
+**Fecha de documentación**: 2025-01-20
+**Versión del proyecto**: MVP v1.0
+**Estado**: Producción (70% production-ready)
