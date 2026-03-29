@@ -11,3 +11,11 @@ CREATE POLICY "Admins can delete any lote"
   ON public.lotes
   FOR DELETE
   USING (public.is_current_user_admin());
+
+-- Fix FK constraint on calificaciones to cascade on product deletion
+ALTER TABLE public.calificaciones
+  DROP CONSTRAINT calificaciones_producto_id_fkey,
+  ADD CONSTRAINT calificaciones_producto_id_fkey
+    FOREIGN KEY (producto_id)
+    REFERENCES public.productos(id)
+    ON DELETE CASCADE;
