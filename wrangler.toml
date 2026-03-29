@@ -1,0 +1,14 @@
+name = "natuvital"
+type = "javascript"
+main = "src/index.ts"
+compatibility_date = "2024-01-01"
+
+[env.production]
+name = "natuvital-prod"
+
+# Build configuration
+build = { command = "bun run build" }
+dist = "dist"
+
+# Environment variables are configured in Cloudflare Pages Dashboard
+
