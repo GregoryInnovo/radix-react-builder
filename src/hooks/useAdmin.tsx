@@ -224,65 +224,71 @@ export const useAdmin = () => {
 
     try {
       let previousStatus = '';
-      
-      // Get current status
+
+      // Get current status and update local state immediately
       if (entityType === 'lote') {
         const current = lotes.find(l => l.id === entityId);
         previousStatus = current?.status || 'pendiente';
-        
+
         const { error } = await supabase
           .from('lotes')
-          .update({ 
+          .update({
             status: newStatus,
             admin_notes: notes || null
           })
           .eq('id', entityId);
-        
+
         if (error) throw error;
 
-        // Send notification for lote status change
-        try {
-          await supabase.functions.invoke('notify-status-change', {
-            body: {
-              loteId: entityId,
-              newStatus,
-              oldStatus: previousStatus,
-              adminNotes: notes
-            }
-          });
-        } catch (notifError) {
-          console.error('Error sending lote notification:', notifError);
-          // Don't fail the main operation if notification fails
-        }
+        // Update local state immediately
+        setLotes(prev => prev.map(l =>
+          l.id === entityId ? { ...l, status: newStatus as any, admin_notes: notes || null } : l
+        ));
+
+        // Send notification async (don't block on this)
+        supabase.functions.invoke('notify-status-change', {
+          body: {
+            loteId: entityId,
+            newStatus,
+            oldStatus: previousStatus,
+            adminNotes: notes
+          }
+        }).then(() => {
+          console.log('Notification sent for lote status change');
+        }).catch(err => console.error('Notification error:', err));
+
       } else if (entityType === 'producto') {
         const current = productos.find(p => p.id === entityId);
         previousStatus = current?.status || 'pendiente';
-        
+
         const { error } = await supabase
           .from('productos')
           .update({ status: newStatus })
           .eq('id', entityId);
-        
+
         if (error) throw error;
 
-        // Send notification for product status change
-        try {
-          await supabase.functions.invoke('notify-product-status', {
-            body: {
-              productId: entityId,
-              newStatus,
-              oldStatus: previousStatus,
-              adminNotes: notes
-            }
-          });
-        } catch (notifError) {
-          console.error('Error sending product notification:', notifError);
-          // Don't fail the main operation if notification fails
-        }
+        // Update local state immediately
+        setProductos(prev => prev.map(p =>
+          p.id === entityId ? { ...p, status: newStatus as any } : p
+        ));
+
+        // Send notification async
+        supabase.functions.invoke('notify-product-status', {
+          body: {
+            productId: entityId,
+            newStatus,
+            oldStatus: previousStatus,
+            adminNotes: notes
+          }
+        }).then(() => {
+          console.log('Notification sent for product status change');
+        }).catch(err => console.error('Notification error:', err));
+
       } else if (entityType === 'usuario') {
         const current = profiles.find(p => p.id === entityId);
         previousStatus = current?.is_active ? 'activo' : 'suspendido';
-        
+
         // Use the edge function for effective suspension
         try {
           await supabase.functions.invoke('suspend-user', {
@@ -299,13 +305,18 @@ export const useAdmin = () => {
             .from('profiles')
             .update({ is_active: newStatus === 'activo' })
             .eq('id', entityId);
-          
+
           if (error) throw error;
         }
+
+        // Update local state
+        setProfiles(prev => prev.map(p =>
+          p.id === entityId ? { ...p, is_active: newStatus === 'activo' } : p
+        ));
       }
 
-      // Log the action
-      await supabase
+      // Log the action async (don't block on this)
+      supabase
         .from('auditoria_admin')
         .insert({
           user_id: user!.id,
@@ -315,16 +326,17 @@ export const useAdmin = () => {
           previous_status: previousStatus,
           new_status: newStatus,
           notes: notes
-        });
+        })
+        .then(() => {
+          console.log('Audit log created for status change');
+        })
+        .catch(err => console.error('Audit error:', err));
 
       toast({
         title: "Acción completada",
         description: `Estado actualizado a: ${newStatus}`,
       });
 
-      // Refresh data
-      setDataLoaded(false);
-      await fetchAllData();
     } catch (error: any) {
       console.error('Error updating entity status:', error);
       toast({
@@ -336,86 +348,102 @@ export const useAdmin = () => {
   };
 
   const deleteEntity = async (entityType: string, entityId: string, notes?: string) => {
-    if (loadingData) {
-      console.log('Already deleting, preventing duplicate call');
-      return;
-    }
-    
-    setLoadingData(true);
     try {
-      // Get entity data for audit before deletion
       let entityData: any = null;
-      
+
       if (entityType === 'lote') {
-        const { data } = await supabase
-          .from('lotes')
-          .select('*')
-          .eq('id', entityId)
-          .single();
-        entityData = data;
-        
-        // Send notification before soft deletion
-        if (entityData) {
-          try {
-            await supabase.functions.invoke('notify-delete-entity', {
-              body: {
-                entityType: 'lote',
-                entityId,
-                ownerId: entityData.user_id,
-                entityTitle: `Lote de ${entityData.peso_estimado}kg`,
-                adminNotes: notes
-              }
-            });
-          } catch (notifError) {
-            console.error('Error sending delete notification:', notifError);
-          }
+        const currentLote = lotes.find(l => l.id === entityId);
+        if (!currentLote) {
+          throw new Error('Lote no encontrado');
         }
-        
-        // Soft delete lote using deleted_at timestamp
-        const { error: deleteError } = await supabase
+        entityData = currentLote;
+
+        // Soft delete lote
+        const { data: updatedRows, error: deleteError } = await supabase
           .from('lotes')
           .update({ deleted_at: new Date().toISOString() })
-          .eq('id', entityId);
-        
-        if (deleteError) throw deleteError;
-      } else if (entityType === 'producto') {
-        const { data } = await supabase
-          .from('productos')
-          .select('*')
           .eq('id', entityId)
-          .single();
-        entityData = data;
-        
-        // Send notification before deletion
-        if (entityData) {
-          try {
-            await supabase.functions.invoke('notify-delete-entity', {
-              body: {
-                entityType: 'producto',
-                entityId,
-                ownerId: entityData.user_id,
-                entityTitle: entityData.nombre,
-                adminNotes: notes
-              }
-            });
-          } catch (notifError) {
-            console.error('Error sending delete notification:', notifError);
-          }
+          .select();
+
+        if (deleteError) {
+          throw new Error(`Error al eliminar lote: ${deleteError.message}`);
         }
-        
-        // Hard delete producto (no soft delete for products yet)
-        const { error: deleteError } = await supabase
+
+        if (!updatedRows || updatedRows.length === 0) {
+          throw new Error(
+            'No se pudo eliminar el lote. Falta política DELETE para admins. ' +
+            'Ejecuta en Supabase SQL Editor: CREATE POLICY "Admins can delete any lote" ON public.lotes FOR DELETE USING (public.is_current_user_admin());'
+          );
+        }
+
+        // Update local state immediately
+        setLotes(prev => prev.filter(l => l.id !== entityId));
+
+        // Send notification in background (fire and forget)
+        supabase.functions.invoke('notify-delete-entity', {
+          body: {
+            entityType: 'lote',
+            entityId,
+            ownerId: entityData.user_id,
+            entityTitle: `Lote de ${entityData.peso_estimado}kg`,
+            adminNotes: notes
+          }
+        }).then(() => {
+          console.log('Notification sent for lote deletion');
+        }).catch(err => {
+          console.error('Notification error:', err);
+        });
+
+      } else if (entityType === 'producto') {
+        const currentProducto = productos.find(p => p.id === entityId);
+        if (!currentProducto) {
+          throw new Error('Producto no encontrado en el sistema');
+        }
+        entityData = currentProducto;
+
+        // Delete from DB using select with count to verify
+        const { data: deletedRows, error: deleteError } = await supabase
           .from('productos')
           .delete()
-          .eq('id', entityId);
-        
-        if (deleteError) throw deleteError;
+          .eq('id', entityId)
+          .select();
+
+        if (deleteError) {
+          throw new Error(`Error al eliminar producto: ${deleteError.message}`);
+        }
+
+        // Verify rows were actually deleted (RLS might silently block)
+        if (!deletedRows || deletedRows.length === 0) {
+          throw new Error(
+            'No se pudo eliminar el producto. Probablemente falta la política de DELETE para administradores en la base de datos. ' +
+            'Ejecuta en Supabase SQL Editor: CREATE POLICY "Admins can delete any product" ON public.productos FOR DELETE USING (public.is_current_user_admin());'
+          );
+        }
+
+        // Update local state immediately
+        setProductos(prev => prev.filter(p => p.id !== entityId));
+
+        // Send notification in background (fire and forget)
+        supabase.functions.invoke('notify-delete-entity', {
+          body: {
+            entityType: 'producto',
+            entityId,
+            ownerId: entityData.user_id,
+            entityTitle: entityData.nombre,
+            adminNotes: notes
+          }
+        }).then(() => {
+          console.log('Notification sent for producto deletion');
+        }).catch(err => {
+          console.error('Notification error:', err);
+        });
+
       } else {
         throw new Error(`Tipo de entidad no válido para eliminación: ${entityType}`);
       }
 
-      // Log the action in audit table
-      const { error: auditError } = await supabase
+      // Log the action in audit table in background
+      supabase
         .from('auditoria_admin')
         .insert({
           user_id: user!.id,
@@ -425,32 +453,30 @@ export const useAdmin = () => {
           previous_status: entityData?.status || 'pendiente',
           new_status: 'eliminado',
           notes: notes || `${entityType} eliminado definitivamente por el administrador`
+        })
+        .then(() => {
+          console.log('Audit log created');
+        })
+        .catch(err => {
+          console.error('Audit error:', err);
         });
-
-      if (auditError) throw auditError;
 
       toast({
         title: "Eliminado correctamente",
         description: `El ${entityType} ha sido eliminado definitivamente.`,
       });
 
-      // Refresh data
-      setDataLoaded(false);
-      await fetchAllData();
     } catch (error: any) {
       console.error('Error deleting entity:', error);
       toast({
         title: "Error al eliminar",
-        description: error.message,
+        description: error.message || 'No se pudo eliminar el elemento',
         variant: "destructive",
       });
-    } finally {
-      setLoadingData(false);
     }
   };
 
   const deleteUserCompletely = async (userId: string, notes?: string) => {
-    setLoadingData(true);
     try {
       // Call the edge function to delete user completely
       const { error } = await supabase.functions.invoke('delete-user-completely', {
@@ -462,8 +488,11 @@ export const useAdmin = () => {
 
       if (error) throw error;
 
-      // Log the action in audit table
-      await supabase
+      // Update local state immediately
+      setProfiles(prev => prev.filter(p => p.id !== userId));
+
+      // Log the action in audit table (async)
+      supabase
         .from('auditoria_admin')
         .insert({
           user_id: user!.id,
@@ -473,25 +502,24 @@ export const useAdmin = () => {
           previous_status: 'existente',
           new_status: 'eliminado_completamente',
           notes: notes || 'Usuario eliminado completamente por el administrador'
-        });
+        })
+        .then(() => {
+          console.log('Audit log created for user deletion');
+        })
+        .catch(err => console.error('Audit error:', err));
 
       toast({
         title: "Usuario eliminado completamente",
         description: "El usuario y todos sus datos han sido eliminados definitivamente.",
       });
 
-      // Refresh data
-      setDataLoaded(false);
-      await fetchAllData();
     } catch (error: any) {
       console.error('Error deleting user completely:', error);
       toast({
         title: "Error al eliminar usuario",
-        description: error.message,
+        description: error.message || 'No se pudo eliminar el usuario',
         variant: "destructive",
       });
-    } finally {
-      setLoadingData(false);
     }
   };
 

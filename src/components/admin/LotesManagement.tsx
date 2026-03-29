@@ -7,7 +7,6 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { useAdmin } from '@/hooks/useAdmin';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Search, Package, MapPin, Calendar, Weight, User, CheckCircle, XCircle, Trash2, Eye } from 'lucide-react';
@@ -29,9 +28,12 @@ type Profile = Database['public']['Tables']['profiles']['Row'];
 
 interface LotesManagementProps {
   lotes: Lote[];
+  profiles: Profile[];
+  updateEntityStatus: (entityType: string, entityId: string, newStatus: string, notes?: string) => Promise<void>;
+  deleteEntity: (entityType: string, entityId: string, notes?: string) => Promise<void>;
 }
 
-export const LotesManagement: React.FC<LotesManagementProps> = ({ lotes }) => {
+export const LotesManagement: React.FC<LotesManagementProps> = ({ lotes, profiles, updateEntityStatus, deleteEntity }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [showApprovalDialog, setShowApprovalDialog] = useState(false);
@@ -40,7 +42,6 @@ export const LotesManagement: React.FC<LotesManagementProps> = ({ lotes }) => {
   const [selectedLote, setSelectedLote] = useState<Lote | null>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [adminNotes, setAdminNotes] = useState('');
-  const { updateEntityStatus, deleteEntity, profiles } = useAdmin();
   const { getProfileById } = useProfiles();
 
   const getStatusBadge = (status: string) => {
