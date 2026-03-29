@@ -253,6 +253,8 @@ export const useAdmin = () => {
             oldStatus: previousStatus,
             adminNotes: notes
           }
+        }).then(() => {
+          console.log('Notification sent for lote status change');
         }).catch(err => console.error('Notification error:', err));
 
       } else if (entityType === 'producto') {
@@ -279,6 +281,8 @@ export const useAdmin = () => {
             oldStatus: previousStatus,
             adminNotes: notes
           }
+        }).then(() => {
+          console.log('Notification sent for product status change');
         }).catch(err => console.error('Notification error:', err));
 
       } else if (entityType === 'usuario') {
@@ -323,6 +327,9 @@ export const useAdmin = () => {
           new_status: newStatus,
           notes: notes
         })
+        .then(() => {
+          console.log('Audit log created for status change');
+        })
         .catch(err => console.error('Audit error:', err));
 
       toast({
@@ -342,7 +349,6 @@ export const useAdmin = () => {
 
   const deleteEntity = async (entityType: string, entityId: string, notes?: string) => {
     try {
-      // Get entity data for audit before deletion
       let entityData: any = null;
 
       if (entityType === 'lote') {
@@ -352,7 +358,20 @@ export const useAdmin = () => {
         }
         entityData = currentLote;
 
-        // Send notification before deletion (async, don't block)
+        // Delete from DB first
+        const { error: deleteError } = await supabase
+          .from('lotes')
+          .update({ deleted_at: new Date().toISOString() })
+          .eq('id', entityId);
+
+        if (deleteError) {
+          throw new Error(`Error al eliminar lote: ${deleteError.message}`);
+        }
+
+        // Update local state immediately
+        setLotes(prev => prev.filter(l => l.id !== entityId));
+
+        // Send notification in background (fire and forget)
         supabase.functions.invoke('notify-delete-entity', {
           body: {
             entityType: 'lote',
@@ -361,30 +380,37 @@ export const useAdmin = () => {
             entityTitle: `Lote de ${entityData.peso_estimado}kg`,
             adminNotes: notes
           }
-        }).catch(err => console.error('Notification error:', err));
-
-        // Soft delete lote using deleted_at timestamp
-        const { error: deleteError } = await supabase
-          .from('lotes')
-          .update({ deleted_at: new Date().toISOString() })
-          .eq('id', entityId);
-
-        if (deleteError) {
-          console.error('Delete error:', deleteError);
-          throw deleteError;
-        }
-
-        // Update local state immediately
-        setLotes(prev => prev.filter(l => l.id !== entityId));
+        }).then(() => {
+          console.log('Notification sent for lote deletion');
+        }).catch(err => {
+          console.error('Notification error:', err);
+        });
 
       } else if (entityType === 'producto') {
         const currentProducto = productos.find(p => p.id === entityId);
         if (!currentProducto) {
-          throw new Error('Producto no encontrado');
+          throw new Error('Producto no encontrado en el sistema');
         }
         entityData = currentProducto;
 
-        // Send notification before deletion (async)
+        // Delete from DB first
+        const { error: deleteError } = await supabase
+          .from('productos')
+          .delete()
+          .eq('id', entityId);
+
+        if (deleteError) {
+          throw new Error(`Error al eliminar producto: ${deleteError.message}`);
+        }
+
+        // Update local state immediately
+        setProductos(prev => {
+          const filtered = prev.filter(p => p.id !== entityId);
+          console.log(`Producto eliminado. Antes: ${prev.length}, Después: ${filtered.length}`);
+          return filtered;
+        });
+
+        // Send notification in background (fire and forget)
         supabase.functions.invoke('notify-delete-entity', {
           body: {
             entityType: 'producto',
@@ -393,32 +419,17 @@ export const useAdmin = () => {
             entityTitle: entityData.nombre,
             adminNotes: notes
           }
-        }).catch(err => console.error('Notification error:', err));
-
-        // Hard delete producto
-        const { error: deleteError } = await supabase
-          .from('productos')
-          .delete()
-          .eq('id', entityId);
-
-        if (deleteError) {
-          console.error('Delete error:', deleteError);
-          throw deleteError;
-        }
-
-        // Update local state immediately - ESTO ES CRÍTICO
-        setProductos(prev => {
-          console.log('Before filter:', prev.length);
-          const filtered = prev.filter(p => p.id !== entityId);
-          console.log('After filter:', filtered.length);
-          return filtered;
+        }).then(() => {
+          console.log('Notification sent for producto deletion');
+        }).catch(err => {
+          console.error('Notification error:', err);
         });
 
       } else {
         throw new Error(`Tipo de entidad no válido para eliminación: ${entityType}`);
       }
 
-      // Log the action in audit table (async, don't block)
+      // Log the action in audit table in background
       supabase
         .from('auditoria_admin')
         .insert({
@@ -430,7 +441,12 @@ export const useAdmin = () => {
           new_status: 'eliminado',
           notes: notes || `${entityType} eliminado definitivamente por el administrador`
         })
-        .catch(err => console.error('Audit error:', err));
+        .then(() => {
+          console.log('Audit log created');
+        })
+        .catch(err => {
+          console.error('Audit error:', err);
+        });
 
       toast({
         title: "Eliminado correctamente",
@@ -473,6 +489,9 @@ export const useAdmin = () => {
           previous_status: 'existente',
           new_status: 'eliminado_completamente',
           notes: notes || 'Usuario eliminado completamente por el administrador'
+        })
+        .then(() => {
+          console.log('Audit log created for user deletion');
         })
         .catch(err => console.error('Audit error:', err));
 
