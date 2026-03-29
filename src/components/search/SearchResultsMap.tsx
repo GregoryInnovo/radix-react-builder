@@ -62,11 +62,17 @@ const createLoteIcon = (index: number) => new L.DivIcon({
   popupAnchor: [0, -22],
 });
 
-// Auto-fit bounds component
-function FitBounds({ bounds }: { bounds: L.LatLngBoundsExpression }) {
+// Auto-fit bounds + invalidate size for dialog rendering
+function MapController({ bounds }: { bounds: L.LatLngBoundsExpression | null }) {
   const map = useMap();
   React.useEffect(() => {
-    map.fitBounds(bounds, { padding: [40, 40], maxZoom: 15 });
+    // Leaflet needs this when rendered inside hidden containers (Dialog)
+    setTimeout(() => {
+      map.invalidateSize();
+      if (bounds) {
+        map.fitBounds(bounds, { padding: [40, 40], maxZoom: 15 });
+      }
+    }, 200);
   }, [map, bounds]);
   return null;
 }
@@ -119,7 +125,7 @@ export const SearchResultsMap: React.FC<SearchResultsMapProps> = ({
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
 
-          {bounds && <FitBounds bounds={bounds} />}
+          <MapController bounds={bounds} />
 
           {/* User location marker + radius circle */}
           {userLocation && (
