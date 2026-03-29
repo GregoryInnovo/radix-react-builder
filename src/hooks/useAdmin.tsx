@@ -358,14 +358,22 @@ export const useAdmin = () => {
         }
         entityData = currentLote;
 
-        // Delete from DB first
-        const { error: deleteError } = await supabase
+        // Soft delete lote
+        const { data: updatedRows, error: deleteError } = await supabase
           .from('lotes')
           .update({ deleted_at: new Date().toISOString() })
-          .eq('id', entityId);
+          .eq('id', entityId)
+          .select();
 
         if (deleteError) {
           throw new Error(`Error al eliminar lote: ${deleteError.message}`);
+        }
+
+        if (!updatedRows || updatedRows.length === 0) {
+          throw new Error(
+            'No se pudo eliminar el lote. Falta política DELETE para admins. ' +
+            'Ejecuta en Supabase SQL Editor: CREATE POLICY "Admins can delete any lote" ON public.lotes FOR DELETE USING (public.is_current_user_admin());'
+          );
         }
 
         // Update local state immediately
@@ -393,22 +401,27 @@ export const useAdmin = () => {
         }
         entityData = currentProducto;
 
-        // Delete from DB first
-        const { error: deleteError } = await supabase
+        // Delete from DB using select with count to verify
+        const { data: deletedRows, error: deleteError } = await supabase
           .from('productos')
           .delete()
-          .eq('id', entityId);
+          .eq('id', entityId)
+          .select();
 
         if (deleteError) {
           throw new Error(`Error al eliminar producto: ${deleteError.message}`);
         }
 
+        // Verify rows were actually deleted (RLS might silently block)
+        if (!deletedRows || deletedRows.length === 0) {
+          throw new Error(
+            'No se pudo eliminar el producto. Probablemente falta la política de DELETE para administradores en la base de datos. ' +
+            'Ejecuta en Supabase SQL Editor: CREATE POLICY "Admins can delete any product" ON public.productos FOR DELETE USING (public.is_current_user_admin());'
+          );
+        }
+
         // Update local state immediately
-        setProductos(prev => {
-          const filtered = prev.filter(p => p.id !== entityId);
-          console.log(`Producto eliminado. Antes: ${prev.length}, Después: ${filtered.length}`);
-          return filtered;
-        });
+        setProductos(prev => prev.filter(p => p.id !== entityId));
 
         // Send notification in background (fire and forget)
         supabase.functions.invoke('notify-delete-entity', {
