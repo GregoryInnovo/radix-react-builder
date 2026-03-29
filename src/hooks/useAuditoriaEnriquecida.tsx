@@ -33,115 +33,135 @@ export const useAuditoriaEnriquecida = (auditorias: AuditoriaAdmin[]) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (auditorias.length === 0) {
+      setEnrichedAuditorias([]);
+      setLoading(false);
+      return;
+    }
+
     const enrichAuditorias = async () => {
       setLoading(true);
-      const enriched: EnrichedAuditoria[] = [];
 
-      for (const auditoria of auditorias) {
+      // 1. Collect all unique IDs to fetch in batch
+      const adminIds = [...new Set(auditorias.map(a => a.user_id))];
+      const loteIds = [...new Set(auditorias.filter(a => a.entity_type === 'lote').map(a => a.entity_id))];
+      const productoIds = [...new Set(auditorias.filter(a => a.entity_type === 'producto').map(a => a.entity_id))];
+      const usuarioIds = [...new Set(auditorias.filter(a => a.entity_type === 'usuario').map(a => a.entity_id))];
+
+      // Combine all profile IDs we need
+      const allProfileIds = [...new Set([...adminIds, ...usuarioIds])];
+
+      // 2. Fetch all data in parallel batches (NOT one per audit record)
+      const [profilesResult, lotesResult, productosResult] = await Promise.all([
+        // Fetch all profiles at once
+        allProfileIds.length > 0
+          ? supabase.from('profiles').select('id, full_name, email, avatar_url').in('id', allProfileIds)
+          : Promise.resolve({ data: [], error: null }),
+
+        // Fetch all lotes at once
+        loteIds.length > 0
+          ? supabase.from('lotes').select('id, titulo, peso_estimado, imagenes, user_id, tipos_residuo:tipo_residuo_id(nombre)').in('id', loteIds)
+          : Promise.resolve({ data: [], error: null }),
+
+        // Fetch all productos at once
+        productoIds.length > 0
+          ? supabase.from('productos').select('id, nombre, precio_unidad, imagenes, user_id').in('id', productoIds)
+          : Promise.resolve({ data: [], error: null }),
+      ]);
+
+      // 3. Build lookup maps for O(1) access
+      const profileMap = new Map<string, any>();
+      (profilesResult.data || []).forEach(p => profileMap.set(p.id, p));
+
+      const loteMap = new Map<string, any>();
+      (lotesResult.data || []).forEach(l => loteMap.set(l.id, l));
+
+      const productoMap = new Map<string, any>();
+      (productosResult.data || []).forEach(p => productoMap.set(p.id, p));
+
+      // 4. Fetch lote/product owner profiles that we don't have yet
+      const ownerIds = new Set<string>();
+      (lotesResult.data || []).forEach(l => { if (l.user_id && !profileMap.has(l.user_id)) ownerIds.add(l.user_id); });
+      (productosResult.data || []).forEach(p => { if (p.user_id && !profileMap.has(p.user_id)) ownerIds.add(p.user_id); });
+
+      if (ownerIds.size > 0) {
+        const { data: ownerProfiles } = await supabase
+          .from('profiles')
+          .select('id, full_name, email, avatar_url')
+          .in('id', [...ownerIds]);
+
+        (ownerProfiles || []).forEach(p => profileMap.set(p.id, p));
+      }
+
+      // 5. Enrich all auditorias using the maps (no more HTTP requests)
+      const enriched: EnrichedAuditoria[] = auditorias.map(auditoria => {
         const enrichedItem: EnrichedAuditoria = { ...auditoria };
 
-        // Obtener datos del usuario que realizó la acción
-        const { data: adminData } = await supabase
-          .from('profiles')
-          .select('full_name, email, avatar_url')
-          .eq('id', auditoria.user_id)
-          .single();
-
-        if (adminData) {
-          enrichedItem.admin_data = adminData;
+        // Admin data
+        const admin = profileMap.get(auditoria.user_id);
+        if (admin) {
+          enrichedItem.admin_data = {
+            full_name: admin.full_name,
+            email: admin.email,
+            avatar_url: admin.avatar_url,
+          };
         }
 
-        // Obtener datos de la entidad según su tipo
+        // Entity-specific data
         if (auditoria.entity_type === 'lote') {
-          const { data: loteData } = await supabase
-            .from('lotes')
-            .select(`
-              titulo,
-              peso_estimado,
-              imagenes,
-              user_id,
-              tipos_residuo (nombre)
-            `)
-            .eq('id', auditoria.entity_id)
-            .single();
-
-          if (loteData) {
+          const lote = loteMap.get(auditoria.entity_id);
+          if (lote) {
             enrichedItem.entity_data = {
-              titulo: loteData.titulo,
-              tipo_residuo: loteData.tipos_residuo?.nombre,
-              peso_estimado: loteData.peso_estimado,
-              imagen: loteData.imagenes?.[0],
+              titulo: lote.titulo,
+              tipo_residuo: lote.tipos_residuo?.nombre,
+              peso_estimado: lote.peso_estimado,
+              imagen: lote.imagenes?.[0],
             };
-
-            // Obtener datos del usuario creador del lote
-            if (loteData.user_id) {
-              const { data: userData } = await supabase
-                .from('profiles')
-                .select('full_name, email, avatar_url')
-                .eq('id', loteData.user_id)
-                .single();
-
-              if (userData) {
-                enrichedItem.user_data = userData;
-              }
+            const owner = profileMap.get(lote.user_id);
+            if (owner) {
+              enrichedItem.user_data = {
+                full_name: owner.full_name,
+                email: owner.email,
+                avatar_url: owner.avatar_url,
+              };
             }
           }
         } else if (auditoria.entity_type === 'producto') {
-          const { data: productoData } = await supabase
-            .from('productos')
-            .select('nombre, precio_unidad, imagenes, user_id')
-            .eq('id', auditoria.entity_id)
-            .single();
-
-          if (productoData) {
+          const producto = productoMap.get(auditoria.entity_id);
+          if (producto) {
             enrichedItem.entity_data = {
-              nombre: productoData.nombre,
-              precio_unidad: productoData.precio_unidad,
-              imagen: productoData.imagenes?.[0],
+              nombre: producto.nombre,
+              precio_unidad: producto.precio_unidad,
+              imagen: producto.imagenes?.[0],
             };
-
-            // Obtener datos del usuario creador del producto
-            if (productoData.user_id) {
-              const { data: userData } = await supabase
-                .from('profiles')
-                .select('full_name, email, avatar_url')
-                .eq('id', productoData.user_id)
-                .single();
-
-              if (userData) {
-                enrichedItem.user_data = userData;
-              }
+            const owner = profileMap.get(producto.user_id);
+            if (owner) {
+              enrichedItem.user_data = {
+                full_name: owner.full_name,
+                email: owner.email,
+                avatar_url: owner.avatar_url,
+              };
             }
           }
         } else if (auditoria.entity_type === 'usuario') {
-          const { data: userData } = await supabase
-            .from('profiles')
-            .select('full_name, email, avatar_url')
-            .eq('id', auditoria.entity_id)
-            .single();
-
-          if (userData) {
+          const usuario = profileMap.get(auditoria.entity_id);
+          if (usuario) {
             enrichedItem.entity_data = {
-              full_name: userData.full_name,
-              email: userData.email,
-              avatar_url: userData.avatar_url,
+              full_name: usuario.full_name,
+              email: usuario.email,
+              avatar_url: usuario.avatar_url,
             };
           }
         }
 
-        enriched.push(enrichedItem);
-      }
+        return enrichedItem;
+      });
 
       setEnrichedAuditorias(enriched);
       setLoading(false);
     };
 
-    if (auditorias.length > 0) {
-      enrichAuditorias();
-    } else {
-      setEnrichedAuditorias([]);
-      setLoading(false);
-    }
+    enrichAuditorias();
   }, [auditorias]);
 
   return { enrichedAuditorias, loading };
