@@ -10,7 +10,8 @@ import { CalificacionesView } from './CalificacionesView';
 import { OrdenesView } from './OrdenesView';
 import { AuditoriasView } from './AuditoriasView';
 import { GuiasManagement } from './GuiasManagement';
-import { Users, Package, ShoppingBag, Star, ClipboardList, FileText, Leaf, BookOpen } from 'lucide-react';
+import { Users, Package, ShoppingBag, Star, ClipboardList, FileText, Leaf, BookOpen, Activity } from 'lucide-react';
+import { StatusView } from './StatusView';
 
 export const AdminDashboard: React.FC = () => {
   const { 
@@ -35,7 +36,7 @@ export const AdminDashboard: React.FC = () => {
 
   return (
     <Tabs defaultValue="users" className="w-full">
-      <TabsList className="grid w-full grid-cols-8">
+      <TabsList className="grid w-full grid-cols-9">
         <TabsTrigger value="users" className="flex items-center gap-2">
           <Users className="h-4 w-4" />
           Usuarios ({profiles.length})
@@ -67,6 +68,10 @@ export const AdminDashboard: React.FC = () => {
         <TabsTrigger value="auditoria" className="flex items-center gap-2">
           <FileText className="h-4 w-4" />
           Auditoría ({auditorias.length})
+        </TabsTrigger>
+        <TabsTrigger value="status" className="flex items-center gap-2">
+          <Activity className="h-4 w-4" />
+          Estado
         </TabsTrigger>
       </TabsList>
 
@@ -100,6 +105,10 @@ export const AdminDashboard: React.FC = () => {
       
       <TabsContent value="auditoria">
         <AuditoriasView auditorias={auditorias} />
+      </TabsContent>
+
+      <TabsContent value="status">
+        <StatusView />
       </TabsContent>
     </Tabs>
   );
