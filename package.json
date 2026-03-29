@@ -8,7 +8,10 @@
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "deploy": "vite build && wrangler pages deploy dist --branch main --commit-dirty=true",
+    "deploy:preview": "vite build && wrangler pages deploy dist --commit-dirty=true",
+    "deploy:status": "wrangler pages deployment list --project-name natuvital"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
