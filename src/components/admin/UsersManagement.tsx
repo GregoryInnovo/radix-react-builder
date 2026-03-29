@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useAdmin } from '@/hooks/useAdmin';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Search, User, Mail, Calendar, Trash2, UserX } from 'lucide-react';
@@ -15,12 +14,13 @@ type Profile = Database['public']['Tables']['profiles']['Row'];
 
 interface UsersManagementProps {
   users: Profile[];
+  updateEntityStatus: (entityType: string, entityId: string, newStatus: string, notes?: string) => Promise<void>;
+  deleteUserCompletely: (userId: string, notes?: string) => Promise<void>;
 }
 
-export const UsersManagement: React.FC<UsersManagementProps> = ({ users }) => {
+export const UsersManagement: React.FC<UsersManagementProps> = ({ users, updateEntityStatus, deleteUserCompletely }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  const { updateEntityStatus, deleteUserCompletely } = useAdmin();
 
   const getStatusBadge = (user: Profile) => {
     if (user.is_admin) {

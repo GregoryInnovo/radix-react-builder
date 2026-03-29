@@ -14,15 +14,18 @@ import { Users, Package, ShoppingBag, Star, ClipboardList, FileText, Leaf, BookO
 import { StatusView } from './StatusView';
 
 export const AdminDashboard: React.FC = () => {
-  const { 
-    profiles, 
-    lotes, 
-    productos, 
-    calificaciones, 
-    ordenes, 
+  const {
+    profiles,
+    lotes,
+    productos,
+    calificaciones,
+    ordenes,
     auditorias,
     guias,
-    loading 
+    loading,
+    updateEntityStatus,
+    deleteEntity,
+    deleteUserCompletely
   } = useAdmin();
 
   if (loading) {
@@ -76,15 +79,15 @@ export const AdminDashboard: React.FC = () => {
       </TabsList>
 
       <TabsContent value="users">
-        <UsersManagement users={profiles} />
+        <UsersManagement users={profiles} updateEntityStatus={updateEntityStatus} deleteUserCompletely={deleteUserCompletely} />
       </TabsContent>
-      
+
       <TabsContent value="lotes">
-        <LotesManagement lotes={lotes} />
+        <LotesManagement lotes={lotes} profiles={profiles} updateEntityStatus={updateEntityStatus} deleteEntity={deleteEntity} />
       </TabsContent>
-      
+
       <TabsContent value="productos">
-        <ProductosManagement productos={productos} />
+        <ProductosManagement productos={productos} updateEntityStatus={updateEntityStatus} deleteEntity={deleteEntity} />
       </TabsContent>
       
       <TabsContent value="tipos-residuo">

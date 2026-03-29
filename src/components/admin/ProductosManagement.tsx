@@ -6,7 +6,6 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Search, Calendar, Package, MapPin, DollarSign, Home, CheckCircle, XCircle, Trash2, User, Eye } from 'lucide-react';
-import { useAdmin } from '@/hooks/useAdmin';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useProfiles } from '@/hooks/useProfiles';
@@ -18,15 +17,16 @@ type Producto = Database['public']['Tables']['productos']['Row'];
 
 interface ProductosManagementProps {
   productos: Producto[];
+  updateEntityStatus: (entityType: string, entityId: string, newStatus: string, notes?: string) => Promise<void>;
+  deleteEntity: (entityType: string, entityId: string, notes?: string) => Promise<void>;
 }
 
-export const ProductosManagement: React.FC<ProductosManagementProps> = ({ productos }) => {
+export const ProductosManagement: React.FC<ProductosManagementProps> = ({ productos, updateEntityStatus, deleteEntity }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [profiles, setProfiles] = useState<Record<string, any>>({});
   const [selectedProducto, setSelectedProducto] = useState<Producto | null>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
-  const { updateEntityStatus, deleteEntity } = useAdmin();
   const { getProfileById } = useProfiles();
 
   // Fetch profiles for producto owners
